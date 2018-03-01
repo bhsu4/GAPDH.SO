@@ -19,5 +19,3 @@ plot_l4 <- function(xs, params){
   legend(0, y=max(df)+100000, c(LETTERS[1:nrow(params)]), 
          col=1:nrow(params), ncol=8, lty=1, cex=0.5)
 }
-
-plot_l4(Cycle, newtest)
