@@ -1,8 +1,7 @@
-genparams <- function(est){
+genparams <- function(est, listdf){
   n <- length(unique(gsub("[[:digit:]+ | [:lower:] | \\.]","", colnames(df))))
-  listdf <- list(A, B, C, D, E, F, G, H)
   listmod <- list("l4", "l5", "b4", "b5")
-  result <- lapply(listdf, function(k) pcrfit(k, fluo = 2:13, model = b4, start = NULL,
+  result <- lapply(listdf, function(k) pcrfit(k, fluo = 2:13, model = est, start = NULL,
                                               offset = 0, weights = NULL, verbose = TRUE))
   if(any(gsub("[[:alpha:]]","", result[[1]]$MODEL$name) == "5") == "TRUE") {
     for (k in 1:n){
@@ -17,8 +16,8 @@ genparams <- function(est){
     }
     colnames(test) <- c(LETTERS[1:n])
     newtest <- data.frame(t(test))
-    h = which(listmod == result[[1]]$MODEL$name)
-    assign(paste0("DF", h), newtest)
+#    h = which(listmod == result[[1]]$MODEL$name)
+#    assign(paste0("DF", h), newtest)
   }
   if(any(gsub("[[:alpha:]]","", result[[1]]$MODEL$name) == "4") == "TRUE") {
     for (k in 1:n){
@@ -33,10 +32,9 @@ genparams <- function(est){
     }
     colnames(test) <- c("A", "B", "C", "D", "E", "F", "G", "H")
     newtest <- data.frame(t(test))
-    h = which(listmod == result[[1]]$MODEL$name)
-    assign(paste0("DF", h), newtest)
+#    h = which(listmod == result[[1]]$MODEL$name)
+#    assign(paste0("DF", h), newtest)
   }
+  return(list(params=newtest, fits=result))
 }
 
-genparams(est = 4) #this does not work
-library(qpcR)
