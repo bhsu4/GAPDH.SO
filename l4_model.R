@@ -1,4 +1,4 @@
-l4 <- function(x, b, c, d, e) {
+l4_model <- function(x, b, c, d, e) {
   c+(d-c)/(1+exp(b*(log(x)-log(e))))
 }
 

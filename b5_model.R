@@ -1,4 +1,4 @@
-b5 <- function(x, b, c, d, e, f) {
+b5_model <- function(x, b, c, d, e, f) {
   c+(d-c)/(1+exp(b*(x-e)))^f
 }
 

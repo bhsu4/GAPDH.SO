@@ -1,6 +1,4 @@
-par(xpd = TRUE, mar = par()$mar + c(0,0,.5,0))
-
-l5 <- function(x, b, c, d, e, f) {
+l5_model <- function(x, b, c, d, e, f) {
   c + ( (d-c) / (1+exp(b*(log(x)-log(e))))^f )
 }
 

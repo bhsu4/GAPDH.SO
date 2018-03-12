@@ -1,4 +1,4 @@
-plot_resid <- function(params){
+plot_resid <- function(params,resids){
 
 for (i in 1:length(params$fits)){
   for(k in 1:12){
@@ -12,8 +12,8 @@ for (i in 1:length(params$fits)){
       ind2 <- 40*k
       ind1 <- ind2-39
       lines(y=resids[[i]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
-      }
     }
   }
+title(main= names(params$fits[i]))
+  }
 }
-
