@@ -12,8 +12,8 @@ for (i in 1:length(params$fits)){
       ind2 <- 40*k
       ind1 <- ind2-39
       lines(y=resids[[i]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
-    }
-  }
-title(main= names(params$fits[i]))
+       }
+     }
+title(main= paste(names(params$fits[i]), sub=params$fits$A$MODEL$name, sep = ", "))
   }
 }
