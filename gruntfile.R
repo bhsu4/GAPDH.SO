@@ -1,4 +1,3 @@
-
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/")
 df <- read.csv(file="GAPDH.SO.csv", header = TRUE, sep = ",")
 Cycle = c(1:40)
@@ -34,12 +33,10 @@ plot_subset(Cycle, df_l4, df_l5, df_b4, df_b5, subsets)
 source("GAPDH.SO/plot_together.R") 
 plot_together(Cycle, df_l4, df_l5, df_b4, df_b5, subsets)
 
-
-
 ### subsetting with efficiencies / run fluo eff plots
 
 source("GAPDH.SO/eff_phase.R") 
-subsetsb_b5 <- genparamsbase(subsets, df_b5)
+subsetsb_b5 <- genparamsbase(subsets, df_b5, subsets)
 
 #subsetsbE <- lapply(1, matrix, data= NA, nrow=39, ncol=13)
 
@@ -64,8 +61,31 @@ testing2 <- testing2[!grepl("Cycle",colnames(testing2))]
 Cycles <- 1:39
 testing2 <- cbind(Cycles, testing2)                       
 colnames(testing2) <- colnames(df)
-subsetstest <- lapply(LETTERS[1:8], function(k) cbind(Cycles, testing2[,colnames(testing2) %like% k]))
-names(subsetstest) <- LETTERS[1:8]
-subsetstest$C <- subsetstest$C[,-c(1)]
+testingsubset <- lapply(LETTERS[1:8], function(k) cbind(Cycles, testing2[,colnames(testing2) %like% k]))
+names(testingsubset) <- LETTERS[1:8]
+testingsubset$C <- testingsubset$C[,-c(1)]
 
-plot_eff(Cycles, subsetstest)
+plot_efftest(Cycles, df_b5, testingsubset)
+
+
+listdfb <- subsetb_b5
+for(k in 1:length(listdfb)){ #turn it into 39 rows
+  listdfb[[k]] <- subsetsb_b5[[k]][-40, ]
+}
+for(k in 1:length(listdfb)){
+  for(j in 2:(nrow(listdfb$A)+1)){ #efficiency big, check baseline sub fluo is non-neg without division OK
+    listdfb[[k]][j-1,] <- (subsetsb_b5[[k]][j,])/(subsetsb_b5[[k]][j-1,])
+  }
+}
+
+
+source("GAPDH.SO/eff_phase.R")
+Cycles = 1:39
+subsetsb_b5 <- genparamsbase(subsets, df_b5, subsets)
+plot_eff(Cycles, subsetsb_b5) #data's efficiency curve
+
+curve_b5 <- curvefunc(df_b5, "b5_model", subsetsb_b5)
+curveb_b5 <- genparamsbase(curve_b5, df_b5, subsets)
+plot_eff(Cycles, curveb_b5)
+
+
