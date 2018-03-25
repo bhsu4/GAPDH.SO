@@ -32,8 +32,6 @@ plot_eff <- function(xs, listdf){
       listdfb[[k]][j-1,] <- (listdf[[k]][j,])/(listdf[[k]][j-1,])
     }
   }
-  listdfb$C <- listdfb$C[,-c(1)]
-  
   for (k in 1:length(listdfb)){
     for (i in 2:length(listdfb$A)){
       if (i == 2){
@@ -47,4 +45,17 @@ plot_eff <- function(xs, listdf){
     }
     title(main = names(listdfb[k]))
   }
+}
+
+eff_values <- function(listdf){
+listdfb <- listdf
+for(k in 1:length(listdfb)){ #turn it into 39 rows
+  listdfb[[k]] <- listdf[[k]][-40, ]
+}
+for(k in 1:length(listdfb)){
+  for(j in 2:(nrow(listdfb$A)+1)){ #efficiency big, check baseline sub fluo is non-neg without division OK
+    listdfb[[k]][j-1,] <- (listdf[[k]][j,])/(listdf[[k]][j-1,])
+  }
+}
+return(listdfb)
 }
