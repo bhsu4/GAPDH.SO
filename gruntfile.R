@@ -88,4 +88,57 @@ curve_b5 <- curvefunc(df_b5, "b5_model", subsetsb_b5)
 curveb_b5 <- genparamsbase(curve_b5, df_b5, subsets)
 plot_eff(Cycles, curveb_b5)
 
+# Plotting Double-Log Function
 
+eff_b5 <- eff_values(subsetsb_b5)
+
+leff_b5 <- log(log(eff_b5))
+
+subsetscyc <- subsets
+for(k in 1:length(subsetscyc)){ #turn it into 39 rows
+  subsetscyc[[k]] <- subsets[[k]][-40, ]
+}
+plot(log(subsetscyc[[1]][,2]), log(eff_b5[[1]][,2]))
+points(log(subsetscyc[[1]][,4]), log(eff_b5[[1]][,4]), col = 2)
+points(log(subsetscyc[[1]][,5]), log(eff_b5[[1]][,5]), col = 3)
+points(log(subsetscyc[[1]][,6]), log(eff_b5[[1]][,6]), col = 4)
+points(log(subsetscyc[[1]][,7]), log(eff_b5[[1]][,7]), col = 5)
+
+subsets_df <- data.frame(subsets)
+cc = 1:11
+hi <- lm(subsets_df[1:11,2] ~ cc, data = subsets_df)
+hi$coefficients
+
+hi <- lm(subsets[[1]][1:11,2] ~ cc, data = subsets)
+listparams[[1]][1] <- list(hi$coefficients)
+
+result <- lapply(subsets, function(k) lm(k ~ cc))
+
+params222[[1]][,1] <- hi$coefficients
+
+#creating ground phase slanted baseline model
+params222 <- subsetsb_b5
+for(k in 1:length(subsetsb_b5)){ #turn it into 39 rows
+  params222[[k]] <- subsetsb_b5[[k]][-(3:40), -1]
+}
+cc <- 1:14
+for (i in 1:8){
+  for (k in 2:13){
+    hi <- lm(subsets[[i]][1:14, k] ~ cc, data = subsets)
+    params222[[i]][,k-1] <- hi$coefficients
+    
+  }
+}
+
+
+subsets_slb5 <- eff_b5
+
+for (i in 1:8){
+  for (k in 2:13){
+    for (j in 2:40){
+    subsets_slb5[[i]][[k]][[j-1]] <- (subsets[[i]][[k]][[j]]-(params222[[i]][k-1][1,]+params222[[i]][k-1][2,]*j))/(subsets[[i]][[k]][[j-1]]-(params222[[i]][k-1][1,]+params222[[i]][k-1][2,]*(j-1)))
+    }
+  }
+}
+
+plot_eff(Cycles, subsets_slb5)
