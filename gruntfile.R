@@ -35,58 +35,14 @@ plot_together(Cycle, df_l4, df_l5, df_b4, df_b5, subsets)
 
 ### subsetting with efficiencies / run fluo eff plots
 
-source("GAPDH.SO/eff_phase.R") 
-subsetsb_b5 <- genparamsbase(subsets, df_b5, subsets)
-
-#subsetsbE <- lapply(1, matrix, data= NA, nrow=39, ncol=13)
-
-#subsetsbE <- subsets
-#for (i in 1:8){
-#  for (k in 2:13){
-#    for (j in 2:40){
-#      subsetsbE[[i]][[k]] <- (subsetsb_b5[[i]][[k]][j,])/(subsetsb_b5[[i]][[k]][j-1,])
-#    }
-#  }
-#}
-
-#testing[[1]][[1]] <- (subsetsb_b5[[1]][[1]][2,]/subsetsb_b5[[1]][[1]][1,])
-
-testing <- data.frame(subsetsb_b5)
-testing2 <- testing
-for (k in 2:40){
-  testing2[k-1,] <- testing[k,]/testing[k-1,]
-}
-testing2 <- abs(testing2[-40,])
-testing2 <- testing2[!grepl("Cycle",colnames(testing2))]
-Cycles <- 1:39
-testing2 <- cbind(Cycles, testing2)                       
-colnames(testing2) <- colnames(df)
-testingsubset <- lapply(LETTERS[1:8], function(k) cbind(Cycles, testing2[,colnames(testing2) %like% k]))
-names(testingsubset) <- LETTERS[1:8]
-testingsubset$C <- testingsubset$C[,-c(1)]
-
-plot_efftest(Cycles, df_b5, testingsubset)
-
-
-listdfb <- subsetb_b5
-for(k in 1:length(listdfb)){ #turn it into 39 rows
-  listdfb[[k]] <- subsetsb_b5[[k]][-40, ]
-}
-for(k in 1:length(listdfb)){
-  for(j in 2:(nrow(listdfb$A)+1)){ #efficiency big, check baseline sub fluo is non-neg without division OK
-    listdfb[[k]][j-1,] <- (subsetsb_b5[[k]][j,])/(subsetsb_b5[[k]][j-1,])
-  }
-}
-
-
 source("GAPDH.SO/eff_phase.R")
 Cycles = 1:39
 subsetsb_b5 <- genparamsbase(subsets, df_b5, subsets)
-plot_eff(Cycles, subsetsb_b5) #data's efficiency curve
 
-curve_b5 <- curvefunc(df_b5, "b5_model", subsetsb_b5)
-curveb_b5 <- genparamsbase(curve_b5, df_b5, subsets)
-plot_eff(Cycles, curveb_b5)
+#creating ground phase slanted baseline model
+plot_eff(Cycles, subsetsb_b5, subsets, subsets, "slant", 11)
+plot_eff(Cycles, subsetsb_b5, subsets, subsets, "flat", 11)
+plot_eff(Cycles, subsetsb_b5, subsets, curve_b5, "slant", 11)
 
 # Plotting Double-Log Function
 
@@ -116,29 +72,22 @@ result <- lapply(subsets, function(k) lm(k ~ cc))
 
 params222[[1]][,1] <- hi$coefficients
 
-#creating ground phase slanted baseline model
-params222 <- subsetsb_b5
-for(k in 1:length(subsetsb_b5)){ #turn it into 39 rows
-  params222[[k]] <- subsetsb_b5[[k]][-(3:40), -1]
+#### confirmation on curve values fitted
+
+testconf <- function(x, b, e, f){
+  ((1+exp(b*((x-1)-e)))/(1+exp(b*(x-e))))^f
 }
-cc <- 1:14
-for (i in 1:8){
-  for (k in 2:13){
-    hi <- lm(subsets[[i]][1:14, k] ~ cc, data = subsets)
-    params222[[i]][,k-1] <- hi$coefficients
-    
+
+plot_testconf <- function(xs, listdf, par){
+  plot(x=xs, y=testconf(xs, b=par$params$b[1], e=par$params$e[1], f=par$params$f[1]), type="l",  
+       xlab="Cycle", ylab="Fluorescence")
+  for(k in 2:length(subsets)){
+    lines(x=xs, y=testconf(xs, b=par$params$b[k], e=par$params$e[k], f=par$params$f[k]), col=k)
   }
+  legend("topright", c(LETTERS[1:length(subsets)]), 
+         col=1:length(subsets), ncol=2, lty=1, cex=0.5)
 }
 
+plot_testconf(Cycles, subsets, df_b5) #looks like eff. from curve values
 
-subsets_slb5 <- eff_b5
 
-for (i in 1:8){
-  for (k in 2:13){
-    for (j in 2:40){
-    subsets_slb5[[i]][[k]][[j-1]] <- (subsets[[i]][[k]][[j]]-(params222[[i]][k-1][1,]+params222[[i]][k-1][2,]*j))/(subsets[[i]][[k]][[j-1]]-(params222[[i]][k-1][1,]+params222[[i]][k-1][2,]*(j-1)))
-    }
-  }
-}
-
-plot_eff(Cycles, subsets_slb5)
