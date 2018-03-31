@@ -91,3 +91,6 @@ plot_testconf <- function(xs, listdf, par){
 plot_testconf(Cycles, subsets, df_b5) #looks like eff. from curve values
 
 
+require(strucchange)
+strbreak_chow(Cycle, subsets)
+

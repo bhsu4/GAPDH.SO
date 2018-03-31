@@ -52,6 +52,8 @@ if(type == "estar"){
 star_plot(seq(-5,5,0.01), 10, 2.5, "lstar")
 star_plot(seq(-5,5,0.01), 10, 2.5, "estar")
 
+
+
   
   
   
