@@ -21,59 +21,77 @@ get_lag_formulae <- function(n, nrep){
 #creating list for values to run through nrep
 names(ts_subsets$F)[8] <- "F7"
 
-fftest <- vector('list', 8)
+fftest <- lapply(LETTERS[1:8], paste0, 1:12) #list of subset names
+fftry <- lapply(fftest, function(x) lapply(x, get_lag_formulae, n=15)) #dynlm formula in list
+ff_fitstest <- list()
+for(j in 1:8) ff_fitstest[[j]] <- lapply(fftry[[j]], function(x) lapply(x, 
+                                function(f) dynlm(formula = as.formula(f), 
+                                                  data=ts_subsets[[j]]))) #output results of dynlm
+for(j in 1:8) ff_fitstestaic[[j]] <- sapply(ff_fitstest[[j]], function(x) sapply(x,AIC)) #output results of dynlm
+
+#looking at 4 lagged AIC values
+for(j in 1:8){
+  for(i in 2:5){
+if(i==1){
+plot(x=1:12, y=ff_fitstestaic[[j]][1,], type = "l", 
+     ylim=range(ff_fitstestaic), col = i, xlab = "Lagged Parameter", ylab = "AIC")
+}
+    lines(x=1:12, y=ff_fitstestaic[[j]][i-1,], col = i-1)
+  }
+}
+
+#finding 5% and 95% plot
+
 for(j in 1:8){
 for(i in 1:12){
-fftest[[j]][[i]] <- paste0(LETTERS[j], i)
+  if(i==1 & j==1){
+plot(x=1:15, y=ff_fitstestaic[[j]][,i], type = "p", ylim = c(range(ff_fitstestaic)))
   }
+points(x=1:15, y=ff_fitstestaic[[j]][,i], col = j)
 }
-
-fftry <- vector('list', 8)
+}
 for(j in 1:8){
-  for(i in 1:12){
-    fftry[[j]][[i]] <- get_lag_formulae(4, fftest[[j]][[i]])
-  }
+    lines(x = 1:15, y=rowMeans(ff_fitstestaic[[j]]), pch = 19, cex = 3, col = j)
 }
-
-ff_fitstest <- vector('list', 8)
-for(j in 1:8){
-  for(i in 1:12){
-ff_fitstest[[j]][[i]] <- lapply(fftry[[j]][[i]], 
-                                function(f) dynlm(formula = as.formula(f), data=ts_subsets[[j]]))
-  }
-}
-
-ff_fitstestaic <- vector('list', 8)
-for(j in 1:8){
-  for(i in 1:12){
-ff_fitstestaic[[j]][[i]] <- sapply(ff_fitstest[[j]][[i]], AIC)
-  }
-}
-
-plot(x=1, y=ff_fitstestaic[[1]][[1]])
-stripchart(ff_fitstestaic, vertical = TRUE)
-#plotting x from 12*8 , with y values taking on AIC
-
-#works down here
-ff <- get_lag_formulae(4, "A2")
-ff_fits <- lapply(ff, function(f) dynlm(formula = as.formula(f), data=ts_subsets[[1]]))
-sapply(ff_fits, AIC)
-#if only look at 4 lags, then we get use of AR(4)
+qts <- quantile(range(ff_fitstestaic), probs=c(0.05, 0.95, 0.15, 0.85))
+abline(h=qts[1], col="red")
+abline(h=qts[2], col="red")
+abline(h=qts[3], col="green")
+abline(h=qts[4], col="green")
+#use lag(2) since dramatically better, afterwards plateaus
 
 
+##Bai and Perron's Test
 A1test <- log10(subsets$A$A1)
-A1test <- cbind(A1test, lag(subsets$A$A1, k=-4))
-colnames(A1test) <- c("y", "ylag4")
+A1test <- cbind(A1test, lag(subsets$A$A1, k=-2))
+colnames(A1test) <- c("y", "ylag2")
 A1test <- ts(A1test)
-re.a1 <- efp(y ~ ylag4, data = A1test, type = "RE")
+re.a1 <- efp(y ~ ylag1, data = A1test, type = "RE")
 plot(re.a1)
-bp.a1 <- breakpoints(y ~ ylag4, data = A1test)
+bp.a1 <- breakpoints(y ~ ylag2, data = A1test)
 summary(bp.a1)
 plot(A1test[,"y"], ylab = expression(log[10](Fluorescence))) 
 lines(bp.a1, breaks = 2)
 
-mod.lstar <- lstar(log10(lynx), m=2, mTh=c(0,1), control=list(maxit=3000))
-mod.lstar
+
+subsets_log <- subsets
+bp.subs <- vector("list", 12)
+for(i in 1:8){
+  for(j in 2:13){
+    subsets_log[[i]][[j-1]] <- log10(subsets[[i]][[j]]) #converting to log10
+    subsets_log[[i]][[j-1]] <- cbind(subsets_log[[i]][[j-1]], lag(subsets[[i]][[j]], k=-2)) #include lag2
+    colnames(subsets_log[[i]][[j-1]]) <- c("y", "ylag2")
+    subsets_log[[i]][[j-1]] <- ts(subsets_log[[i]][[j-1]]) #change to time series to apply brkpt
+    bp.subs[[i]][[j-1]] <- breakpoints(y ~ ylag2, data=subsets_log[[i]][[j-1]]) #finding brkpt for each
+  if(j==2){
+    plot(subsets_log[[i]][[j-1]][,"y"], ylab = expression(log[10](Fluorescence)), 
+                                        ylim = c(range(subsets_log[[i]][[j-1]][,"y"])), col = i) 
+      }
+    lines(subsets_log[[i]][[j-1]][,"y"], ylab = expression(log[10](Fluorescence)),
+                                         ylim = c(range(subsets_log[[i]][[j-1]][,"y"])), col = i)
+    lines(bp.subs[[i]][[j-1]], breaks = 2, col = j-1)
+  }
+}
 
 
 
@@ -82,7 +100,7 @@ mod.lstar
 library(tsDyn)
 
 #fit a LSTAR model. Note 'maxit': slow convergence
-mod.lstar <- lstar(log10(lynx), m=2, mTh=c(0,1), control=list(maxit=3000))
+mod.lstar <- tsDyn::lstar(log10(lynx), m=2, mTh=c(0,1), control=list(maxit=3000))
 mod.lstar
 
 #fit a LSTAR model without a constant in both regimes. 
