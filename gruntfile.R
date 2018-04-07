@@ -64,6 +64,22 @@ plot_testconf(Cycles, subsets, df_b5) #looks like eff. from curve values
 
 ##Applying STAR Model
 
+#Chow test single break confirm
+source("GAPDH.SO/strucbreak.R")
+breakA <- strbreak_chow(Cycle, subsets)
+
+plot(x=5:35, y = breakA[[1]][[1]][,1], ylab = "F-statistic", xlab = "Cycle")
+for(k in 1:8){
+  for(i in 1:12){
+    lines(x=5:35, y=breakA[[1]][[k]][,i], col=k)
+  } #breakpoints for replicates
+}
+for(j in 2:ncol(subsets$A)){
+  for(h in 1:length(subsets)){
+    points(x=Cycle, y=(50*subsets[[h]][,j]/max(subsets[[h]][,j])), cex=0.45)
+  }
+} #scaled overlay of points
+
 #creating list for values to run through nrep
 names(ts_subsets$F)[8] <- "F7" #replace F.6.1
 
