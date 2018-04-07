@@ -44,34 +44,6 @@ plot_eff(Cycles, subsetsb_b5, subsets, subsets, "slant", 11)
 plot_eff(Cycles, subsetsb_b5, subsets, subsets, "flat", 11)
 plot_eff(Cycles, subsetsb_b5, subsets, curve_b5, "slant", 11)
 
-# Plotting Double-Log Function
-
-eff_b5 <- eff_values(subsetsb_b5)
-
-leff_b5 <- log(log(eff_b5))
-
-subsetscyc <- subsets
-for(k in 1:length(subsetscyc)){ #turn it into 39 rows
-  subsetscyc[[k]] <- subsets[[k]][-40, ]
-}
-plot(log(subsetscyc[[1]][,2]), log(eff_b5[[1]][,2]))
-points(log(subsetscyc[[1]][,4]), log(eff_b5[[1]][,4]), col = 2)
-points(log(subsetscyc[[1]][,5]), log(eff_b5[[1]][,5]), col = 3)
-points(log(subsetscyc[[1]][,6]), log(eff_b5[[1]][,6]), col = 4)
-points(log(subsetscyc[[1]][,7]), log(eff_b5[[1]][,7]), col = 5)
-
-subsets_df <- data.frame(subsets)
-cc = 1:11
-hi <- lm(subsets_df[1:11,2] ~ cc, data = subsets_df)
-hi$coefficients
-
-hi <- lm(subsets[[1]][1:11,2] ~ cc, data = subsets)
-listparams[[1]][1] <- list(hi$coefficients)
-
-result <- lapply(subsets, function(k) lm(k ~ cc))
-
-params222[[1]][,1] <- hi$coefficients
-
 #### confirmation on curve values fitted
 
 testconf <- function(x, b, e, f){
@@ -90,7 +62,101 @@ plot_testconf <- function(xs, listdf, par){
 
 plot_testconf(Cycles, subsets, df_b5) #looks like eff. from curve values
 
+##Applying STAR Model
 
-require(strucchange)
-strbreak_chow(Cycle, subsets)
+#creating list for values to run through nrep
+names(ts_subsets$F)[8] <- "F7" #replace F.6.1
+
+fftest <- lapply(LETTERS[1:8], paste0, 1:12) #list of subset names
+fftry <- lapply(fftest, function(x) lapply(x, get_lag_formulae, n=15)) #dynlm formula in list
+ff_fitstest <- list()
+for(j in 1:8) ff_fitstest[[j]] <- lapply(fftry[[j]], function(x) lapply(x, 
+                                                     function(f) dynlm(formula = as.formula(f), 
+                                                     data=ts_subsets[[j]]))) #output results of dynlm
+for(j in 1:8) ff_fitstestaic[[j]] <- sapply(ff_fitstest[[j]], 
+                                            function(x) sapply(x,AIC)) #output results of dynlm
+
+#n-lag AIC values
+for(j in 1:8){
+  for(i in 2:16){
+    if(j==1){
+      plot(x=1:12, y=ff_fitstestaic[[j]][1,], type = "p", 
+           ylim=range(ff_fitstestaic), col = i, xlab = "Replication Set", ylab = "AIC")
+    }
+    points(x=1:12, y=ff_fitstestaic[[j]][i-1,], col = i-1)
+  }
+}
+
+#finding 5% and 95% plot/ deciding on lag term
+
+for(j in 1:8){
+  for(i in 1:12){
+    if(i==1 & j==1){
+      plot(x=1:15, y=ff_fitstestaic[[j]][,i], type = "p", ylim = c(range(ff_fitstestaic)), 
+           ylab = "AIC", xlab = "Replication Set")
+    }
+    points(x=1:15, y=ff_fitstestaic[[j]][,i], col = j)
+  } #plotting all replication sets' AIC
+}
+for(j in 1:8){
+  lines(spline(x = 1:15, y=rowMeans(ff_fitstestaic[[j]])), pch = 19, cex = 3, col = j)
+} #smoothing line
+qts <- quantile(range(ff_fitstestaic), probs=c(0.05, 0.95, 0.15, 0.85)) #percentage lines of range
+abline(h=qts[1], col="red") 
+abline(h=qts[2], col="red")
+abline(h=qts[3], col="green")
+abline(h=qts[4], col="green")
+#use lag(2) since dramatically better, afterwards plateaus
+
+##Bai and Perron's Test
+A1test <- log10(subsets$A$A1)
+A1test <- cbind(A1test, lag(subsets$A$A1, k=-2))
+colnames(A1test) <- c("y", "ylag2")
+A1test <- ts(A1test)
+re.a1 <- efp(y ~ ylag1, data = A1test, type = "RE")
+plot(re.a1)
+bp.a1 <- breakpoints(y ~ ylag2, data = A1test)
+summary(bp.a1)
+plot(A1test[,"y"], ylab = expression(log[10](Fluorescence))) 
+lines(bp.a1, breaks = 2)
+
+#breakpoints at each replication
+subsets_log <- subsets
+bp.subs <- vector("list", 12)
+for(i in 1:8){
+  for(j in 2:13){
+    subsets_log[[i]][[j-1]] <- log10(subsets[[i]][[j]]) #converting to log10
+    subsets_log[[i]][[j-1]] <- cbind(subsets_log[[i]][[j-1]], lag(subsets[[i]][[j]], k=-2)) #include lag2
+    colnames(subsets_log[[i]][[j-1]]) <- c("y", "ylag2")
+    subsets_log[[i]][[j-1]] <- ts(subsets_log[[i]][[j-1]]) #change to time series to apply brkpt
+    bp.subs[[i]][[j-1]] <- breakpoints(y ~ ylag2, data=subsets_log[[i]][[j-1]]) #finding brkpt for each
+    if(j==2){
+      plot(subsets_log[[i]][[j-1]][,"y"], ylab = expression(log[10](Fluorescence)), 
+           ylim = c(range(subsets_log[[i]][[j-1]][,"y"])), col = i) 
+    } #plotting each subset A-H
+    lines(subsets_log[[i]][[j-1]][,"y"], ylab = expression(log[10](Fluorescence)),
+          ylim = c(range(subsets_log[[i]][[j-1]][,"y"])), col = i)
+    lines(bp.subs[[i]][[j-1]], breaks = 2, col = j-1) #adding brkspt cycle times
+  }
+}
+
+##plotting LSTAR model to see fit for replication
+df <- data.frame(1:40)
+ff <- rowMeans(lsubsets$A[,2:13])
+ff2 <- apply(lsubsets$A[,2:13], 1, median)
+
+try.lstar <- tsDyn::lstar(ff, m=2, d=1) #embedding dimension=2, delay = 1 #mean
+plot(x=1:38, try.lstar$fitted.values, type = "l", ylim = c(5.1, 5.75))
+for(j in 2:13){
+  for(h in 1:8){
+    points(x=1:38, y=subsets_log[[h]][[j]][1:38,1], cex=0.45)
+  }
+} #plot points for 38 cycles given lag 2
+try.lstar2 <- tsDyn::lstar(ff2, m=2, d=1) #median replication set
+lines(x=1:38, try.lstar2$fitted.values, type = "l", ylim = c(5.1, 5.75), col = 2)
+
+df_b5_log <- genparams(est=b5, listdf=lsubsets)
+lines(x=1:38, y=b5_model(1:38, b=df_b5_log$params$b[1], c=df_b5_log$params$c[1],
+                         d=df_b5_log$params$d[1], e=df_b5_log$params$e[1], 
+                         f=df_b5_log$params$f[1]), col=2) #lines for b_5 model
 
