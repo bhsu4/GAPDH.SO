@@ -157,22 +157,123 @@ for(i in 1:8){
 }
 
 ##plotting LSTAR model to see fit for replication
-df <- data.frame(1:40)
+lsubsets <- subsets #lsubsets different from subsets_log b/c subsets_log with ts 
+for(i in 1:8){
+  for(j in 2:13){
+    lsubsets[[i]][[j-1]] <- log10(subsets[[i]][[j]])
+  }
+}
+
 ff <- rowMeans(lsubsets$A[,2:13])
 ff2 <- apply(lsubsets$A[,2:13], 1, median)
 
+try.lstar2 <- tsDyn::lstar(fftest, m=2, d=1)
 try.lstar <- tsDyn::lstar(ff, m=2, d=1) #embedding dimension=2, delay = 1 #mean
-plot(x=1:38, try.lstar$fitted.values, type = "l", ylim = c(5.1, 5.75))
-for(j in 2:13){
+
+plot(x=3:40, try.lstar$fitted.values, type = "l", ylim = c(5.1, 5.75), xlim=c(1,40))
+for(j in 1:12){
   for(h in 1:8){
-    points(x=1:38, y=subsets_log[[h]][[j]][1:38,1], cex=0.45)
+    points(x=1:40, y=subsets_log[[h]][[j]][,1], cex=0.45)
   }
-} #plot points for 38 cycles given lag 2
-try.lstar2 <- tsDyn::lstar(ff2, m=2, d=1) #median replication set
-lines(x=1:38, try.lstar2$fitted.values, type = "l", ylim = c(5.1, 5.75), col = 2)
+} #plot points for 38 cycles given lag 2try.lstar2 <- tsDyn::lstar(ff2, m=2, d=1) #median replication set
+#lines(x=1:38, try.lstar2$fitted.values, type = "l", ylim = c(5.1, 5.75), col = 2)
 
 df_b5_log <- genparams(est=b5, listdf=lsubsets)
-lines(x=1:38, y=b5_model(1:38, b=df_b5_log$params$b[1], c=df_b5_log$params$c[1],
+lines(x=1:40, y=b5_model(1:40, b=df_b5_log$params$b[1], c=df_b5_log$params$c[1],
                          d=df_b5_log$params$d[1], e=df_b5_log$params$e[1], 
                          f=df_b5_log$params$f[1]), col=2) #lines for b_5 model
 
+
+#plotting residuals: do we need to forecast, if by looking, resid worse for lstar than log models?
+plot(x=1:38, try.lstar$residuals, type = "l") #reduces branching effect?? doesnt match up
+
+ff <- vector("list", 8)
+for(i in 1:8){
+ff[[i]] <- rowMeans(lsubsets[[i]][, 2:13])
+} #list of 8 for row means
+
+try.lstar <- vector("list", 8)
+for(i in 1:8){
+try.lstar[[i]] <- tsDyn::lstar(ff[[i]], m=2, d=1) #run lstar model through each rep
+}
+
+for(i in 1:8){
+if(i == 1){ #plot residuals/ note: in ln units
+  plot(x = 1:38, y = try.lstar[[i]]$residuals, type = "l", col = 1, cex = 1.5, 
+       ylab = "Residuals", xlab = "Time Series Cycle (t)")
+}
+  lines(x = 1:38, y = try.lstar[[i]]$residuals, col = i, cex = 1.5)
+}
+legend("bottomright", c(LETTERS[1:8]), col=1:8, ncol = 4, lty = 1)
+
+#plotting ln units for plot_resid comp
+
+library(qpcR)
+source("GAPDH.SO/genparams.R")
+df_b5_log <- genparams(est=b5, listdf=lsubsets) #log b5 params
+df_b4_log <- genparams(est=b4, listdf=lsubsets) #log b4 params
+df_l5_log <- genparams(est=l5, listdf=lsubsets) #log b4 params
+df_l4_log <- genparams(est=l4, listdf=lsubsets) #log b4 params
+
+## to get residuals
+source("GAPDH.SO/plot_resid.R")
+b5lresids <- lapply(df_b5_log$fits, resid)
+b4lresids <- lapply(df_b4_log$fits, resid)
+l5lresids <- lapply(df_l5_log$fits, resid)
+l4lresids <- lapply(df_l4_log$fits, resid)
+
+plot_resid(df_b5_log, b5resids)
+plot_resid(df_b4_log, b4resids)
+plot_resid(df_l5_log, l5resids)
+plot_resid(df_l4_log, l4resids)
+
+
+##each replication set 
+lstarmod <- list()
+#for(j in 1:8) lstarmod[[j]] <- lapply(lsubsets[[j]][,2:13], function(f) tsDyn::lstar(f, m=2, d=1))
+#doesn't work???
+
+lstarmod1 <- lapply(lsubsets[[1]][,2:13], function(x) tsDyn::lstar(x, m=2, d=1))
+lstarmod2 <- lapply(lsubsets[[2]][,2:13], function(x) tsDyn::lstar(x, m=2, d=1))
+lstarmod3 <- lapply(lsubsets[[3]][,2:13], function(x) tsDyn::lstar(x, m=2, d=1))
+lstarmod4 <- lapply(lsubsets[[4]][,2:13], function(x) tsDyn::lstar(x, m=2, d=1))
+lstarmod5 <- lapply(lsubsets[[5]][,2:13], function(x) tsDyn::lstar(x, m=2, d=1))
+lstarmod6 <- lapply(lsubsets[[6]][,2:13], function(x) tsDyn::lstar(x, m=2, d=1))
+lstarmod7 <- lapply(lsubsets[[7]][,2:13], function(x) tsDyn::lstar(x, m=2, d=1))
+lstarmod8 <- lapply(lsubsets[[8]][,2:13], function(x) tsDyn::lstar(x, m=2, d=1))
+
+lstarmod1nolog <- lapply(subsets[[1]][,2:13], function(x) tsDyn::lstar(x, m=2, d=1))
+
+for(h in 1:8){
+  for(j in 1:12){
+if(j == 1){
+  plot(x=3:40, lstarmod1[[1]]$fitted.values, type = "l", ylim = c(5.1, 5.75), xlim=c(1,40))
+}
+  lines(x=3:40, lstarmod1[[j]]$fitted.values, type = "l", col = j)
+
+  points(x=1:40, y=subsets_log[[h]][[j]][,1], cex=0.45)
+  }
+} 
+
+for(i in 1:8){
+  if(i == 1){ #plot residuals/ note: in ln units
+    plot(x = 1:38, y = lstarmod1[[i]]$residuals, type = "l", col = 1, cex = 1.5, 
+         ylab = "Residuals", xlab = "Time Series Cycle (t)")
+  }
+    lines(x = 1:38, y = lstarmod1[[i]]$residuals, col = i, cex = 1.5)
+}
+legend("bottomright", c(names(lstarmod1)), col=1:8, ncol = 6, lty = 1, cex=0.75)
+
+
+#nolog residual plots
+for(i in 1:8){
+  if(i == 1){ #plot residuals/ note: in ln units
+    plot(x = 1:38, y = lstarmod1nolog[[i]]$residuals, type = "l", col = 1, cex = 1.5, 
+         ylab = "Residuals", xlab = "Time Series Cycle (t)")
+  }
+  lines(x = 1:38, y = lstarmod1nolog[[i]]$residuals, col = i, cex = 1.5)
+}
+legend("bottomright", c(names(lstarmod1nolog)), col=1:8, ncol = 6, lty = 1, cex=0.75)
+
+#original b5
+plot_resid(df_b5, b5resids)
