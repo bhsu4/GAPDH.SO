@@ -11,7 +11,7 @@ strbreak_chow <- function(xs, ys){
         result <- sctest(ys[[i]][,j] ~ xs, type = "Chow", point = k-5)
         struc_result[[i]][,j-1][k-9] <- result$statistic #p.value 
         dum.xs=rep(1,nrow(ys$A))
-        dum.xs[x>=k-5]=0
+        dum.xs[xs>=k-5]=0
         result2 <- summary(lm(ys[[i]][,j] ~ xs*dum.xs))
         
         break_result[[i]][,j-1][k-9] <- result2$fstatistic[1]
