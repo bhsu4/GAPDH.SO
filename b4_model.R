@@ -19,3 +19,19 @@ plot_b4 <- function(xs, listdf, par){
   legend("topleft", c(LETTERS[1:length(subsets)]), 
          col=1:length(subsets), ncol=2, lty=1, cex=0.5)
 }
+
+subplot_b4 <- function(xs, listdf, par){
+  plot(x=xs, y=b4_model(xs, b=par$params$b[1], c=par$params$c[1],
+                        d=par$params$d[1], e=par$params$e[1]), type="l",  
+       xlab="Cycle", ylab="Fluorescence", ylim=c(min(df[2:ncol(df)]), max(df)))
+  for(k in 2:length(listdf)){
+    lines(x=xs, y=b4_model(xs, b=par$params$b[k], c=par$params$c[k],
+                           d=par$params$d[k], e=par$params$e[k]),  
+          col=k)
+    for(j in 2:ncol(listdf)){
+      points(x=xs, y=listdf[,j], cex=0.45)
+    }
+  }
+  legend("topleft", c(names(listdf)[2:13]), 
+         col=1:length(listdf), ncol=2, lty=1, cex=0.5)
+}
