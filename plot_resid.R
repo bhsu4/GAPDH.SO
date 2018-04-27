@@ -1,4 +1,4 @@
-plot_resid <- function(params,resids){
+plot_resid <- function(params){
 
 for (i in 1:length(params$fits)){
   for(k in 1:12){
@@ -15,5 +15,22 @@ for (i in 1:length(params$fits)){
        }
      }
 title(main= paste(names(params$fits[i]), sub=params$fits$A$MODEL$name, sep = ", "))
+  }
+}
+
+subplot_resid <- function(params){
+  
+  for(k in 1:12){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1) plot(y=resids[[k]][1:40], 
+                    x=params$fits[[1]]$DATA$Cycles[1:40], 
+                    ylim=range(resids[[k]]), type="l", 
+                    xlab="Cycle", ylab="Fluorescence")
+    if(k > 1){
+      ind2 <- 40*k
+      ind1 <- ind2-39*(k)-(k-1)
+      lines(y=resids[[k]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
+    }
   }
 }

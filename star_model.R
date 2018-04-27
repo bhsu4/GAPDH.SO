@@ -28,24 +28,24 @@ star_plot <- function(xs, maxk, intk, type){
 if(type == "lstar"){
     testk <- seq(0,maxk,intk)
     plot(x=xs, y=lstar(0, xs), ylim=c(0,1), xlim=c(-2.5,2.5), type = "l", col = 1, 
-         xlab = "y_(t-d)-c", ylab = "F(y_(t-d))")
+         xlab = expression(y[t-d]-c), ylab = expression(F(y[t-d])))
     for(i in 2:((maxk/intk)+1)){
       lines(x=xs, y=lstar(testk[i], xs), ylim=c(0,1), type = "l", col = i)
     }
     legend("bottomright", c(paste0("Gamma", " =", testk[1:((maxk/intk)+1)])), 
-           col=1:((maxk/intk)+1), ncol=1, lty=1, cex=0.5)
-    title(c("LSTAR With Varying Gamma"))
+           col=1:((maxk/intk)+1), ncol=1, lty=1, cex=0.5, x.intersp=0.1, text.width=c(rep(0.25,5)), pt.cex = 1)
+   # title(c("LSTAR With Varying Gamma"))
   }
 if(type == "estar"){
   testk <- seq(0,maxk,intk)
   plot(x=xs, y=estar(0, xs), ylim=c(0,1), xlim=c(-2.5,2.5), type = "l", col = 1, 
-       xlab = "y_(t-d)-c", ylab = "F(y_(t-d))")
+       xlab = expression(y[t-d]-c), ylab = expression(F(y[t-d])))
   for(i in 2:((maxk/intk)+1)){
     lines(x=xs, y=estar(testk[i], xs), ylim=c(0,1), type = "l", col = i)
   }
   legend("bottomright", c(paste0("Gamma", " =", testk[1:((maxk/intk)+1)])), 
-         col=1:((maxk/intk)+1), ncol=1, lty=1, cex=0.5)
-  title(c("ESTAR With Varying Gamma"))
+         col=1:((maxk/intk)+1), ncol=1, lty=1, cex=0.5, x.intersp=0.1, text.width=c(rep(0.25,5)), pt.cex = 1)
+ # title(c("ESTAR With Varying Gamma"))
 }
 }
 
