@@ -256,3 +256,43 @@ legend("bottomright", c(fftest[[h]]), col = 1:12, lty=1, ncol=4, cex=0.5)
 
 #original b5
 plot_resid(df_b5, b5resids)
+
+
+tmp <- log10(subsets[[2]][[2]]) + rnorm(40, sd=0.2)
+tst = tsDyn::lstar(tmp , m=2, d=1, starting.control=list(gammaInt=c(1,200)))
+plot(x=3:40, y=tst$fitted.values, type="l")
+points(x=3:40, y=tmp[3:40])
+
+
+#######trying with mircomp data
+
+data("miRcompData")
+KW91 <- miRcompData[grep("^KW9_1", miRcompData$SampleID), ]
+
+fftest <- lapply(LETTERS[1:8], paste0, 1:12) #list of subset names
+fftry <- lapply(fftest, function(x) lapply(x, get_lag_formulae, n=15)) #dynlm formula in list
+
+KW91set1 <- KW91[1:40,]
+ts_KW91set1 <- ts(KW91set1$Rn)
+KW91test1 <- dynlm(ts_KW91set1 ~ L(ts_KW91set1, 1))
+KW91test2 <- dynlm(ts_KW91set1 ~ L(ts_KW91set1, 1) + L(ts_KW91set1, 2))
+KW91test3 <- dynlm(ts_KW91set1 ~ L(ts_KW91set1, 1) + L(ts_KW91set1, 2) + L(ts_KW91set1, 3))
+KW91test4 <- dynlm(ts_KW91set1 ~ L(ts_KW91set1, 1) + L(ts_KW91set1, 2) + L(ts_KW91set1, 3) + L(ts_KW91set1, 4))
+
+AIC(KW91test1)
+AIC(KW91test2)
+AIC(KW91test3)
+AIC(KW91test4)
+
+KW91test4lstar <- tsDyn::lstar(KW91set1$Rn, m=4, d=1)
+
+kw_b5 <- pcrfit(data = KW91set1, cyc = 6, fluo = 7, model=b5, 
+                start = NULL, offset = 0, weights = NULL, verbose = TRUE)
+
+plot(x=1:40, y=b5_model(1:40, b=kw_b5$model$b[1], c=kw_b5$model$c[1],
+                        d=kw_b5$model$d[1], e=kw_b5$model$e[1], f=kw_b5$model$f[1]), 
+                        type="l", xlab="Cycle", ylab="Fluorescence")
+
+lines(x=5:40, y=KW91test4$fitted.values, type = "l", col =2)
+lines(x=5:40, y=KW91test4lstar$fitted.values, type = "l", col = 3)
+points(x=1:40, y=KW91set1$Rn)
