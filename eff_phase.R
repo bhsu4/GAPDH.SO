@@ -8,7 +8,8 @@ for (i in 1:8){
   return(subsetsb)
 }
 
-curvefunc <- function(par, modelname, listdf){
+curvefunc <- function(par, modelname, listdf, modparams){
+  if (modparams == 5){
   curve_values <- listdf
   for (k in 1:8){
     for (j in 2:13){
@@ -19,6 +20,21 @@ curvefunc <- function(par, modelname, listdf){
     }
   }
   return(curve_values)
+  }
+  
+  if (modparams == 4){
+    curve_values <- listdf
+    for (k in 1:8){
+      for (j in 2:13){
+        for (i in 1:40){
+          curve_values[[k]][[i,j]] <- do.call(what=modelname, args=list(x=i, b=par$params$b[[k]], c=par$params$c[[k]],
+                                                                        d=par$params$d[[k]], e=par$params$e[[k]]))
+        }
+      }
+    }
+    return(curve_values)
+  } 
+
 }
 
 plot_eff <- function(xs, listdf, sub, sl_df, baseline, slantk){

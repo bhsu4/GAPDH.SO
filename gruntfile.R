@@ -17,7 +17,7 @@ df_l4 <- genparams(est=l4, listdf=subsets)
 ## to get residuals
 source("GAPDH.SO/plot_resid.R")
 b5resids <- lapply(df_b5$fits, resid)
-plot_resid(df_b5, b5resids)
+plot_resid(df_b5)
 
 source("GAPDH.SO/b5_model.R")
 plot_b5(Cycle, subsets, df_b5)
@@ -63,4 +63,3 @@ plot_testconf <- function(xs, listdf, par){
 }
 
 plot_testconf(Cycles, subsets, df_b5) #looks like eff. from curve values
-
