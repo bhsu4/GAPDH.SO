@@ -1,7 +1,7 @@
 genparams <- function(est, listdf){
-  n <- length(unique(gsub("[[:digit:]+ | [:lower:] | \\.]","", colnames(df))))
+  n <- length(listdf)    #unique(gsub("[[:digit:]+ | [:lower:] | \\.]","", colnames(df))))
   listmod <- list("l4", "l5", "b4", "b5")
-  result <- lapply(listdf, function(k) pcrfit(k, fluo = 2:13, model = est, start = NULL,
+  result <- lapply(listdf, function(k) pcrfit(k, fluo = 2:length(k), model = est, start = NULL,
                                               offset = 0, weights = NULL, verbose = TRUE))
   if(any(gsub("[[:alpha:]]","", result[[1]]$MODEL$name) == "5") == "TRUE") {
     for (k in 1:n){
