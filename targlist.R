@@ -1,3 +1,14 @@
+get.repl <- function(tst){ #function for secondary rep group 
+  repl <- list()
+  for(k in 1:length(unique(tst$SampleID))){
+    if (dim(tst)==0) {print("no such combo")} else {
+      #   print(k); print( unique(tst$SampleID)[k])
+      repl[[k]] <- tst[which(tst$SampleID == unique(tst$SampleID)[k]),] #creating four reps within 10 reps
+    } #tst is a list of 10
+  }
+  return(repl)
+}
+
 singtarget.list <- function(orgdata, target){
   
   targnames <- unique(c(orgdata$TargetName)) 
