@@ -24,23 +24,28 @@ plot_l5 <- function(listdf, par){
          col=1:length(listdf), ncol=2, lty=1, cex=0.5)
 }
 
-subplot_b5 <- function(listdf, par){
-  xs = listdf$Cycle
-  plot(x=xs, y=l5_model(xs, b=par$params$b[1], c=par$params$c[1],
-                            d=par$params$d[1], e=par$params$e[1], 
-                            f=par$params$f[1]), type="l",  
-       xlab="Cycle", ylab="Fluorescence", 
-       ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
-                                    names(unlist(listdf)))])]))) #xaxt="n", yaxt="n"
-  for(k in 2:(length(listdf)-1)){
-    lines(x=xs, y=l5_model(xs, b=par$params$b[k], c=par$params$c[k],
-                               d=par$params$d[k], e=par$params$e[k], 
-                               f=par$params$f[k]), col=k)
-    for(j in 2:length(listdf)){
-      points(x=xs, y=listdf[,j], cex=0.45)
+subplot_l5 <- function(listdf){
+  #get fitted models of each replicate within list
+  par <- lapply(listdf, function(x) sub_genparams(l5, x)) #KW test results
+  #plot the model
+  for(i in 1:length(listdf)){
+    xs = listdf$Cycle
+    plot(x=xs, y=l5_model(xs, b=par$params$b[1], c=par$params$c[1],
+                              d=par$params$d[1], e=par$params$e[1], 
+                              f=par$params$f[1]), type="l",  
+         xlab="Cycle", ylab="Fluorescence", 
+         ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
+                                                                   names(unlist(listdf)))])]))) #xaxt="n", yaxt="n"
+    for(k in 2:length(par$params)){
+      lines(x=xs, y=l5_model(xs, b=par$params$b[k], c=par$params$c[k],
+                                 d=par$params$d[k], e=par$params$e[k], 
+                                 f=par$params$f[k]), col=k)
+      for(j in 2:length(listdf)){
+        points(x=xs, y=listdf[,j], cex=0.45)
+      }
     }
+    legend("topleft", c(names(listdf)[2:length(listdf)]), 
+           col=1:(length(listdf)-1), ncol=2, lty=1, cex=0.65)
+    #x.intersp=0.25, text.width=c(rep(0,6), rep(0.5,6))
   }
-  legend("topleft", c(names(listdf)[2:length(listdf)]), 
-         col=1:(length(listdf)-1), ncol=2, lty=1, cex=0.65)
-         #x.intersp=0.25, text.width=c(rep(0,6), rep(0.5,6))
 }
