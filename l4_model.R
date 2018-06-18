@@ -38,7 +38,7 @@ for(i in 1:length(listdf)){
     lines(x=xs, y=l4_model(xs, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
                                d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), col=k)
     for(j in 2:length(listdf[[i]])){
-      points(x=xs, y=listdf[[i]][,j], cex=0.45)
+      points(x=xs, y=listdf[[i]][,j], cex=0.45, col=j-1)
       }
     }
   legend("topleft", c(names(listdf[[i]])[2:length(listdf[[i]])]), 

@@ -70,6 +70,6 @@ subsubplots_tog <- function(est, listdf, k){
                                                       dw.res$r, dw.res$dw, dw.res$p,
                                                       rss, res1[,k][1], res1[,k][2])
   names(values) <- c(names(par$params), paste0(names(dw.amp)[1:3], "-amp"),
-                     paste0(names(dw.res)[1:3], "-res"), c("rss", "dw", "p"))
+                     paste0(names(dw.res)[1:3], "-res"), c("rss", "ct", "eff"))
   return(values)
 }

@@ -41,7 +41,7 @@ subplot_l5 <- function(listdf){
                                  d=par$params$d[k], e=par$params$e[k], 
                                  f=par$params$f[k]), col=k)
       for(j in 2:length(listdf)){
-        points(x=xs, y=listdf[,j], cex=0.45)
+        points(x=xs, y=listdf[,j], cex=0.45, col = j-1)
       }
     }
     legend("topleft", c(names(listdf)[2:length(listdf)]), 
