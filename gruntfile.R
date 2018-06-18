@@ -20,13 +20,13 @@ b5resids <- lapply(df_b5$fits, resid)
 plot_resid(subsets, df_b5)
 
 source("GAPDH.SO/b5_model.R")
-plot_b5(Cycle, subsets, df_b5)
+plot_b5(subsets, df_b5)
 source("GAPDH.SO/b4_model.R")
-plot_b4(Cycle, subsets, df_b4)
+plot_b4(subsets, df_b4)
 source("GAPDH.SO/l4_model.R")
-plot_l4(Cycle, subsets, df_l4)
+plot_l4(subsets, df_l4)
 source("GAPDH.SO/l5_model.R")
-plot_l5(Cycle, subsets, df_l5)
+plot_l5(subsets, df_l5)
 
 source("GAPDH.SO/plot_subset.R") #by model
 plot_subset(Cycle, df_l4, df_l5, df_b4, df_b5, subsets)
