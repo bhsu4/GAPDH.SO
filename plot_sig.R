@@ -1,6 +1,6 @@
-subsubplots_tog <- function(est, listdf, k){
+subsubplots_tog <- function(est, listdf, k, plot=FALSE){
   #genearting parameters of specific
-  par <- sub_genparams(est, listdf)
+  par <- try(sub_genparams(est, listdf))
   #two graphs on top each other
   par(mfrow=c(2,1))
   par(oma=c(4,4,4,4),mar=c(0.25,0.25,0,0))
@@ -13,7 +13,7 @@ subsubplots_tog <- function(est, listdf, k){
   reg.res <- dynlm(resids[[k]] ~ listdf$Cycle)
   dw.amp <- durbinWatsonTest(reg.amp) ; dw.res <- durbinWatsonTest(reg.res)
   #finding the CT value
-  ml1 <- modlist(listdf, model = l4)
+  ml1 <- modlist(listdf, model = est)
   res1 <- getPar(ml1, type = "curve", cp = "cpD2", eff = "sliwin")
   #combining all into df
   values <- data.frame(apply(par$params[k,], c(1,2), as.numeric))
@@ -25,6 +25,7 @@ subsubplots_tog <- function(est, listdf, k){
   rownames(values) <- c() #getting rid of arbitrary row names
   #plotting amplification curve
   xs = listdf$Cycle
+if(plot){
   if(est$name == "l4"){
     plot(x=xs, y=l4_model(xs, b=par$params$b[k], c=par$params$c[k],
                           d=par$params$d[k], e=par$params$e[k]), type="l",  
@@ -213,7 +214,7 @@ subsubplots_tog <- function(est, listdf, k){
                 min(resids[[k]][round(res1[,k][1]-2, digits=0):round(res1[,k][1]+2, digits=0)]),
                 min(resids[[k]][round(res1[,k][1]-2, digits=0):round(res1[,k][1]+2, digits=0)])),
           col= rgb(0,0,0,alpha=0.15))
-    
+}
   #return matrix of values
   return(values)
 }
