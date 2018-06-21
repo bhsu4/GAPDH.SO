@@ -4,7 +4,7 @@ if(macro == 0){
 par <- list() ; resids <- list(); rss <- list()
 reg.amp <- list() ; reg.res <- list() ; dw.amp <- list() ; dw.res <- list()
 ml1 <- list() ; res1 <- list() ; paramest <- list()
-for(i in 1:10){
+for(i in 1:length(listdf)){
   #each replicate fit
   par[[i]] <- sub_genparams(l4, listdf[[i]])
   #finding the residuals
@@ -12,7 +12,7 @@ for(i in 1:10){
   #finding the RSS
   rss[[i]] <- lapply(resids[[i]], function(x) sum(x^2))
   #finding the Durbin-Watson stat
-  reg.amp[[i]] <- lapply(listdf[[i]][,2:length(listdf[[i]])], 
+  reg.amp[[i]] <- lapply(listdf[[i]][ ,2:length(listdf[[i]])], 
                          function(y) dynlm(y ~ listdf[[i]][["Cycle"]]))
   reg.res[[i]] <- lapply(resids[[i]], function(y) dynlm(y ~ listdf[[i]][["Cycle"]]))
   dw.amp[[i]] <- lapply(reg.amp[[i]], function(x) durbinWatsonTest(x))
@@ -23,8 +23,8 @@ for(i in 1:10){
   #parameter estimates
   paramest[[i]] <- apply(par[[i]]$params, c(1,2), as.numeric) #apply(x[k,], c(1,2), as.numeric)
 }
-for(i in 1:10){
-  for(j in 1:4){
+for(i in 1:length(listdf)){
+  for(j in 1:(length(listdf[[i]])-1)){
     if(i==1 & j ==1){
       values <- data.frame(t(paramest[[i]][j,]))
       me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, dw.res[[i]][[j]]$r, 
@@ -36,7 +36,7 @@ for(i in 1:10){
       values[j,] <- data.frame(t(paramest[[i]][j,])) #data.frame(apply(par.tst[[i]]$params[j,], c(1,2), as.numeric))
       me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, dw.res[[i]][[j]]$r, 
               dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2])
-      values[j, 5:13] <- t(me)
+      values[j, (ncol(paramest[[i]])+1):length(values)] <- t(me)
     }
     if(i > 1){
       ind2 <- i*(length(listdf[[i]])-1)
@@ -45,7 +45,7 @@ for(i in 1:10){
       me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, 
               dw.res[[i]][[j]]$r, dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, 
               rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2])
-      values[(ind1:ind2)[j], 5:13] <- t(me)
+      values[(ind1:ind2)[j], (ncol(paramest[[i]])+1):length(values)] <- t(me)
     }
   }
 }
@@ -58,8 +58,8 @@ par(mfrow=c(2,1))
 par(oma=c(4,4,4,4),mar=c(0.25,0.25,0,0))
 
 #plotting amplification curve
-for(i in 1:10){
-  for(k in 1:4){
+for(i in 1:length(listdf)){
+  for(k in 1:(length(listdf[[i]])-1)){
     xs = listdf[[i]]$Cycle
 if(plot){
   if(est$name == "l4"){
