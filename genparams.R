@@ -42,8 +42,8 @@ sub_genparams <- function(est, listdf){
   n <- length(listdf)    #unique(gsub("[[:digit:]+ | [:lower:] | \\.]","", colnames(df))))
   result = list()
   for(i in 2:n){
-    result[[i-1]] <- pcrfit(listdf, fluo=i, model = est, start = NULL,
-                            offset = 0, weights = NULL, verbose = TRUE)
+    result[[i-1]] <- try(pcrfit(listdf, fluo=i, model = est, start = NULL,
+                                offset = 0, weights = NULL, verbose = TRUE), silent=TRUE)
   }
   if(any(gsub("[[:alpha:]]","", result[[1]]$MODEL$name) == "5") == "TRUE") {
     for (k in 1:(n-1)){
@@ -52,13 +52,21 @@ sub_genparams <- function(est, listdf){
         test <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
                              params[,"e"], params[,"f"]))
       }
-      params <- apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
-      test[,k] <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
-                               params[,"e"], params[,"f"]))
+        params <- tryCatch({
+          apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
+          
+        }, error = function(e){
+          return(matrix(data=rep(NA,5), nrow=1, byrow=FALSE, 
+                 dimnames=list(c(""), 
+                 c(colnames(result.tst[[1]]$parMat != "")[which(colnames(result.tst[[1]]$parMat) != "")]))))
+        })
+        
+        test[,k] <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
+                                 params[,"e"], params[,"f"]))
+      }
+      colnames(test) <- c(LETTERS[1:(n-1)])
+      newtest <- data.frame(t(test))
     }
-    colnames(test) <- c(LETTERS[1:n])
-    newtest <- data.frame(t(test))
-  }
   if(any(gsub("[[:alpha:]]","", result[[1]]$MODEL$name) == "4") == "TRUE") {
     for (k in 1:(n-1)){
       if (k < 2) {
