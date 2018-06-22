@@ -6,7 +6,7 @@ reg.amp <- list() ; reg.res <- list() ; dw.amp <- list() ; dw.res <- list()
 ml1 <- list() ; res1 <- list() ; paramest <- list()
 for(i in 1:length(listdf)){
   #each replicate fit
-  par[[i]] <- sub_genparams(l4, listdf[[i]])
+  par[[i]] <- sub_genparams(est, listdf[[i]])
   #finding the residuals
   resids[[i]] <- lapply(par[[i]]$fits, resid)
   #finding the RSS
@@ -69,7 +69,6 @@ if(plot){
          ylim=c(range(unlist(listdf[[i]][,k+1]))), col = k, xaxt = "n")
          points(x=xs, y=listdf[[i]][,k+1], cex=0.45) #actual points
          legend("topleft", c(names(listdf[[i]])[k+1]), col=k, lty=1, cex=0.65) #legend
-  }
  #adding box around CT values (+/- 2 cycles)
     points(x=res1[[i]][,k][1], y=l4_model(res1[[i]][,k][1], b=par[[i]]$params$b[k], 
                                           c=par[[i]]$params$c[k], d=par[[i]]$params$d[k], 
@@ -107,7 +106,8 @@ if(plot){
   }
   if(est$name == "l5"){
     plot(x=xs, y=l5_model(xs, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                              d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
+                              d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
+                              f=par[[i]]$params$f[k]), 
          type="l", xlab="Cycle", ylab="Fluorescence", 
          ylim=c(range(unlist(listdf[[i]][,k+1]))), col = k, xaxt = "n")
     points(x=xs, y=listdf[[i]][,k+1], cex=0.45) #actual points
@@ -116,36 +116,44 @@ if(plot){
     #adding box around CT values (+/- 2 cycles)
     points(x=res1[[i]][,k][1], y=l5_model(res1[[i]][,k][1], b=par[[i]]$params$b[k], 
                                           c=par[[i]]$params$c[k], d=par[[i]]$params$d[k], 
-                                          e=par[[i]]$params$e[k]), cex=0.8, pch=16) #CT point
+                                          e=par[[i]]$params$e[k], f=par[[i]]$params$f[k]), 
+          cex=0.8, pch=16) #CT point
     #boundaries for vertical lines
     clip(min(xs), max(xs), 
          l5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
+                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
+                                      f=par[[i]]$params$f[k]),
          l5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k])) 
+                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                                      f=par[[i]]$params$f[k])) 
     abline(v=res1[[i]][,k][1]-2, lty=1, col=k) ; abline(v=res1[[i]][,k][1]+2, lty=1, col=k) 
     #boundaries for horizontal lines
     clip(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, min(listdf[[i]][ ,2:length(listdf[[i]])][[k]]),
          max(listdf[[i]][ ,2:length(listdf[[i]])][[k]])) 
     abline(h=l5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-           lty=1, col=k)
+                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
+                                          f=par[[i]]$params$f[k]), lty=1, col=k)
     abline(h=l5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-           lty=1, col=k)
+                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
+                                          f=par[[i]]$params$f[k]), lty=1, col=k)
     #filling in the +/- squares for CT value
     polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, 
                   res1[[i]][,k][1]+2, res1[[i]][,k][1]-2), 
             y = c(l5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
+                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
+                                               f=par[[i]]$params$f[k]), 
                   l5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
+                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                                               f=par[[i]]$params$f[k]),
                   l5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
+                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
+                                               f=par[[i]]$params$f[k]), 
                   l5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
+                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
+                                               f=par[[i]]$params$f[k]),
                   l5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k])), 
+                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
+                                               f=par[[i]]$params$f[k])), 
             col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
   } 
   if(est$name == "b4"){
@@ -193,7 +201,8 @@ if(plot){
   }
   if(est$name == "b5"){
     plot(x=xs, y=b5_model(xs, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                              d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
+                              d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                              f=par[[i]]$params$f[k]), 
          type="l", xlab="Cycle", ylab="Fluorescence", 
          ylim=c(range(unlist(listdf[[i]][,k+1]))), col = k, xaxt = "n")
     points(x=xs, y=listdf[[i]][,k+1], cex=0.45) #actual points
@@ -202,36 +211,44 @@ if(plot){
     #adding box around CT values (+/- 2 cycles)
     points(x=res1[[i]][,k][1], y=b5_model(res1[[i]][,k][1], b=par[[i]]$params$b[k], 
                                           c=par[[i]]$params$c[k], d=par[[i]]$params$d[k], 
-                                          e=par[[i]]$params$e[k]), cex=0.8, pch=16) #CT point
+                                          e=par[[i]]$params$e[k], f=par[[i]]$params$f[k]), 
+           cex=0.8, pch=16) #CT point
     #boundaries for vertical lines
     clip(min(xs), max(xs), 
          b5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
+                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                                      f=par[[i]]$params$f[k]),
          b5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k])) 
+                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                                      f=par[[i]]$params$f[k])) 
     abline(v=res1[[i]][,k][1]-2, lty=1, col=k) ; abline(v=res1[[i]][,k][1]+2, lty=1, col=k) 
     #boundaries for horizontal lines
     clip(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, min(listdf[[i]][ ,2:length(listdf[[i]])][[k]]),
          max(listdf[[i]][ ,2:length(listdf[[i]])][[k]])) 
     abline(h=b5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-           lty=1, col=k)
+                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                                          f=par[[i]]$params$f[k]), lty=1, col=k)
     abline(h=b5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-           lty=1, col=k)
+                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
+                                          f=par[[i]]$params$f[k]), lty=1, col=k)
     #filling in the +/- squares for CT value
     polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, 
                   res1[[i]][,k][1]+2, res1[[i]][,k][1]-2), 
             y = c(b5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
+                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                                               f=par[[i]]$params$f[k]), 
                   b5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
+                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                                               f=par[[i]]$params$f[k]),
                   b5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
+                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                                               f=par[[i]]$params$f[k]), 
                   b5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
+                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                                               f=par[[i]]$params$f[k]),
                   b5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k])), 
+                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
+                                               f=par[[i]]$params$f[k])), 
             col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
   }
   #plotting residuals
@@ -259,9 +276,8 @@ if(plot){
             col= rgb(0,0,0,alpha=0.15))
         }
       }
-    return(values)
   }
-
+}
 #start of microscoping: specific w term evaluation
 
 #plotting amplification curve
@@ -384,33 +400,40 @@ if(plot){
   #adding box around CT values (+/- 2 cycles)
       points(x=res1[,w][1], y=l5_model(res1[,w][1], b=par$params$b[w], #CT point
                                        c=par$params$c[w], d=par$params$d[w], 
-                                       e=par$params$e[w]), cex=0.8, pch=16) 
+                                       e=par$params$e[w], f=par$params$f[w]), cex=0.8, pch=16) 
   #boundaries for vertical lines
       clip(min(xs), max(xs), 
            l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w]),
+                                   d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]),
            l5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w])) 
+                                   d=par$params$d[w], e=par$params$e[w], f=par$params$f[w])) 
       abline(v=res1[,w][1]-2, lty=1, col=46) ; abline(v=res1[,w][1]+2, lty=1, col=w) 
   #boundaries for horizontal lines
       clip(res1[,w][1]-2, res1[,w][1]+2, min(listdf[ ,2:length(listdf)][[w]]),
                                          max(listdf[ ,2:length(listdf)][[w]])) 
       abline(h=l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w]), lty=1, col=w)
+                                       d=par$params$d[w], e=par$params$e[w], 
+                                       f=par$params$f[w]), lty=1, col=w)
       abline(h=l5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w]), lty=1, col=w)
+                                       d=par$params$d[w], e=par$params$e[w],
+                                       f=par$params$f[w]), lty=1, col=w)
   #filling in the +/- squares for CT value
       polygon(x = c(res1[,w][1]-2, res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2), 
               y = c(l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w]), 
+                                            d=par$params$d[w], e=par$params$e[w],
+                                            f=par$params$f[w]), 
                     l5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w]),
+                                            d=par$params$d[w], e=par$params$e[w],
+                                            f=par$params$f[w]),
                     l5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w]), 
+                                            d=par$params$d[w], e=par$params$e[w],
+                                            f=par$params$f[w]), 
                     l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w]),
+                                            d=par$params$d[w], e=par$params$e[w], 
+                                            f=par$params$f[w]),
                     l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w])), 
+                                            d=par$params$d[w], e=par$params$e[w], 
+                                            f=par$params$f[w])), 
               col= rgb(0,0,0,alpha=0.15))
     }
   if(est$name == "b5"){ 
@@ -425,33 +448,37 @@ if(plot){
    #adding box around CT values (+/- 2 cycles)
       points(x=res1[,w][1], y=b5_model(res1[,w][1], b=par$params$b[w], #CT point
                                        c=par$params$c[w], d=par$params$d[w], 
-                                       e=par$params$e[w]), cex=0.8, pch=16) 
+                                       e=par$params$e[w], f=par$params$f[w]), cex=0.8, pch=16) 
    #boundaries for vertical lines
       clip(min(xs), max(xs), 
            b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w]),
+                                   d=par$params$d[w], e=par$params$e[w],
+                                   f=par$params$f[w]),
            b5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w])) 
+                                   d=par$params$d[w], e=par$params$e[w],
+                                   f=par$params$f[w])) 
       abline(v=res1[,w][1]-2, lty=1, col=46) ; abline(v=res1[,w][1]+2, lty=1, col=w) 
    #boundaries for horizontal lines
       clip(res1[,w][1]-2, res1[,w][1]+2, min(listdf[ ,2:length(listdf)][[w]]),
                                          max(listdf[ ,2:length(listdf)][[w]])) 
       abline(h=b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w]), lty=1, col=w)
+                                       d=par$params$d[w], e=par$params$e[w],
+                                       f=par$params$f[w]), lty=1, col=w)
       abline(h=b5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w]), lty=1, col=w) 
+                                       d=par$params$d[w], e=par$params$e[w],
+                                       f=par$params$f[w]), lty=1, col=w) 
    #filling in the +/- squares for CT value
       polygon(x = c(res1[,w][1]-2, res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2), 
               y = c(b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w]), 
+                             d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]), 
                     b5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w]),
+                             d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]),
                     b5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w]), 
+                             d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]), 
                     b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w]),
+                             d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]),
                     b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w])), 
+                             d=par$params$d[w], e=par$params$e[w], f=par$params$f[w])), 
               col= rgb(0,0,0,alpha=0.15))
     }
   #plotting residuals
@@ -479,4 +506,5 @@ if(plot){
   return(values)
   }
 }
+
 
