@@ -58,7 +58,7 @@ sub_genparams <- function(est, listdf){
         }, error = function(e){
           return(matrix(data=rep(NA,5), nrow=1, byrow=FALSE, 
                  dimnames=list(c(""), 
-                 c(colnames(result.tst[[1]]$parMat != "")[which(colnames(result.tst[[1]]$parMat) != "")]))))
+                 c(colnames(result[[1]]$parMat != "")[which(colnames(result[[1]]$parMat) != "")]))))
         })
         
         test[,k] <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
