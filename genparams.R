@@ -38,7 +38,6 @@ genparams <- function(est, listdf){
   return(list(params=newtest, fits=result))
 }
 
-listdf = try[[4]] ; est = b5
 sub_genparams <- function(est, listdf){
   n <- length(listdf)    #unique(gsub("[[:digit:]+ | [:lower:] | \\.]","", colnames(df))))
   result = list() ; 
@@ -64,11 +63,11 @@ sub_genparams <- function(est, listdf){
       if(k==1){
         test <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
                              params[,"e"], params[,"f"]))
-      }
+        }
       if(k>1){
         test[,k] <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
                                  params[,"e"], params[,"f"]))   
-      }
+        }
       }
       colnames(test) <- c(LETTERS[1:(n-1)])
       newtest <- data.frame(t(test))
@@ -76,14 +75,21 @@ sub_genparams <- function(est, listdf){
     }
   if(any(gsub("[[:alpha:]]","", mod) == "4") == "TRUE"){      #result[[1]]$MODEL$name) == "4"
     for (k in 1:(n-1)){
-      if (k < 2) {
-        params <- apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
+      params <- tryCatch({
+        apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
+        
+      }, error = function(e){
+        return(matrix(data=rep(NA,5), nrow=1, byrow=FALSE, 
+                      dimnames=list(c(""),c("b", "c", "d", "e"))))
+      })
+      if(k==1){
         test <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
                              params[,"e"]))
       }
-      params <- apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
-      test[,k] <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
-                               params[,"e"]))
+      if(k>1){
+        test[,k] <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
+                                 params[,"e"]))   
+      }
     }
     colnames(test) <- c(LETTERS[1:n-1])
     newtest <- data.frame(t(test))
