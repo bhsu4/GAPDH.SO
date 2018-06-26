@@ -79,7 +79,7 @@ sub_genparams <- function(est, listdf){
         apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
         
       }, error = function(e){
-        return(matrix(data=rep(NA,5), nrow=1, byrow=FALSE, 
+        return(matrix(data=rep(NA,4), nrow=1, byrow=FALSE, 
                       dimnames=list(c(""),c("b", "c", "d", "e"))))
       })
       if(k==1){
