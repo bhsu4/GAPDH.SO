@@ -70,11 +70,11 @@ for(i in 1:length(listdf)){
     }
   }
 }
-  if( est == "b5" || est == "l5"){
+  if( est$name == "b5" || est$name == "l5"){
 names(values) <- c(c("b", "c", "d", "e", "f"), paste0(c("r", "dw", "p"), "-amp"),
                    paste0(c("r", "dw", "p"), "-res"), c("rss", "ct", "eff"))
   }
-  else{
+  else{  #if( est == "l4" || est == "b4"){
 names(values) <- c(c("b", "c", "d", "e"), paste0(c("r", "dw", "p"), "-amp"),
                    paste0(c("r", "dw", "p"), "-res"), c("rss", "ct", "eff"))
   }
@@ -349,6 +349,7 @@ if(plot){
       } # if plot
     } #secondary list
   } #primary list
+  return(values)
 } #macro bracket
   
 #start of microscoping: specific w term evaluation

@@ -93,7 +93,8 @@ sub_genparams <- function(est, listdf){
     }
     colnames(test) <- c(LETTERS[1:n-1])
     newtest <- data.frame(t(test))
-  }
+    colnames(newtest) <- c("b", "c", "d", "e")
+    }
   return(list(params=newtest, fits=result))
 }
 
