@@ -9,7 +9,7 @@ for(i in 1:length(listdf)){
   #each replicate fit
   par[[i]] <- sub_genparams(est, listdf[[i]])
   #finding the residuals
-#for(j in 1:4){ double loop
+#for(j in 1:4){             #double loop
 #  resids[[i]][[j]] <- tryCatch({
 #    resid(par[[i]]$fits[[j]])
 #  }, error = function(e){
@@ -30,7 +30,7 @@ for(i in 1:length(listdf)){
   #residuals contain NA
   dw.amp[[i]] <- lapply(reg.amp[[i]], function(x) durbinWatsonTest(x))
 
-for(j in 1:4){ #NA resids cannot run
+for(j in 1:(length(listdf[[i]])-1)){ #NA resids cannot run
   dw.res[[i]][[j]] <- tryCatch({
     durbinWatsonTest(reg.res[[i]][[j]])
   }, error=function(e) {
@@ -361,13 +361,21 @@ if(macro > 0){
   #getting parameter estimates
   par <- sub_genparams(est, listdf)
   #finding the residuals
-  resids <- lapply(par$fits, resid)
+  try_resid <- function(x) tryCatch({resid(x)},
+                           error = function(e) rep(NA, max(listdf$Cycle)))
+  resids <- lapply(par$fits, try_resid)
   #finding the RSS
   rss <- sum(resids[[w]]^2)
   #finding the DW-stat
   reg.amp <- dynlm(listdf[,w+1] ~ listdf$Cycle)
-  reg.res <- dynlm(resids[[w]] ~ listdf$Cycle)
-  dw.amp <- durbinWatsonTest(reg.amp) ; dw.res <- durbinWatsonTest(reg.res)
+  reg.res <- try(dynlm(resids[[w]] ~ listdf$Cycle), silent = TRUE)
+  #DW-statistics for amp and resid
+  dw.amp <- durbinWatsonTest(reg.amp) 
+  dw.res <- tryCatch({
+    durbinWatsonTest(reg.res)
+    }, error = function(e) {
+      return(list(r=NA, dw=NA, p=NA))
+      })  #cannot run with NA's
   #finding the CT value
   ml1 <- modlist(listdf, model = est)
   res1 <- getPar(ml1, type = "curve", cp = "cpD2", eff = "sliwin")
@@ -381,19 +389,26 @@ if(macro > 0){
   rownames(values) <- c() #getting rid of arbitrary row names  
 if(plot){
   xs = listdf$Cycle
-    if(est$name == "l4"){
-      plot(x=xs, y=l4_model(xs, b=par$params$b[w], c=par$params$c[w],
-                                d=par$params$d[w], e=par$params$e[w]), type="l",  
+    if(est$name == "l4"){ #if NAs, model cannot run
+      try(plot(x=xs, y=l4_model(xs, b=par$params$b[w], c=par$params$c[w],
+                                    d=par$params$d[w], e=par$params$e[w]), type="l",  
            xlab="Cycle", ylab="Fluorescence", 
            ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
-                                        names(unlist(listdf)))])])), col = w, xaxt = "n")
+                                        names(unlist(listdf)))])])), col = w, xaxt = "n"))
       points(x=xs, y=listdf[,w+1], cex=0.45)
+    if(is.na(par$params$b[[w]]) == "FALSE"){ #legend if non-NA's
       legend("topleft", c(names(listdf)[w+1]), col=w, lty=1, cex=0.65)
+    }
+      else{} #no legend if NA b/c only points show
   #adding box around CT values (+/- 2 cycles)
-      points(x=res1[,w][1], y=l4_model(res1[,w][1], b=par$params$b[w], 
+      try(points(x=res1[,w][1], y=l4_model(res1[,w][1], b=par$params$b[w], 
                                        c=par$params$c[w], d=par$params$d[w], 
-                                       e=par$params$e[w]), cex=0.8, pch=16) #CT point
+                                       e=par$params$e[w]), cex=0.8, pch=16)) #CT point
   #boundaries for vertical lines
+    if( (is.na(res1[,w][[1]]) == "TRUE") || (res1[,w][[1]] <=2)){
+      print(paste0(LETTERS[z], w, " " , "no ct")) 
+    } #can't draw box for those with <=2 CT or NA
+    else{
       clip(min(xs), max(xs), 
            l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
                                    d=par$params$d[w], e=par$params$e[w]),
@@ -421,19 +436,24 @@ if(plot){
                              d=par$params$d[w], e=par$params$e[w])), 
               col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
     }
+  }
     if(est$name == "b4"){
-      plot(x=xs, y=b4_model(xs, b=par$params$b[w], c=par$params$c[w],
-                                d=par$params$d[w], e=par$params$e[w]), type="l",  
+      try(plot(x=xs, y=b4_model(xs, b=par$params$b[w], c=par$params$c[w],
+                                    d=par$params$d[w], e=par$params$e[w]), type="l",  
            xlab="Cycle", ylab="Fluorescence", 
            ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
-                                        names(unlist(listdf)))])])), col = w, xaxt = "n")
+                                        names(unlist(listdf)))])])), col = w, xaxt = "n"))
       points(x=xs, y=listdf[,w+1], cex=0.45)
+    if(is.na(par$params$b[[w]]) == "FALSE"){ #legend if non-NA's
       legend("topleft", c(names(listdf)[w+1]), col=w, lty=1, cex=0.65)
+      }
+    else{}
   #adding box around CT values (+/- 2 cycles)
-      points(x=res1[,w][1], y=b4_model(res1[,w][1], b=par$params$b[w], 
+      try(points(x=res1[,w][1], y=b4_model(res1[,w][1], b=par$params$b[w], 
                                        c=par$params$c[w], d=par$params$d[w], 
-                                       e=par$params$e[w]), cex=0.8, pch=16) #CT point
+                                       e=par$params$e[w]), cex=0.8, pch=16)) #CT point
   #boundaries for vertical lines
+    if(is.na(res1[,w][[1]]) == "FALSE"){
       clip(min(xs), max(xs), 
            b4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
                                    d=par$params$d[w], e=par$params$e[w]),
@@ -461,20 +481,32 @@ if(plot){
                                             d=par$params$d[w], e=par$params$e[w])), 
               col= rgb(0,0,0,alpha=0.15))
     }
+  else{
+    print(paste0(LETTERS[z], w, " ", "no ct"))
+    }
+  }
   if(est$name == "l5"){
-      plot(x=xs, y=l5_model(xs, b=par$params$b[w], c=par$params$c[w],
-                                d=par$params$d[w], e=par$params$e[w],
-                                f=par$params$f[w]), type="l",  
+      try(plot(x=xs, y=l5_model(xs, b=par$params$b[w], c=par$params$c[w],
+                                    d=par$params$d[w], e=par$params$e[w],
+                                    f=par$params$f[w]), type="l",  
            xlab="Cycle", ylab="Fluorescence", 
            ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
-                                        names(unlist(listdf)))])])), col = w, xaxt = "n")
+                                        names(unlist(listdf)))])])), col = w, xaxt = "n"))
       points(x=xs, y=listdf[,w+1], cex=0.45)
+  if(is.na(par$params$b[[w]]) == "FALSE"){ #legend if non-NA's
       legend("topleft", c(names(listdf)[w+1]), col=w, lty=1, cex=0.65)
+  }
+  else{} #no legend for NAs since no curve
+      
   #adding box around CT values (+/- 2 cycles)
-      points(x=res1[,w][1], y=l5_model(res1[,w][1], b=par$params$b[w], #CT point
+      try(points(x=res1[,w][1], y=l5_model(res1[,w][1], b=par$params$b[w], #CT point
                                        c=par$params$c[w], d=par$params$d[w], 
-                                       e=par$params$e[w], f=par$params$f[w]), cex=0.8, pch=16) 
+                                       e=par$params$e[w], f=par$params$f[w]), cex=0.8, pch=16)) 
   #boundaries for vertical lines
+    if( (is.na(res1[,w][[1]]) == "TRUE") || (res1[,w][[1]] <= 2)){
+      print(paste0(LETTERS[z], w, " " , "no ct"))
+    }
+    else{
       clip(min(xs), max(xs), 
            l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
                                    d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]),
@@ -509,20 +541,26 @@ if(plot){
                                             f=par$params$f[w])), 
               col= rgb(0,0,0,alpha=0.15))
     }
+  }
   if(est$name == "b5"){ 
-      plot(x=xs, y=b5_model(xs, b=par$params$b[w], c=par$params$c[w],
-                                d=par$params$d[w], e=par$params$e[w],
-                                f=par$params$f[w]), type="l",  
+      try(plot(x=xs, y=b5_model(xs, b=par$params$b[w], c=par$params$c[w],
+                                    d=par$params$d[w], e=par$params$e[w],
+                                    f=par$params$f[w]), type="l",  
            xlab="Cycle", ylab="Fluorescence", 
            ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
-                                        names(unlist(listdf)))])])), col = w, xaxt = "n")
+                                        names(unlist(listdf)))])])), col = w, xaxt = "n"))
       points(x=xs, y=listdf[,w+1], cex=0.45)
+  if(is.na(par$params$b[[w]]) == "FALSE"){ #legend if non-NA's
       legend("topleft", c(names(listdf)[w+1]), col=w, lty=1, cex=0.65)
+  }
+  else{}
+      
    #adding box around CT values (+/- 2 cycles)
-      points(x=res1[,w][1], y=b5_model(res1[,w][1], b=par$params$b[w], #CT point
+      try(points(x=res1[,w][1], y=b5_model(res1[,w][1], b=par$params$b[w], #CT point
                                        c=par$params$c[w], d=par$params$d[w], 
-                                       e=par$params$e[w], f=par$params$f[w]), cex=0.8, pch=16) 
+                                       e=par$params$e[w], f=par$params$f[w]), cex=0.8, pch=16)) 
    #boundaries for vertical lines
+  if(is.na(res1[,w][[1]]) == "FALSE"){
       clip(min(xs), max(xs), 
            b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
                                    d=par$params$d[w], e=par$params$e[w],
@@ -553,13 +591,30 @@ if(plot){
                     b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
                              d=par$params$d[w], e=par$params$e[w], f=par$params$f[w])), 
               col= rgb(0,0,0,alpha=0.15))
+  }
+    else{
+      print(paste0(LETTERS[z], w, " " , "no ct"))
     }
+  }
   #plotting residuals
+  if(unique(is.na(resids[[w]])) == "FALSE"){
     plot(y = resids[[w]][1:length(listdf$Cycle)], 
          x = par$fits[[w]]$DATA$Cycles[1:length(listdf$Cycle)], 
-         ylim = range(unlist(resids)), 
+         ylim = range(unlist(resids)[which(!is.na(unlist(resids)))]), 
          xlab = "Cycle", ylab="Fluorescence Residual")
     abline(h=0) ; points(x=res1[,w][1], y=0, cex=0.8, pch=17)
+  }
+  else{
+    plot(1, type="n", xlab="n", ylab="", xlim=c(0, sum(is.na(resids[[w]]))), ylim=c(0,1))
+  }
+  #boundaires for horizontal lines
+  if( (res1[,w][[1]] <= 2) || (is.na(res1[,w][[1]])) == "TRUE" ||
+      (res1[,w][[1]] > 38 & max(listdf$Cycle) == 40) ||
+      (res1[,w][[1]] > 44 & max(listdf$Cycle) == 46) ){ 
+    #recall: listdf is with primary list called already
+    print("check")
+  }
+  else{
     clip(min(xs), max(xs), 
          min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]), 
          max(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]))
@@ -575,9 +630,10 @@ if(plot){
                   min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]),
                   min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)])),
             col= rgb(0,0,0,alpha=0.15))
-    }
+      }
+    } #plot bracket
   return(values)
-  }
+  } #macro bracket
 }
 
 
