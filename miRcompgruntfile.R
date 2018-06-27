@@ -194,7 +194,6 @@ rm(grp.list) ; rm(tst)
 targetatt <- singtarget.list(miRcompData2, target = targnames[1])
 
 
-
 ##written as function (saving all target)
 savetarget.list <- function(orgdata){
   
@@ -225,4 +224,144 @@ for(h in 1:length(targnames)) { #repeats this 758 times for 10 by 4 lists
   save(tst, file = paste0("targ_", target, ".Rda"))
   }
 }
-savetarget.list(miRcompData2)
+savetarget.list(miRcompData2) #saves all the miRcompData as list of lists
+
+#loads as tst, replaces
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-let-7c#_002405.Rda")
+
+df_b5 <- sub_genparams(est=b5, listdf=tst)
+df_b5 <- genparams(est=b5, listdf=subsets)
+
+#unlisting list of lists for secondary list is dataframe for genparams
+rm(listdf.tst) ; rm(tst.list) ; rm(j) ; rm(mincyc)
+tst.list <- list() ; listdf.tst <- list()
+for(i in 1:10){
+  j=1 #set j for within list reps
+  tst.list[[i]] <- list(tst[[i]][[j]]$dRn, tst[[i]][[j+1]]$dRn, 
+                        tst[[i]][[j+2]]$dRn, tst[[i]][[j+3]]$dRn)
+  mincyc <- min(max(tst[[i]][[j]]$Cycle), max(tst[[i]][[j+1]]$Cycle), 
+                max(tst[[i]][[j+2]]$Cycle), max(tst[[i]][[j+3]]$Cycle))
+  listdf.tst[[i]] <- as.data.frame(cbind(seq(1:mincyc), unlist(tst.list[[i]][[j]])[1:mincyc], 
+                                                   unlist(tst.list[[i]][[j+1]])[1:mincyc],
+                                                   unlist(tst.list[[i]][[j+2]])[1:mincyc], 
+                                                   unlist(tst.list[[i]][[j+3]])[1:mincyc]))
+}
+
+#unlist genparams function
+unlist.genparams <- function(test){
+  tst.list <- list() ; listdf.tst <- list() ; repnames <- list()
+  for(i in 1:length(test)){
+    for(j in 1:length(test[[i]])){ #length = rep of secondary list
+      mincyc <- min(unlist(lapply(test[[i]], function(k) max(k$Cycle)))) #min cyc (if diff)
+      tst.list[[i]] <- sapply(test[[i]], function(x) x$dRn[1:mincyc]) #list of diff sampleIDs, but df secondary
+      listdf.tst[[i]] <- as.data.frame(cbind(seq(1:mincyc), tst.list[[i]])) 
+      repnames <- lapply(LETTERS[1:length(test)], paste0, 1:length(test[[i]])) #df colnames
+      names(listdf.tst[[i]]) <- c("Cycle", repnames[[i]][1:length(test[[i]])])
+    }
+  }
+  names(listdf.tst) <- LETTERS[1:length(test)]
+  return(listdf.tst)
+}
+rm(tst.list) ; rm(listdf.tst) ; rm(repnames) ; rm(mincyc) ; rm(test) ; rm(i)
+try <- unlist.genparams(tst)
+
+result.try <- genparams(b5, try)
+source("GAPDH.SO/plot_resid.R")
+plot_resid <- function(listdf, params) {
+#new -- rewritten plot resid function  
+  for (i in 1:length(params$fits)){
+    for(k in 1:(length(listdf[[i]])-1)){
+      resids <- lapply(params$fits, resid)
+      if(k == 1) plot(y=resids[[i]][1:length(listdf[[i]]$Cycle)], 
+                      x=params$fits[[i]]$DATA$Cycles[1:length(listdf[[i]]$Cycle)], 
+                      ylim=range(resids[[i]]), type="l", 
+                      xlab="Cycle", ylab="Fluoresence Residual")
+      if(k > 1){
+        ind2 <- length(listdf[[i]]$Cycle)*k
+        ind1 <- ind2-(length(listdf[[i]]$Cycle)-1)
+        lines(y=resids[[i]][ind1:ind2], x=params$fits[[i]]$DATA$Cycles[ind1:ind2], col=k)
+      }
+    }
+    title(main= paste(names(params$fits[i]), sub=params$fits$A$MODEL$name, sep = ", "))
+  }
+}
+
+result.tryresids <- lapply(result.try$fits, resid)
+plot_resid(try, result.try)
+
+
+
+##next step: re-write function / create new one: all same gene target will be together
+
+
+#within replication residuals
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-21_000397")
+
+sub_genparams <- function(est, listdf){
+  n <- length(listdf)    #unique(gsub("[[:digit:]+ | [:lower:] | \\.]","", colnames(df))))
+  result = list()
+  for(i in 2:n){
+    result[[i-1]] <- pcrfit(listdf, fluo=i, model = est, start = NULL,
+                            offset = 0, weights = NULL, verbose = TRUE)
+  }
+  if(any(gsub("[[:alpha:]]","", result[[1]]$MODEL$name) == "5") == "TRUE") {
+    for (k in 1:(n-1)){
+      if (k < 2) {
+        params <- apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
+        test <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
+                             params[,"e"], params[,"f"]))
+      }
+      params <- apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
+      test[,k] <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
+                               params[,"e"], params[,"f"]))
+    }
+    colnames(test) <- c(LETTERS[1:n])
+    newtest <- data.frame(t(test))
+  }
+  if(any(gsub("[[:alpha:]]","", result[[1]]$MODEL$name) == "4") == "TRUE") {
+    for (k in 1:(n-1)){
+      if (k < 2) {
+        params <- apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
+        test <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
+                             params[,"e"]))
+      }
+      params <- apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
+      test[,k] <- data.frame(c(params[,"b"], params[,"c"], params[,"d"], 
+                               params[,"e"]))
+    }
+    colnames(test) <- c(LETTERS[1:n-1])
+    newtest <- data.frame(t(test))
+  }
+  return(list(params=newtest, fits=result))
+}
+
+KW1_tstresults <- sub_genparams(l4, try[[1]])
+
+subplot_resid <- function(listdf, params){
+  
+  for(k in 1:(length(listdf)-1)){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1) plot(y=resids[[k]][1:length(listdf$Cycle)], 
+                    x=params$fits[[1]]$DATA$Cycles[1:length(listdf$Cycle)], 
+                    ylim=range(unlist(resids)), type="l", 
+                    xlab="Cycle", ylab="Fluorescence")
+    if(k > 1){
+      ind2 <- length(listdf$Cycle)*k
+      ind1 <- ind2-(length(listdf$Cycle)-1)*(k)-(k-1)
+      lines(y=resids[[k]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
+    }
+  }
+}
+
+subplot_resid(try[[1]], KW1_tstresults)
+
+###
+files <- list.files(path="path/to/dir", pattern="*.txt", full.names=T, recursive=FALSE)
+lapply(files, function(x) {
+  t <- read.table(x, header=T) # load file
+  # apply function
+  out <- function(t)
+    # write to file
+    write.table(out, "path/to/output", sep="\t", quote=F, row.names=F, col.names=T)
+})
