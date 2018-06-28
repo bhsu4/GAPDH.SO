@@ -46,16 +46,18 @@ singtarget.list <- function(orgdata, target){
   
   #}
 }
-
 savetarget.list <- function(orgdata){
   
   targnames <- unique(c(orgdata$TargetName)) 
+  controls <- c(names(which(table(miRcompData2$TargetName)>10000))) #controls
+  targnames[!grepl(paste0(controls, collapse = "|"), targnames)]
   
+#creating a group  
   splitgroup <- strsplit(orgdata[,"SampleID"], "_") #split into two parts: KW3_1 to KW3/1
   ind.keep <- seq(1,dim(orgdata)[1],1) #into sequence need to take 1st part
   splitgroup.unlist <- unlist(splitgroup) #double cancles out: all miRcompData2 (same length)
   mirc.gr <- splitgroup.unlist[seq(1,length(splitgroup.unlist), 2)] #group names -- keep odds ex: KW3 part (remove _1)
-  
+#adding group column  
   mirc.order <- order(mirc.gr,decreasing = FALSE) 
   ndata <- orgdata[mirc.order,]
   ndata <- cbind(orgdata[mirc.order, ], group = mirc.gr[mirc.order]) #both orders same
@@ -76,3 +78,5 @@ savetarget.list <- function(orgdata){
     save(tst, file = paste0("targ_", target, ".Rda"))
   }
 }
+
+names(which(table(miRcompData2$TargetName)>2000)
