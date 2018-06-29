@@ -50,7 +50,7 @@ savetarget.list <- function(orgdata){
   
   targnames <- unique(c(orgdata$TargetName)) 
   controls <- c(names(which(table(miRcompData2$TargetName)>10000))) #controls
-  targnames[!grepl(paste0(controls, collapse = "|"), targnames)]
+  targnames <- targnames[!grepl(paste0(controls, collapse = "|"), targnames)]
   
 #creating a group  
   splitgroup <- strsplit(orgdata[,"SampleID"], "_") #split into two parts: KW3_1 to KW3/1
@@ -78,5 +78,3 @@ savetarget.list <- function(orgdata){
     save(tst, file = paste0("targ_", target, ".Rda"))
   }
 }
-
-names(which(table(miRcompData2$TargetName)>2000)
