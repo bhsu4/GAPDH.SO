@@ -46,7 +46,7 @@ profvis({
   }
 })
 
-for(k in 1:5){   #ength(files)){
+for(k in 1:5){   #length(files)){
   load(file = files[[k]])
   try <- unlist.genparams(tst)
   ind2 <- 40*k  ; ind1 <- ind2-39
@@ -56,9 +56,23 @@ for(k in 1:5){   #ength(files)){
   else{print("NOPE")}
 }
 
+tst[[1]][[1]]
 
 
+load(file = files[[1]])
 
+tst[[10]][[2]]
 
+data.table(miRcompData2$SampleID)
 
 #rbind matrix
+
+
+##running est 
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
+                pattern =  "^targ_")
+
+
+profvis({getdat(l5, miRcompData2, getfiles=getfiles) })
+sig_est(l5, miRcompData2, getfiles=getfiles)

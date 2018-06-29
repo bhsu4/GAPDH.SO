@@ -9,6 +9,9 @@ source("GAPDH.SO/targlist.R")
 targetatt <- singtarget.list(miRcompData2, target = targnames[1])
 savetarget.list(miRcompData2) #saves all the miRcompData as list of lists
 
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont")
+savetarget.list(miRcompData2) #saves all the miRcompData as list of lists
+
 source("GAPDH.SO/genparams.R")
 load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-let-7c#_002405.Rda")
 try <- unlist.genparams(tst)
