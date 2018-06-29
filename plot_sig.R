@@ -637,4 +637,63 @@ if(plot){
   } #macro bracket
 }
 
-
+sig_est <- function(est, orgdata, getfiles){
+  #get the files which overwrites tst 
+  files <- getfiles
+  targnames <- unique(files) #all targets
+  targnames <- gsub(".Rda", "", targnames) #remove .Rda to match later
+  sampnames <- sort(unique(c(orgdata$SampleID)))
+  #repeat all sample names for the chosen targets in files
+  tmp <- rep(sampnames, length(files))
+  #creating result data.frame
+  targlength <- length(targnames) #length of all targets
+  replength <- length(unique(orgdata$SampleID)) #sum(lengths(tst)) #length of total reps for each target
+  if(est$name == "l4" || est$name == "b4"){
+    res <- data.frame(
+      #target categories
+      TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength), 
+      Group = gsub("_." , "", tmp), FeatureSet = rep(NA, each = replength), 
+      #parameter est for 4 parm
+      b = rep(NA, targlength * replength), c = rep(NA, targlength * replength), 
+      d = rep(NA, targlength * replength), e = rep(NA, targlength * replength),
+      #dw statistics
+      r.amp = rep(NA, targlength * replength), dw.amp = rep(NA, targlength * replength), p.amp = rep(NA, targlength * replength), 
+      r.res = rep(NA, targlength * replength), dw.res = rep(NA, targlength * replength), p.res = rep(NA, targlength * replength), 
+      #rss and getPar statistics
+      rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength)
+    )
+  }
+  if(est$name == "l5" || est$name == "b5"){
+    res <- data.frame(
+      #target categories
+      TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength), 
+      Group = gsub("_." , "", tmp), FeatureSet = rep(NA, each = replength), 
+      #parameter est for 5 parm
+      b = rep(NA, targlength * replength), c = rep(NA, targlength * replength), d = rep(NA, targlength * replength), 
+      e = rep(NA, targlength * replength), f = rep(NA, targlength * replength), 
+      #dw statistics
+      r.amp = rep(NA, targlength * replength), dw.amp = rep(NA, targlength * replength), p.amp = rep(NA, targlength * replength), 
+      r.res = rep(NA, targlength * replength), dw.res = rep(NA, targlength * replength), p.res = rep(NA, targlength * replength), 
+      #rss and getPar statistics
+      rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength)
+    )
+  }
+  foreach (k = 1:length(files)) %dopar% {
+    load(file = files[[k]])
+    try <- unlist.genparams(tst)
+    ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
+    if((grepl(tst[[1]][[1]]$TargetName[1], res[,"TargetName"][ind1]) == "TRUE") & 
+       (gsub("[[:alpha:]]","", est$name) == "5") == "TRUE"){
+      res[ind1:ind2, 5:18] <- plot_sig(est, try)
+      res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
+                                                                     function(x) unique(x$FeatureSet)))), replength)
+    }
+    if((grepl(tst[[1]][[1]]$TargetName[1], res[,"TargetName"][ind1]) == "TRUE") & 
+       (gsub("[[:alpha:]]","", est$name) == "4") == "TRUE"){
+      res[ind1:ind2, 5:17] <- plot_sig(est, try)
+      res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
+                                                                     function(x) unique(x$FeatureSet)))), replength) 
+    }
+  }
+  return(res)
+}
