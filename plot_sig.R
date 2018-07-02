@@ -1,7 +1,7 @@
 plot_sig <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
 
 if(macro == 0){
-  par <- list() ; resids <- list(); rss <- list()
+  par <- list() ; resids <- list() ; rss <- list()
   reg.amp <- list() ; reg.res <- list() 
   dw.amp <- list() ; dw.res <- replicate(10, list())  
   ml1 <- list() ; res1 <- list() ; paramest <- list()
@@ -17,7 +17,7 @@ for(i in 1:length(listdf)){
 #  }) 
 #}
   try_resid <- function(x) tryCatch({resid(x)}, 
-                           error = function(e) rep(NA, max(try[[i]]$Cycle)))    
+                           error = function(e) rep(NA, max(listdf[[i]]$Cycle)))    
   resids[[i]] <- lapply(par[[i]]$fits, try_resid)
   
   #finding the RSS
@@ -678,7 +678,7 @@ sig_est <- function(est, orgdata, getfiles){
       rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength)
     )
   }
-  foreach (k = 1:length(files)) %dopar% {
+  for(k in 1:length(files)){  #foreach (k = 1:length(files)) %do% {
     load(file = files[[k]])
     try <- unlist.genparams(tst)
     ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
@@ -686,14 +686,16 @@ sig_est <- function(est, orgdata, getfiles){
        (gsub("[[:alpha:]]","", est$name) == "5") == "TRUE"){
       res[ind1:ind2, 5:18] <- plot_sig(est, try)
       res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
-                                                                     function(x) unique(x$FeatureSet)))), replength)
+                                                    function(x) unique(x$FeatureSet)))), replength)
     }
     if((grepl(tst[[1]][[1]]$TargetName[1], res[,"TargetName"][ind1]) == "TRUE") & 
        (gsub("[[:alpha:]]","", est$name) == "4") == "TRUE"){
       res[ind1:ind2, 5:17] <- plot_sig(est, try)
       res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
-                                                                     function(x) unique(x$FeatureSet)))), replength) 
+                                                     function(x) unique(x$FeatureSet)))), replength) 
     }
   }
   return(res)
 }
+
+
