@@ -47,11 +47,12 @@ sub_genparams <- function(est, listdf){
   }
   #res.mod <- sapply(result.tst, function(m) print(m["MODEL"])) #extract MODEL
   #mod.nam <- sapply(res.mod, function(n) print(n["name"]))     #extract names in MODEL
-  mod.nam <- unique(as.vector(unlist(sapply(result, 
-                                 function(m) sapply(m["MODEL"], 
-                                                    function(d) d["name"]))))) #vector unique names
-  mod <- unique(unlist(mod.nam)[!is.na(unlist(mod.nam))])
-  if(any(gsub("[[:alpha:]]","", mod) == "5") == "TRUE"){      #result[[1]]$MODEL$name) == "5"
+#  mod.nam <- unique(as.vector(unlist(sapply(result, 
+#                                 function(m) sapply(m["MODEL"], 
+#                                                    function(d) d["name"]))))) #vector unique names
+#  mod <- unique(unlist(mod.nam)[!is.na(unlist(mod.nam))])
+#  if(any(gsub("[[:alpha:]]","", mod) == "5") == "TRUE"){      #result[[1]]$MODEL$name) == "5"
+   if(est$name == "l5" || est$name == "b5"){
     for (k in 1:(n-1)){
         params <- tryCatch({
           apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)
@@ -73,7 +74,8 @@ sub_genparams <- function(est, listdf){
       newtest <- data.frame(t(test))
       colnames(newtest) <- c("b", "c", "d", "e", "f")
     }
-  if(any(gsub("[[:alpha:]]","", mod) == "4") == "TRUE"){      #result[[1]]$MODEL$name) == "4"
+#  if(any(gsub("[[:alpha:]]","", mod) == "4") == "TRUE"){      #result[[1]]$MODEL$name) == "4"
+   if(est$name == "l4" || est$name == "b4"){
     for (k in 1:(n-1)){
       params <- tryCatch({
         apply(result[[k]]$parMat[2,-1,drop=FALSE], c(1,2), as.numeric)

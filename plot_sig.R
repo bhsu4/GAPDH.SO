@@ -678,7 +678,7 @@ sig_est <- function(est, orgdata, getfiles){
       rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength)
     )
   }
-  foreach(k=1:length(files)) %do%     #(k in 1:length(files)){  #foreach (k = 1:length(files)) %do% {
+  foreach(k=1:length(files)) %do% {    #(k in 1:length(files)){  #foreach (k = 1:length(files)) %do% {
     load(file = files[[k]])
     try <- unlist.genparams(tst)
     ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
@@ -694,7 +694,7 @@ sig_est <- function(est, orgdata, getfiles){
       res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
                                                      function(x) unique(x$FeatureSet)))), replength) 
     }
-  #}
+  }
   return(res)
 }
 
