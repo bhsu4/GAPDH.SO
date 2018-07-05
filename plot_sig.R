@@ -491,6 +491,65 @@ if(plot){
     } #plot bracket
   return(values)
   } #macro bracket
+  
+#start of macro set: specific set for z
+#plotting amplification curve
+  if(macro == 0 & z > 0){
+    #define w for easier written numbers
+    w = macro
+    #re-state specified z-list
+    listdf <- listdf[[z]]
+    #getting parameter estimates
+    par <- sub_genparams(est, listdf)
+    #finding the residuals
+    try_resid <- function(x) tryCatch({resid(x)},
+                                      error = function(e) rep(NA, max(listdf$Cycle)))
+    resids <- lapply(par$fits, try_resid)
+    #finding the RSS
+    rss <- lapply(resids, function(x) sum(x^2))
+    #finding the DW-stat
+    reg.amp <- dynlm(listdf[,w+1] ~ listdf$Cycle)
+    reg.res <- try(dynlm(resids[[w]] ~ listdf$Cycle), silent = TRUE)
+    
+    #finding the Durbin-Watson stat
+    reg.amp <- lapply(listdf[ ,2:length(listdf)], 
+                      function(y) dynlm(y ~ listdf[["Cycle"]])) #all amp can run
+    reg.res <- lapply(resids, function(y) try(dynlm(y ~ listdf["Cycle"]), 
+                                              silent=TRUE))
+    #residuals contain NA
+    dw.amp <- lapply(reg.amp, function(x) durbinWatsonTest(x))
+    dw.res <- list()
+    for(j in 1:(length(listdf)-1)){ #NA resids cannot run
+      dw.res[[j]] <- tryCatch({
+        durbinWatsonTest(reg.res[[j]])
+      }, error=function(e) {
+        return(list(r=NA, dw=NA, p=NA))
+      })
+    } #replace errors with NA for r, dw, p
+    
+    #finding the CT value
+    ml1 <- modlist(listdf, model = est)
+    res1 <- getPar(ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    #parameter estimates
+    paramest <- apply(par$params, c(1,2), as.numeric) #apply(x[k,], c(1,2), as.numeric)
+    
+    #all together
+    for(j in 1:(length(listdf)-1)){
+      if(j==1){
+        values <- data.frame(t(paramest[j,]))
+        me <- c(dw.amp[[j]]$r, dw.amp[[j]]$dw, dw.amp[[j]]$p, dw.res[[j]]$r, 
+                dw.res[[j]]$dw, dw.res[[j]]$p, rss[[j]], res1[,j][1], res1[,j][2])
+        #values[k, (length(values[k,])+1):(length(values[k,])+9)] <- cbind(values, me) 
+        values <- cbind(values, t(me))
+      }
+      if(j >1){
+        values[j,] <- data.frame(t(paramest[j,])) #data.frame(apply(par.tst[[i]]$params[j,], c(1,2), as.numeric))
+        me <- c(dw.amp[[j]]$r, dw.amp[[j]]$dw, dw.amp[[j]]$p, dw.res[[j]]$r, 
+                dw.res[[j]]$dw, dw.res[[j]]$p, rss[[j]], res1[,j][1], res1[,j][2])
+        values[j, (ncol(paramest)+1):length(values)] <- t(me) #replaces repeated paramest with dw, rss
+      }
+    }
+    
 }
 
 sig_est <- function(est, orgdata, getfiles){
