@@ -107,35 +107,39 @@ if(plot){
   if( (is.na(res1[[i]][,k][1]) == "TRUE") || (res1[[i]][,k][1] <= 2)){
     print(paste0(LETTERS[i], k, " ", "no ct"))
   }
-  else{  
-    clip(min(xs), max(xs), 
-         l4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
-         l4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k])) 
-    abline(v=res1[[i]][,k][1]-2, lty=1, col=k) ; abline(v=res1[[i]][,k][1]+2, lty=1, col=k) 
+  else{ 
+ #small box clipping boundaries
+ #   clip(min(xs), max(xs), 
+ #         l4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
+ #                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
+ #         l4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
+ #                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k])) 
+ #    abline(v=res1[[i]][,k][1]-2, lty=1, col=k) ; abline(v=res1[[i]][,k][1]+2, lty=1, col=k) 
  #boundaries for horizontal lines
-    clip(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, min(listdf[[i]][ ,2:length(listdf[[i]])][[k]]),
-                                                 max(listdf[[i]][ ,2:length(listdf[[i]])][[k]])) 
-    abline(h=l4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-           lty=1, col=k)
-    abline(h=l4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-           lty=1, col=k)
- #filling in the +/- squares for CT value
-    polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, 
-                  res1[[i]][,k][1]+2, res1[[i]][,k][1]-2), 
-            y = c(l4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-                  l4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
-                  l4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-                  l4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
-                  l4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k])), 
+ #   clip(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, min(listdf[[i]][ ,2:length(listdf[[i]])][[k]]),
+ #                                                max(listdf[[i]][ ,2:length(listdf[[i]])][[k]])) 
+ #    abline(h=l4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
+ #                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
+ #          lty=1, col=k)
+ #    abline(h=l4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
+ #                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
+ #          lty=1, col=k)
+    #filling in the +/- squares for CT value
+    polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, res1[[i]][,k][1]+2, 
+                  res1[[i]][,k][1]-2, res1[[i]][,k][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
+    #specific small box
+          #  y = c(l4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
+          #                                     d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
+          #        l4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
+          #                                     d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
+          #        l4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
+          #                                     d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
+          #        l4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
+          #                                     d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
+          #        l4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
+          #                                     d=par[[i]]$params$d[k], e=par[[i]]$params$e[k])), 
     col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
   }
 }
@@ -161,41 +165,11 @@ if(plot){
       print(paste0(LETTERS[i], k, " " , "no ct"))
     }
     else{
-      clip(min(xs), max(xs), 
-         l5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
-                                      f=par[[i]]$params$f[k]),
-         l5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
-                                      f=par[[i]]$params$f[k])) 
-    abline(v=res1[[i]][,k][1]-2, lty=1, col=k) ; abline(v=res1[[i]][,k][1]+2, lty=1, col=k) 
-    #boundaries for horizontal lines
-    clip(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, min(listdf[[i]][ ,2:length(listdf[[i]])][[k]]),
-         max(listdf[[i]][ ,2:length(listdf[[i]])][[k]])) 
-    abline(h=l5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
-                                          f=par[[i]]$params$f[k]), lty=1, col=k)
-    abline(h=l5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
-                                          f=par[[i]]$params$f[k]), lty=1, col=k)
     #filling in the +/- squares for CT value
-    polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, 
-                  res1[[i]][,k][1]+2, res1[[i]][,k][1]-2), 
-            y = c(l5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
-                                               f=par[[i]]$params$f[k]), 
-                  l5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
-                                               f=par[[i]]$params$f[k]),
-                  l5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
-                                               f=par[[i]]$params$f[k]), 
-                  l5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
-                                               f=par[[i]]$params$f[k]),
-                  l5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
-                                               f=par[[i]]$params$f[k])), 
+    polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, res1[[i]][,k][1]+2, 
+                  res1[[i]][,k][1]-2, res1[[i]][,k][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
             col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
     }
   }
@@ -216,34 +190,11 @@ if(plot){
                                           e=par[[i]]$params$e[k]), cex=0.8, pch=16)) #CT point
     #boundaries for vertical lines
   if(is.na(res1[[i]][,k][1]) == "FALSE"){
-    clip(min(xs), max(xs), 
-         b4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
-         b4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k])) 
-    abline(v=res1[[i]][,k][1]-2, lty=1, col=k) ; abline(v=res1[[i]][,k][1]+2, lty=1, col=k) 
-    #boundaries for horizontal lines
-    clip(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, min(listdf[[i]][ ,2:length(listdf[[i]])][[k]]),
-                                                 max(listdf[[i]][ ,2:length(listdf[[i]])][[k]])) 
-    abline(h=b4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-           lty=1, col=k)
-    abline(h=b4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-           lty=1, col=k)
     #filling in the +/- squares for CT value
-    polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, 
-                  res1[[i]][,k][1]+2, res1[[i]][,k][1]-2), 
-            y = c(b4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-                  b4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
-                  b4_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), 
-                  b4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]),
-                  b4_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k])), 
+    polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, res1[[i]][,k][1]+2, 
+                  res1[[i]][,k][1]-2, res1[[i]][,k][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
             col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
     }
     else{
@@ -269,41 +220,10 @@ if(plot){
            cex=0.8, pch=16)) #CT point
     #boundaries for vertical lines
   if(is.na(res1[[i]][,k][1]) == "FALSE"){
-    clip(min(xs), max(xs), 
-         b5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
-                                      f=par[[i]]$params$f[k]),
-         b5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                      d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
-                                      f=par[[i]]$params$f[k])) 
-    abline(v=res1[[i]][,k][1]-2, lty=1, col=k) ; abline(v=res1[[i]][,k][1]+2, lty=1, col=k) 
-    #boundaries for horizontal lines
-    clip(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, min(listdf[[i]][ ,2:length(listdf[[i]])][[k]]),
-         max(listdf[[i]][ ,2:length(listdf[[i]])][[k]])) 
-    abline(h=b5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
-                                          f=par[[i]]$params$f[k]), lty=1, col=k)
-    abline(h=b5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                          d=par[[i]]$params$d[k], e=par[[i]]$params$e[k], 
-                                          f=par[[i]]$params$f[k]), lty=1, col=k)
-    #filling in the +/- squares for CT value
-    polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, 
-                  res1[[i]][,k][1]+2, res1[[i]][,k][1]-2), 
-            y = c(b5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
-                                               f=par[[i]]$params$f[k]), 
-                  b5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
-                                               f=par[[i]]$params$f[k]),
-                  b5_model(res1[[i]][,k][1]+2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
-                                               f=par[[i]]$params$f[k]), 
-                  b5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
-                                               f=par[[i]]$params$f[k]),
-                  b5_model(res1[[i]][,k][1]-2, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
-                                               d=par[[i]]$params$d[k], e=par[[i]]$params$e[k],
-                                               f=par[[i]]$params$f[k])), 
+    polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, res1[[i]][,k][1]+2, 
+                  res1[[i]][,k][1]-2, res1[[i]][,k][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
             col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
   }
     else{
@@ -329,21 +249,26 @@ if(plot){
         print("check")
   }
   else{
-    clip(min(xs), max(xs), 
-         min(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]), 
-         max(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]))
-    abline(v=res1[[i]][,k][1]-2, lty=1, col=1) ; abline(v=res1[[i]][,k][1]+2, lty=1, col=1)
+ #small box
+ #   clip(min(xs), max(xs), 
+ #         min(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]), 
+ #         max(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]))
+ #    abline(v=res1[[i]][,k][1]-2, lty=1, col=1) ; abline(v=res1[[i]][,k][1]+2, lty=1, col=1)
   #boundaries for vertical lines
-    clip(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, min(resids[[i]][[k]]), max(resids[[i]][[k]]))
-    abline(h=min(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]), lty=1, col=1)
-    abline(h=max(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]), lty=1, col=1)
+ #   clip(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, min(resids[[i]][[k]]), max(resids[[i]][[k]]))
+ #    abline(h=min(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]), lty=1, col=1)
+ #    abline(h=max(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]), lty=1, col=1)
   #filling in the +/- squares for CT value for resids
-    polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, res1[[i]][,k][1]+2, res1[[i]][,k][1]-2), 
-            y = c(min(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]), 
-                  max(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]),
-                  max(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]),
-                  min(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]),
-                  min(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)])),
+    polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, res1[[i]][,k][1]+2, 
+                  res1[[i]][,k][1]-2, res1[[i]][,k][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
+  #specific small box
+ #            y = c(min(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]), 
+ #                  max(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]),
+ #                 max(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]),
+ #                  min(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)]),
+ #                 min(resids[[i]][[k]][round(res1[[i]][,k][1]-2, digits=0):round(res1[[i]][,k][1]+2, digits=0)])),
             col= rgb(0,0,0,alpha=0.15))
         }
       } # if plot
@@ -410,31 +335,34 @@ if(plot){
       print(paste0(LETTERS[z], w, " " , "no ct")) 
     } #can't draw box for those with <=2 CT or NA
     else{
-      clip(min(xs), max(xs), 
-           l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w]),
-           l4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w])) 
-      abline(v=res1[,w][1]-2, lty=1, col=w) ; abline(v=res1[,w][1]+2, lty=1, col=w) 
+  #specific small box
+#      clip(min(xs), max(xs), 
+#           l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
+#                                   d=par$params$d[w], e=par$params$e[w]),
+#           l4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
+#                                   d=par$params$d[w], e=par$params$e[w])) 
+#      abline(v=res1[,w][1]-2, lty=1, col=w) ; abline(v=res1[,w][1]+2, lty=1, col=w) 
   #boundaries for horizontal lines
-      clip(res1[,w][1]-2, res1[,w][1]+2, min(listdf[ ,2:length(listdf)][[w]]),
-                                         max(listdf[ ,2:length(listdf)][[w]])) 
-      abline(h=l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w]), lty=1, col=w)
-      abline(h=l4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w]), lty=1, col=w)
+#      clip(res1[,w][1]-2, res1[,w][1]+2, min(listdf[ ,2:length(listdf)][[w]]),
+#                                         max(listdf[ ,2:length(listdf)][[w]])) 
+#      abline(h=l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
+#                                       d=par$params$d[w], e=par$params$e[w]), lty=1, col=w)
+#      abline(h=l4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
+#                                       d=par$params$d[w], e=par$params$e[w]), lty=1, col=w)
   #filling in the +/- squares for CT value
-      polygon(x = c(res1[,w][1]-2, res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2), 
-              y = c(l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w]), 
-                    l4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w]),
-                    l4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w]), 
-                    l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w]),
-                    l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w])), 
+      polygon(x = c(res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2, res1[,w][1]-2), 
+              y = c(min(par("usr")), min(par("usr")), 
+                    max(par("usr")), max(par("usr")), min(par("usr"))),
+           #   y = c(l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
+           #                   d=par$params$d[w], e=par$params$e[w]), 
+           #          l4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
+           #                   d=par$params$d[w], e=par$params$e[w]),
+           #          l4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
+           #                   d=par$params$d[w], e=par$params$e[w]), 
+           #          l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
+           #                   d=par$params$d[w], e=par$params$e[w]),
+           #          l4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
+           #                   d=par$params$d[w], e=par$params$e[w])), 
               col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
     }
   }
@@ -453,33 +381,11 @@ if(plot){
       try(points(x=res1[,w][1], y=b4_model(res1[,w][1], b=par$params$b[w], 
                                        c=par$params$c[w], d=par$params$d[w], 
                                        e=par$params$e[w]), cex=0.8, pch=16)) #CT point
-  #boundaries for vertical lines
-    if(is.na(res1[,w][[1]]) == "FALSE"){
-      clip(min(xs), max(xs), 
-           b4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w]),
-           b4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w])) 
-      abline(v=res1[,w][1]-2, lty=1, col=w) ; abline(v=res1[,w][1]+2, lty=1, col=w) 
-  #boundaries for horizontal lines
-      clip(res1[,w][1]-2, res1[,w][1]+2, min(listdf[ ,2:length(listdf)][[w]]),
-                                         max(listdf[ ,2:length(listdf)][[w]])) 
-      abline(h=b4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w]), lty=1, col=w)
-      abline(h=b4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w]), lty=1, col=w)
   #filling in the +/- squares for CT value
-      polygon(x = c(res1[,w][1]-2, res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2), 
-              y = c(b4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w]), 
-                    b4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w]),
-                    b4_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w]), 
-                    b4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w]),
-                    b4_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w])), 
+    if(is.na(res1[,w][[1]]) == "FALSE"){
+      polygon(x = c(res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2, res1[,w][1]-2), 
+              y = c(min(par("usr")), min(par("usr")), 
+                    max(par("usr")), max(par("usr")), min(par("usr"))),
               col= rgb(0,0,0,alpha=0.15))
     }
   else{
@@ -508,38 +414,11 @@ if(plot){
       print(paste0(LETTERS[z], w, " " , "no ct"))
     }
     else{
-      clip(min(xs), max(xs), 
-           l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]),
-           l5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w], f=par$params$f[w])) 
-      abline(v=res1[,w][1]-2, lty=1, col=46) ; abline(v=res1[,w][1]+2, lty=1, col=w) 
-  #boundaries for horizontal lines
-      clip(res1[,w][1]-2, res1[,w][1]+2, min(listdf[ ,2:length(listdf)][[w]]),
-                                         max(listdf[ ,2:length(listdf)][[w]])) 
-      abline(h=l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w], 
-                                       f=par$params$f[w]), lty=1, col=w)
-      abline(h=l5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w],
-                                       f=par$params$f[w]), lty=1, col=w)
+
   #filling in the +/- squares for CT value
-      polygon(x = c(res1[,w][1]-2, res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2), 
-              y = c(l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w],
-                                            f=par$params$f[w]), 
-                    l5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w],
-                                            f=par$params$f[w]),
-                    l5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w],
-                                            f=par$params$f[w]), 
-                    l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w], 
-                                            f=par$params$f[w]),
-                    l5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                            d=par$params$d[w], e=par$params$e[w], 
-                                            f=par$params$f[w])), 
+      polygon(x = c(res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2, res1[,w][1]-2), 
+              y = c(min(par("usr")), min(par("usr")), 
+                    max(par("usr")), max(par("usr")), min(par("usr"))),
               col= rgb(0,0,0,alpha=0.15))
     }
   }
@@ -562,36 +441,11 @@ if(plot){
                                        e=par$params$e[w], f=par$params$f[w]), cex=0.8, pch=16)) 
    #boundaries for vertical lines
   if(is.na(res1[,w][[1]]) == "FALSE"){
-      clip(min(xs), max(xs), 
-           b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w],
-                                   f=par$params$f[w]),
-           b5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                   d=par$params$d[w], e=par$params$e[w],
-                                   f=par$params$f[w])) 
-      abline(v=res1[,w][1]-2, lty=1, col=46) ; abline(v=res1[,w][1]+2, lty=1, col=w) 
-   #boundaries for horizontal lines
-      clip(res1[,w][1]-2, res1[,w][1]+2, min(listdf[ ,2:length(listdf)][[w]]),
-                                         max(listdf[ ,2:length(listdf)][[w]])) 
-      abline(h=b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w],
-                                       f=par$params$f[w]), lty=1, col=w)
-      abline(h=b5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                                       d=par$params$d[w], e=par$params$e[w],
-                                       f=par$params$f[w]), lty=1, col=w) 
    #filling in the +/- squares for CT value
-      polygon(x = c(res1[,w][1]-2, res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2), 
-              y = c(b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]), 
-                    b5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]),
-                    b5_model(res1[,w][1]+2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]), 
-                    b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w], f=par$params$f[w]),
-                    b5_model(res1[,w][1]-2, b=par$params$b[w], c=par$params$c[w],
-                             d=par$params$d[w], e=par$params$e[w], f=par$params$f[w])), 
-              col= rgb(0,0,0,alpha=0.15))
+    polygon(x = c(res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2, res1[,w][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
+            col= rgb(0,0,0,alpha=0.15))
   }
     else{
       print(paste0(LETTERS[z], w, " " , "no ct"))
@@ -616,20 +470,22 @@ if(plot){
     print("check")
   }
   else{
-    clip(min(xs), max(xs), 
-         min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]), 
-         max(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]))
-    abline(v=res1[,w][1]-2, lty=1, col=1) ; abline(v=res1[,w][1]+2, lty=1, col=1)
-    clip(res1[,w][1]-2, res1[,w][1]+2, min(resids[[w]]), max(resids[[w]]))
-    abline(h=min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]), lty=1, col=1)
-    abline(h=max(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]), lty=1, col=1)
+ #   clip(min(xs), max(xs), 
+ #         min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]), 
+ #        max(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]))
+ #   abline(v=res1[,w][1]-2, lty=1, col=1) ; abline(v=res1[,w][1]+2, lty=1, col=1)
+ #   clip(res1[,w][1]-2, res1[,w][1]+2, min(resids[[w]]), max(resids[[w]]))
+ #   abline(h=min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]), lty=1, col=1)
+ #   abline(h=max(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]), lty=1, col=1)
     #filling in the +/- squares for CT value for resids
-    polygon(x = c(res1[,w][1]-2, res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2), 
-            y = c(min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]), 
-                  max(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]),
-                  max(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]),
-                  min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]),
-                  min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)])),
+    polygon(x = c(res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2, res1[,w][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
+ #           y = c(min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]), 
+ #                 max(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]),
+ #                 max(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]),
+ #                 min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)]),
+ #                 min(resids[[w]][round(res1[,w][1]-2, digits=0):round(res1[,w][1]+2, digits=0)])),
             col= rgb(0,0,0,alpha=0.15))
       }
     } #plot bracket
