@@ -244,8 +244,8 @@ if(plot){
   }
   #boundaries for horizontal lines
   if( (res1[[i]][,k][1] <= 2) || (is.na(res1[[i]][,k][1])) == "TRUE" ||
-      (res1[[i]][,k][1] > 38 & max(try[[i]]$Cycle) == 40) ||
-      (res1[[i]][,k][1] > 44 & max(try[[i]]$Cycle) == 46)){
+      (res1[[i]][,k][1] > 38 & max(listdf[[i]]$Cycle) == 40) ||
+      (res1[[i]][,k][1] > 44 & max(listdf[[i]]$Cycle) == 46)){
         print("check")
   }
   else{
