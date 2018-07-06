@@ -1,6 +1,6 @@
 plot_sig <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
 
-if(macro == 0){
+if(macro == 0 & (is.null(z)) == "TRUE"){
   par <- list() ; resids <- list() ; rss <- list()
   reg.amp <- list() ; reg.res <- list() 
   dw.amp <- list() ; dw.res <- replicate(10, list())  
@@ -492,64 +492,218 @@ if(plot){
   return(values)
   } #macro bracket
   
-#start of macro set: specific set for z
+#start of macro: specific z subset
 #plotting amplification curve
-  if(macro == 0 & z > 0){
-    #define w for easier written numbers
-    w = macro
-    #re-state specified z-list
-    listdf <- listdf[[z]]
-    #getting parameter estimates
-    par <- sub_genparams(est, listdf)
-    #finding the residuals
-    try_resid <- function(x) tryCatch({resid(x)},
-                                      error = function(e) rep(NA, max(listdf$Cycle)))
-    resids <- lapply(par$fits, try_resid)
-    #finding the RSS
-    rss <- lapply(resids, function(x) sum(x^2))
-    #finding the DW-stat
-    reg.amp <- dynlm(listdf[,w+1] ~ listdf$Cycle)
-    reg.res <- try(dynlm(resids[[w]] ~ listdf$Cycle), silent = TRUE)
+if(macro == 0 & z > 0){
+  #define w for easier written numbers
+  w = macro
+  #re-state specified z-list
+  listdf <- listdf[[z]]
+  #getting parameter estimates
+  par <- sub_genparams(est, listdf)
+  
+  #finding the residuals
+  try_resid <- function(x) tryCatch({resid(x)},
+                           error = function(e) rep(NA, max(listdf$Cycle)))
+  resids <- lapply(par$fits, try_resid)
+  #finding the RSS
+  rss <- lapply(resids, function(x) sum(x^2))
+  
+  #finding the DW-stat
+  reg.amp <- dynlm(listdf[,w+1] ~ listdf$Cycle)
+  reg.res <- try(dynlm(resids[[w]] ~ listdf$Cycle), silent = TRUE)
+  #finding the Durbin-Watson stat
+  reg.amp <- lapply(listdf[ ,2:length(listdf)], 
+                    function(y) dynlm(y ~ listdf[["Cycle"]])) #all amp can run
+  reg.res <- lapply(resids, function(y) try(dynlm(y ~ listdf["Cycle"]), silent=TRUE))
+  #residuals contain NA
+  dw.amp <- lapply(reg.amp, function(x) durbinWatsonTest(x))
+  dw.res <- list()
+
+for(j in 1:(length(listdf)-1)){ #NA resids cannot run
+  dw.res[[j]] <- tryCatch({
+  durbinWatsonTest(reg.res[[j]])
+  }, error=function(e) {
+    return(list(r=NA, dw=NA, p=NA))
+    })
+  } #replace errors with NA for r, dw, p
     
-    #finding the Durbin-Watson stat
-    reg.amp <- lapply(listdf[ ,2:length(listdf)], 
-                      function(y) dynlm(y ~ listdf[["Cycle"]])) #all amp can run
-    reg.res <- lapply(resids, function(y) try(dynlm(y ~ listdf["Cycle"]), 
-                                              silent=TRUE))
-    #residuals contain NA
-    dw.amp <- lapply(reg.amp, function(x) durbinWatsonTest(x))
-    dw.res <- list()
-    for(j in 1:(length(listdf)-1)){ #NA resids cannot run
-      dw.res[[j]] <- tryCatch({
-        durbinWatsonTest(reg.res[[j]])
-      }, error=function(e) {
-        return(list(r=NA, dw=NA, p=NA))
-      })
-    } #replace errors with NA for r, dw, p
+  #finding the CT value
+  ml1 <- modlist(listdf, model = est)
+  res1 <- getPar(ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+  #parameter estimates
+  paramest <- apply(par$params, c(1,2), as.numeric) #apply(x[k,], c(1,2), as.numeric)
     
-    #finding the CT value
-    ml1 <- modlist(listdf, model = est)
-    res1 <- getPar(ml1, type = "curve", cp = "cpD2", eff = "sliwin")
-    #parameter estimates
-    paramest <- apply(par$params, c(1,2), as.numeric) #apply(x[k,], c(1,2), as.numeric)
-    
-    #all together
-    for(j in 1:(length(listdf)-1)){
-      if(j==1){
-        values <- data.frame(t(paramest[j,]))
-        me <- c(dw.amp[[j]]$r, dw.amp[[j]]$dw, dw.amp[[j]]$p, dw.res[[j]]$r, 
-                dw.res[[j]]$dw, dw.res[[j]]$p, rss[[j]], res1[,j][1], res1[,j][2])
-        #values[k, (length(values[k,])+1):(length(values[k,])+9)] <- cbind(values, me) 
-        values <- cbind(values, t(me))
+  #all together
+for(j in 1:(length(listdf)-1)){
+  if(j==1){
+    values <- data.frame(t(paramest[j,]))
+    me <- c(dw.amp[[j]]$r, dw.amp[[j]]$dw, dw.amp[[j]]$p, dw.res[[j]]$r, 
+            dw.res[[j]]$dw, dw.res[[j]]$p, rss[[j]], res1[,j][1], res1[,j][2])
+  #values[k, (length(values[k,])+1):(length(values[k,])+9)] <- cbind(values, me) 
+    values <- cbind(values, t(me))
+    }
+  if(j >1){
+    values[j,] <- data.frame(t(paramest[j,])) #data.frame(apply(par.tst[[i]]$params[j,], c(1,2), as.numeric))
+    me <- c(dw.amp[[j]]$r, dw.amp[[j]]$dw, dw.amp[[j]]$p, dw.res[[j]]$r, 
+            dw.res[[j]]$dw, dw.res[[j]]$p, rss[[j]], res1[,j][1], res1[,j][2])
+    values[j, (ncol(paramest)+1):length(values)] <- t(me) #replaces repeated paramest with dw, rss
+    }
+  }
+  names(values) <- c(names(par$params), c("r-amp", "dw-amp", "p-amp"),
+                       c("r-res", "dw-res", "p-res"), c("rss", "ct", "eff"))
+  rownames(values) <- c() #getting rid of arbitrary row names  
+
+#start plotting amp curve + resid
+  for(k in 1:(length(listdf)-1)){
+    xs = listdf$Cycle
+  if(plot){
+    if(est$name == "l4"){ #model might not be able to run
+      try(plot(x=xs, y=l4_model(xs, b=par$params$b[k], c=par$params$c[k],
+                                    d=par$params$d[k], e=par$params$e[k]), 
+               type="l", xlab="Cycle", ylab="Fluorescence", 
+               ylim=c(range(unlist(listdf[,k+1]))), col = k, xaxt = "n"))
+          points(x=xs, y=listdf[,k+1], cex=0.45) #actual points
+          
+    if(is.na(par$params$b[k]) == "FALSE"){
+      legend("topleft", c(names(listdf)[k+1]), col=k, lty=1, cex=0.65) #legend
+      } #adds legend for line of model
+    else{} #only add legend if able to run model
+          
+  #adding box around CT values (+/- 2 cycles)
+    try(points(x=res1[,k][1], y=l4_model(res1[,k][1], b=par$params$b[k], 
+                                         c=par$params$c[k], d=par$params$d[k], 
+                                         e=par$params$e[k]), cex=0.8, pch=16)) #CT point
+  #no CT value for near end CTs or NAs
+    if( (is.na(res1[,k][1]) == "TRUE") || (res1[,k][1] <= 2)){
+         print(paste0(LETTERS[i], k, " ", "no ct"))
       }
-      if(j >1){
-        values[j,] <- data.frame(t(paramest[j,])) #data.frame(apply(par.tst[[i]]$params[j,], c(1,2), as.numeric))
-        me <- c(dw.amp[[j]]$r, dw.amp[[j]]$dw, dw.amp[[j]]$p, dw.res[[j]]$r, 
-                dw.res[[j]]$dw, dw.res[[j]]$p, rss[[j]], res1[,j][1], res1[,j][2])
-        values[j, (ncol(paramest)+1):length(values)] <- t(me) #replaces repeated paramest with dw, rss
+    else{ 
+    #big box around +/- 2 cycles
+    polygon(x = c(res1[,k][1]-2, res1[,k][1]+2, res1[,k][1]+2, 
+                  res1[,k][1]-2, res1[,k][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
+            col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
+          }
+        }
+        
+  if(est$name == "l5"){ #model might not be able to run
+    try(plot(x=xs, y=l5_model(xs, b=par$params$b[k], c=par$params$c[k],
+                                  d=par$params$d[k], e=par$params$e[k], f=par$params$f[k]), 
+             type="l", xlab="Cycle", ylab="Fluorescence", 
+             ylim=c(range(unlist(listdf[,k+1]))), col = k, xaxt = "n"))
+        points(x=xs, y=listdf[,k+1], cex=0.45) #actual points
+  if(is.na(par$params$b[k]) == "FALSE"){
+    legend("topleft", c(names(listdf)[k+1]), col=k, lty=1, cex=0.65) #legend
+    } #adds legend for line of model
+  else{} #only add legend if able to run model
+    #adding box around CT values (+/- 2 cycles)
+    try(points(x=res1[,k][1], y=l5_model(res1[,k][1], b=par$params$b[k], 
+                                         c=par$params$c[k], d=par$params$d[k], 
+                                         e=par$params$e[k], f=par$params$f[k]), 
+        cex=0.8, pch=16)) #CT point
+    #no CT value for near end CTs or NAs
+  if( (is.na(res1[,k][1]) == "TRUE") || (res1[,k][1] <= 2)){
+       print(paste0(LETTERS[i], k, " ", "no ct"))
+      }
+  else{ 
+    #big box around +/- 2 cycles
+    polygon(x = c(res1[,k][1]-2, res1[,k][1]+2, res1[,k][1]+2, 
+                  res1[,k][1]-2, res1[,k][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
+            col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
+      }
+    }  
+        
+  if(est$name == "b4"){ #model might not be able to run
+      try(plot(x=xs, y=b4_model(xs, b=par$params$b[k], c=par$params$c[k],
+                                    d=par$params$d[k], e=par$params$e[k]), 
+          type="l", xlab="Cycle", ylab="Fluorescence", 
+          ylim=c(range(unlist(listdf[,k+1]))), col = k, xaxt = "n"))
+      points(x=xs, y=listdf[,k+1], cex=0.45) #actual points
+  if(is.na(par$params$b[k]) == "FALSE"){
+      legend("topleft", c(names(listdf)[k+1]), col=k, lty=1, cex=0.65) #legend
+    } #adds legend for line of model
+  else{} #only add legend if able to run model
+  #adding box around CT values (+/- 2 cycles)
+  try(points(x=res1[,k][1], y=b4_model(res1[,k][1], b=par$params$b[k], 
+                                       c=par$params$c[k], d=par$params$d[k], 
+                                       e=par$params$e[k]), cex=0.8, pch=16)) #CT point
+  #no CT value for near end CTs or NAs
+  if(is.na(res1[,k][1]) == "FALSE"){
+    #big box around +/- 2 cycles
+    polygon(x = c(res1[,k][1]-2, res1[,k][1]+2, res1[,k][1]+2, 
+                  res1[,k][1]-2, res1[,k][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
+            col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
+      }
+  else{ 
+    print(paste0(LETTERS[i], k, " ", "no ct"))
       }
     }
-    
+        
+  if(est$name == "b5"){ #model might not be able to run
+    try(plot(x=xs, y=b5_model(xs, b=par$params$b[k], c=par$params$c[k],
+                                  d=par$params$d[k], e=par$params$e[k], f=par$params$f[k]), 
+        type="l", xlab="Cycle", ylab="Fluorescence", 
+        ylim=c(range(unlist(listdf[,k+1]))), col = k, xaxt = "n"))
+        points(x=xs, y=listdf[,k+1], cex=0.45) #actual points
+          
+  if(is.na(par$params$b[k]) == "FALSE"){
+    legend("topleft", c(names(listdf)[k+1]), col=k, lty=1, cex=0.65) #legend
+      } #adds legend for line of model
+  else{} #only add legend if able to run model
+          
+    #adding box around CT values (+/- 2 cycles)
+    try(points(x=res1[,k][1], y=b5_model(res1[,k][1], b=par$params$b[k], 
+                                         c=par$params$c[k], d=par$params$d[k], 
+                                         e=par$params$e[k], f=par$params$f[k]), 
+        cex=0.8, pch=16)) #CT point
+    #no CT value for near end CTs or NAs
+  if( (is.na(res1[,k][1]) == "TRUE") || (res1[,k][1] <= 2)){
+    #big box around +/- 2 cycles
+    polygon(x = c(res1[,k][1]-2, res1[,k][1]+2, res1[,k][1]+2, 
+                  res1[,k][1]-2, res1[,k][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
+            col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
+      }
+  else{ 
+    print(paste0(LETTERS[i], k, " ", "no ct"))
+    }
+  } #b5
+        
+  if(unique(is.na(resids[[k]])) == "FALSE"){
+    plot(y = resids[[k]][1:length(listdf$Cycle)], 
+         x = par$fits[[k]]$DATA$Cycles[1:length(listdf$Cycle)], 
+         ylim = range(unlist(resids[[k]])), 
+         xlab = "Cycle", ylab="Fluorescence Residual")
+         abline(h=0) ; points(x=res1[,k][1], y=0, cex=0.8, pch=17)
+    }
+  else{
+    plot(1, type="n" , xlab="n", ylab="", 
+         xlim=c(0, sum(is.na(resids[[k]]))), ylim=c(0,1))
+    }
+  #boundaries for horizontal lines
+  if( (res1[,k][1] <= 2) || (is.na(res1[,k][1])) == "TRUE" ||
+      (res1[,k][1] > 38 & max(listdf$Cycle) == 40) ||
+      (res1[,k][1] > 44 & max(listdf$Cycle) == 46)){
+    print("check")
+    }
+  else{
+    polygon(x = c(res1[,k][1]-2, res1[,k][1]+2, res1[,k][1]+2, 
+                  res1[,k][1]-2, res1[,k][1]-2), 
+            y = c(min(par("usr")), min(par("usr")), 
+                  max(par("usr")), max(par("usr")), min(par("usr"))),
+            col= rgb(0,0,0,alpha=0.15))
+        }
+      } # if plot
+    } #for j in 1:(length-1) subsetted list
+    return(values)
+  }#macro==0 z>0
 }
 
 sig_est <- function(est, orgdata, getfiles){

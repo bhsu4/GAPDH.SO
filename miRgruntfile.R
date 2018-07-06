@@ -41,6 +41,7 @@ plot_sig(l4, try, plot=TRUE) #plots shown
 plot_sig(b5, try) #no plots shown
 plot_sig(l5, try, macro=1, z=4, plot=TRUE) #tester for NA point (pulls out try[[4]][[1]])
 plot_sig(b5, try, macro=3, z=4, plot=TRUE) #tester for good point
+plot_sig(l4, try, z=4, plot=TRUE)
 
 #smaller data set with only 4 targets
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
@@ -61,8 +62,15 @@ b5dat <- sig_est(b5, miRcompData2, getfiles=getfiles)
 b4dat <- sig_est(b4, miRcompData2, getfiles=getfiles)
 
 #saving files
-save(l5dat, file = paste0("l5_", "dat", ".Rda"))
+save(l5dat, file = paste0("l5_" , "dat", ".Rda"))
 save(l4dat, file = paste0("l4_" , "dat", ".Rda"))
-save(b5dat, file = paste0("b5" , "dat", ".Rda"))
+save(b5dat, file = paste0("b5_" , "dat", ".Rda"))
 save(b4dat, file = paste0("b4_" , "dat", ".Rda"))
+
+#loading in matrices of parameter est
+getmat <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
+              pattern = "_dat")
+
+load(file = getmat[[1]]) ; load(file = getmat[[2]]) ; load(file = getmat[[3]]) ; load(file = getmat[[4]])
+l5dat = help1 ; l4dat = help2 ; b5dat = help3 ; b4dat = help4
 
