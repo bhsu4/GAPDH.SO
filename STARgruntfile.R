@@ -102,6 +102,29 @@ for(i in 1:8){
   }
 }
 
+####WRITING FUNCTION: BREAKPOINTS
+subslog <- lapply(subsets, function(x) {x[,which(colnames(x) != "Cycle")] <- log10(x[,which(colnames(x) != "Cycle")])})
+
+#keeps first column cycle, log10 rest of fluorescence 
+subslog <- lapply(subsets, function(x) x %>%
+                           mutate_each(funs(log10(.)), 2:13)) #original log10 terms
+subslogcb <- lapply(subslog, function(x) x %>% 
+                             mutate_each(funs(lag(., k=2)), 2:13)) #lagged terms
+subslogcb <- lapply(subslogcb, function(x) setNames(x, paste0(colnames(x), "_lag"))) #colnames for lagged
+subs.all <- Map(cbind, subslog, subslogcb) #mapped for column bind for log and logcb
+subs.all <- lapply(subs.all, function(x) x %>% 
+            select(noquote(mixedsort(colnames(.)))) %>% #correct order except for Cycles
+            select(starts_with("Cycle"), -starts_with("Cycle_"), everything())) #correct order
+ts.subs <- lapply(subs.all, function(x) ts(x)) #converted to time seriries
+bp.subs[[i]][[j-1]] <- breakpoints(y ~ ylag2, data=subsets_log[[i]][[j-1]]) #finding brkpt for each
+
+
+
+
+
+
+
+
 ##plotting LSTAR model to see fit for replication
 lsubsets <- subsets #lsubsets different from subsets_log b/c subsets_log with ts 
 for(i in 1:8){
