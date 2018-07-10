@@ -106,17 +106,36 @@ for(i in 1:8){
 subslog <- lapply(subsets, function(x) {x[,which(colnames(x) != "Cycle")] <- log10(x[,which(colnames(x) != "Cycle")])})
 
 #keeps first column cycle, log10 rest of fluorescence 
-subslog <- lapply(subsets, function(x) x %>%
+library(tidyverse) ; library(gtools) ; library(strucchange)
+subslog <- lapply(subsets, function(x) x %>% 
                            mutate_each(funs(log10(.)), 2:13)) #original log10 terms
 subslogcb <- lapply(subslog, function(x) x %>% 
-                             mutate_each(funs(lag(., k=2)), 2:13)) #lagged terms
+                             select(-starts_with("Cycle")) %>% #delete cycle lag
+                             mutate_each(funs(lag(., k=2)), 1:12))  #lagged terms
 subslogcb <- lapply(subslogcb, function(x) setNames(x, paste0(colnames(x), "_lag"))) #colnames for lagged
 subs.all <- Map(cbind, subslog, subslogcb) #mapped for column bind for log and logcb
 subs.all <- lapply(subs.all, function(x) x %>% 
             select(noquote(mixedsort(colnames(.)))) %>% #correct order except for Cycles
-            select(starts_with("Cycle"), -starts_with("Cycle_"), everything())) #correct order
-ts.subs <- lapply(subs.all, function(x) ts(x)) #converted to time seriries
-bp.subs[[i]][[j-1]] <- breakpoints(y ~ ylag2, data=subsets_log[[i]][[j-1]]) #finding brkpt for each
+            select(starts_with("Cycle"), everything())) #correct order
+#subs.all <- lapply(subs.all, function(x) x %>% select(-starts_with("Cycle_")))
+mello <- function(he){ 
+    brkpt <- list()
+for(j in 1:12){ 
+    ind1 = 25-(25-2*j) ; ind2 = ind1+1 
+    brkpt[[j]] <- breakpoints(he[,ind1] ~ he[,ind2], data = he) 
+  }
+  return(brkpt)
+}
+foru <- lapply(subs.all, function(x) mello(x))
+
+brkpt <- replicate(8, list())
+for(i in 1:8){
+  for(j in 1:12){
+    ind1 = 25-(25-2*j) ; ind2 = ind1+1
+    brkpt[[i]][[j]] <- breakpoints(subs.all[[i]][,ind1] ~ subs.all[[i]][,ind2], data=subs.all[[i]])
+  }
+}
+
 
 
 
