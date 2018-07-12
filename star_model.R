@@ -1,60 +1,81 @@
-lstar <- function(g, yc){
-  1/(1+exp(-g*(yc)))
-}
+#keeps first column cycle, log10 rest of fluorescence 
+library(tidyverse) ; library(gtools) ; library(strucchange)
 
-estar <- function(g, yc){
-  (1-exp(-g*(yc)^2))
-}
+hello <- function(subs){
 
-
-#plot(x=seq(-5,5,0.01), y=lstar(0, seq(-5,5,0.01)), ylim=c(0,1), type = "l", col = 1)
-#lines(x=seq(-5,5,0.01), y=lstar(0.5, seq(-5,5,0.01)), ylim=c(0,1), type = "l", col = 2)
-#lines(x=seq(-5,5,0.01), y=lstar(1, seq(-5,5,0.01)), type = "l", col = 3)
-#lines(x=seq(-5,5,0.01), y=lstar(2.5, seq(-5,5,0.01)), type = "l", col = 4)
-#lines(x=seq(-5,5,0.01), y=lstar(10, seq(-5,5,0.01)), type = "l", col = 5)
-#legend("bottomright", c(paste0("Gamma", "=")), col=1:5, ncol=1, lty=1, cex=0.5)
-
-lstar_plot <- function(xs, maxk, intk){
-testk <- seq(0,maxk,intk)
-plot(x=xs, y=lstar(0, xs), ylim=c(0,1), xlim=c(-2.5,2.5), type = "l", col = 1, xlab = "y_(t-d)-c", ylab = "F(y_(t-d))")
-  for(i in 2:((maxk/intk)+1)){
-lines(x=xs, y=lstar(testk[i], xs), ylim=c(0,1), type = "l", col = i)
+subslog <- lapply(subs, function(x) x %>% 
+                  mutate_each(funs(log10(.)), 2:13)) #original log10 terms 
+subslogcb <- lapply(subslog, function(x) x %>% 
+                      select(-starts_with("Cycle")) %>% #delete cycle lag
+                      mutate_each(funs(lag(., k=2)), 1:12))  #lagged terms
+subslogcb <- lapply(subslogcb, function(x) setNames(x, paste0(colnames(x), "_lag"))) #colnames for lagged
+subs.all <- Map(cbind, subslog, subslogcb) #mapped for column bind for log and logcb
+subs.all <- lapply(subs.all, function(x) x %>% 
+                     select(noquote(mixedsort(colnames(.)))) %>% #correct order except for Cycles
+                     select(starts_with("Cycle"), everything())) #correct order
+#subs.all <- lapply(subs.all, function(x) x %>% select(-starts_with("Cycle_")))
+brks <- function(subsfcn){ #function for subset breakdate est.
+  brkpt <- list()
+  for(j in 1:12){ 
+    ind1 = 25-(25-2*j) ; ind2 = ind1+1   #takes col 2,3 ; 3,4 ; etc (real, and lag)
+    brkpt[[j]] <- breakpoints(subsfcn[,ind1] ~ subsfcn[,ind2], data = subsfcn) 
   }
-  legend("bottomright", c(paste0("Gamma", " =", testk[1:((maxk/intk)+1)])), col=1:((maxk/intk)+1), ncol=1, lty=1, cex=0.5)
+  return(brkpt)
 }
+breaks <- lapply(subs.all, function(x) brks(x)) #breaks is the dynlm eq with breakpoints
 
-
-star_plot <- function(xs, maxk, intk, type){
-if(type == "lstar"){
-    testk <- seq(0,maxk,intk)
-    plot(x=xs, y=lstar(0, xs), ylim=c(0,1), xlim=c(-2.5,2.5), type = "l", col = 1, 
-         xlab = expression(y[t-d]-c), ylab = expression(F(y[t-d])))
-    for(i in 2:((maxk/intk)+1)){
-      lines(x=xs, y=lstar(testk[i], xs), ylim=c(0,1), type = "l", col = i)
-    }
-    legend("bottomright", c(paste0("Gamma", " =", testk[1:((maxk/intk)+1)])), 
-           col=1:((maxk/intk)+1), ncol=1, lty=1, cex=0.5, x.intersp=0.1, text.width=c(rep(0.25,5)), pt.cex = 1)
-   # title(c("LSTAR With Varying Gamma"))
+for(i in 1:8){
+  for(j in 2:13){ 
+    if(j==2){
+      plot(subslog[[i]][,j], ylab = expression(log[10](Fluorescence)), type="l",
+           ylim = c(range(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))])), col = i)
+    } 
+    lines(subslog[[i]][,j])
+    abline(v=breaks[[i]][[j-1]]$breakpoints, col=j-1)
+    text(c(breaks[[i]][[j-1]]$breakpoints), max(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))]), 
+         as.character(j), pos=2, srt=90, cex=0.65)
   }
-if(type == "estar"){
-  testk <- seq(0,maxk,intk)
-  plot(x=xs, y=estar(0, xs), ylim=c(0,1), xlim=c(-2.5,2.5), type = "l", col = 1, 
-       xlab = expression(y[t-d]-c), ylab = expression(F(y[t-d])))
-  for(i in 2:((maxk/intk)+1)){
-    lines(x=xs, y=estar(testk[i], xs), ylim=c(0,1), type = "l", col = i)
-  }
-  legend("bottomright", c(paste0("Gamma", " =", testk[1:((maxk/intk)+1)])), 
-         col=1:((maxk/intk)+1), ncol=1, lty=1, cex=0.5, x.intersp=0.1, text.width=c(rep(0.25,5)), pt.cex = 1)
- # title(c("ESTAR With Varying Gamma"))
-}
 }
 
-star_plot(seq(-5,5,0.01), 10, 2.5, "lstar")
-star_plot(seq(-5,5,0.01), 10, 2.5, "estar")
+}
+
+
+text(11, max(subslog[[1]][-grep("Cycle", colnames(subslog[[1]]))]), "B", pos=2, srt=90, cex=0.65)
+max(subslog[[1]][-grep("Cycle", colnames(subslog[[1]]))])
+
+
+res <- data.frame(
+  #target categories
+  TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength), 
+  Group = gsub("_." , "", tmp), FeatureSet = rep(NA, each = replength), 
+  #parameter est for 4 parm
+  b = rep(NA, targlength * replength), c = rep(NA, targlength * replength), 
+  d = rep(NA, targlength * replength), e = rep(NA, targlength * replength),
+  #dw statistics
+  r.amp = rep(NA, targlength * replength), dw.amp = rep(NA, targlength * replength), p.amp = rep(NA, targlength * replength), 
+  r.res = rep(NA, targlength * replength), dw.res = rep(NA, targlength * replength), p.res = rep(NA, targlength * replength), 
+  #rss and getPar statistics
+  rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength)
+)
 
 
 
-  
-  
-  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
