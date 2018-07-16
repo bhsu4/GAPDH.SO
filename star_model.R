@@ -39,14 +39,43 @@ for(i in 1:8){
 
 }
 
+#changing data to fit fcn
+mdata <- melt(df, id=c("Cycles"))
+mdata <- mdata %>%
+  dplyr::mutate(TargetName = "A") %>% 
+  dplyr::mutate(cat = str_extract(variable, "[A-Z]")) %>% 
+  mutate_each(funs(chartr("ABCDEFGH", "12345678", .)), "cat") %>% 
+  dplyr::mutate(new_idn = str_extract(variable, "\\d+$")) %>% 
+  dplyr::mutate(new_id = "KW") %>% 
+  dplyr::mutate(SampleID = paste0(new_id, cat, "_", new_idn)) %>% 
+  select(starts_with("Cycle"), starts_with("SampleID"), starts_with("TargetName"), 
+         starts_with("value"), -starts_with("new"), -starts_with("variable")) %>% 
+  rename(Rn = value)
+subsA  <- singtarget.list(mdata, "A") #works!
+
+savetarget.list(mdata)
+load(file = "targ_A.Rda")
+
+
+#overlaps text when attaching at brkpt
+#create DF of it, return that DF, and paste multiple cycle number on graph
+
 
 text(11, max(subslog[[1]][-grep("Cycle", colnames(subslog[[1]]))]), "B", pos=2, srt=90, cex=0.65)
 max(subslog[[1]][-grep("Cycle", colnames(subslog[[1]]))])
 
 
+targetatt <- singtarget.list(df, target = "A1") 
+
+subletters <- LETTERS[1:8]
+
+#if subsets is a list vs if mircmpdata2 is df
+ 
+replength <- data.frame(lapply(subsets, nrow))
+
 res <- data.frame(
   #target categories
-  TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength), 
+  TargetName = rep(subletters, each = replength), SampleID = rep(sampnames, targlength), 
   Group = gsub("_." , "", tmp), FeatureSet = rep(NA, each = replength), 
   #parameter est for 4 parm
   b = rep(NA, targlength * replength), c = rep(NA, targlength * replength), 
@@ -58,8 +87,15 @@ res <- data.frame(
   rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength)
 )
 
+res <- data.frame(
+  Target = rep(subletters[1:8], each = yoo[1:8])
+)
+
+meh = 
+data.frame(target = rep(subletters[1:8], each=meh))
 
 
+length(subsets$A)
 
 
 
