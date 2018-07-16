@@ -49,8 +49,11 @@ singtarget.list <- function(orgdata, target){
 savetarget.list <- function(orgdata){
   
   targnames <- unique(c(orgdata$TargetName)) 
-  controls <- c(names(which(table(miRcompData2$TargetName)>10000))) #controls
-  targnames <- targnames[!grepl(paste0(controls, collapse = "|"), targnames)]
+  controls <- c(names(which(table(orgdata$TargetName)>10000))) #controls
+  if(length(controls) != 0){
+    targnames <- targnames[!grepl(paste0(controls, collapse = "|"), targnames)]
+  }
+  else{}
   
 #creating a group  
   splitgroup <- strsplit(orgdata[,"SampleID"], "_") #split into two parts: KW3_1 to KW3/1
