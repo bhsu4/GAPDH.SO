@@ -36,8 +36,66 @@ for(i in 1:8){
          as.character(j), pos=2, srt=90, cex=0.65)
   }
 }
-
+return(breaks)
 }
+
+#figuring out breakpoinntss into DF or matrix
+mello <- hello(subsets)
+
+#eempty df
+breaks <- data.frame(
+  Breaks = rep(NA, each = 96), Breaks1 = rep(NA, each = 96),
+  Breaks2 = rep(NA, each = 96), Breaks3 = rep(NA, each = 96)
+)
+
+#double lapply extracts brkpts
+brks <- function(x){ #function for subset breakdate est.
+  brkpt <- list()
+  brkpt <- lapply(x, function(y) return(y$breakpoints)) 
+  #nobrk <- lapply(x, function(y) return(length(y$breakpoints)))
+  return(brkpt)
+}
+cello <- lapply(mello, function(x) brks(x))
+
+cello[[1]]
+
+df <- data.frame(matrix(unlist(cello), nrow=96, byrow=T))
+
+df <- data.frame(matrix(unlist(cello), nrow=12, byrow=T),stringsAsFactors=FALSE)
+
+
+
+leng <- function(x){
+  lapply(x, function(y) return(length(y)))
+}
+cellolength <- unlist(lapply(cello, function(x) leng(x)))
+
+
+empmat <- matrix(data=NA,nrow=96,ncol=5)
+empmat[1:96, 1] <- matrix(cellolength[1:96], nrow=96)
+for(i in 1:8){
+  for(j in 1:12){
+empmat[i, 2:(2+empmat[i, 1])] <- matrix(cello[[i]][[j]], nrow=1)
+  }
+}
+
+for(i in 1:96){
+empmat[i, 2:(2+empmat[i,1])] <- lapply(cello, unlist)[1][1:(1+empmat[i,1])]
+}
+
+empmat[1, 2:5] <- matrix(cello[[1]][[1]], nrow=1)
+
+m <- matrix(NA, nrow=96, ncol=4)
+
+for(i in 1:8){
+  for(j in 1:12){
+    m <- matrix(cello[[i]][[j]], nrow=1)
+  }
+}
+
+8*1 - 7, 8*2 - 14, .... 
+
+1,...12, 13
 
 #changing data to fit fcn
 mdata <- melt(df, id=c("Cycles"))
@@ -50,68 +108,50 @@ mdata <- mdata %>%
   dplyr::mutate(SampleID = paste0(new_id, cat, "_", new_idn)) %>% 
   select(starts_with("Cycle"), starts_with("SampleID"), starts_with("TargetName"), 
          starts_with("value"), -starts_with("new"), -starts_with("variable")) %>% 
-  rename(Rn = value)
-subsA  <- singtarget.list(mdata, "A") #works!
-
-savetarget.list(mdata)
-load(file = "targ_A.Rda")
+  rename(dRn = value)
+subsA  <- singtarget.list(mdata, "A") #works for single
+savetarget.list(mdata) #works for general
+load(file = "targ_A.Rda") #loads in as tst
 
 
 #overlaps text when attaching at brkpt
 #create DF of it, return that DF, and paste multiple cycle number on graph
 
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy", 
+                pattern =  "^targ_")
 
-text(11, max(subslog[[1]][-grep("Cycle", colnames(subslog[[1]]))]), "B", pos=2, srt=90, cex=0.65)
-max(subslog[[1]][-grep("Cycle", colnames(subslog[[1]]))])
-
-
-targetatt <- singtarget.list(df, target = "A1") 
-
-subletters <- LETTERS[1:8]
-
-#if subsets is a list vs if mircmpdata2 is df
- 
-replength <- data.frame(lapply(subsets, nrow))
-
-res <- data.frame(
-  #target categories
-  TargetName = rep(subletters, each = replength), SampleID = rep(sampnames, targlength), 
-  Group = gsub("_." , "", tmp), FeatureSet = rep(NA, each = replength), 
-  #parameter est for 4 parm
-  b = rep(NA, targlength * replength), c = rep(NA, targlength * replength), 
-  d = rep(NA, targlength * replength), e = rep(NA, targlength * replength),
-  #dw statistics
-  r.amp = rep(NA, targlength * replength), dw.amp = rep(NA, targlength * replength), p.amp = rep(NA, targlength * replength), 
-  r.res = rep(NA, targlength * replength), dw.res = rep(NA, targlength * replength), p.res = rep(NA, targlength * replength), 
-  #rss and getPar statistics
-  rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength)
-)
+files <- getfiles
+targnames <- unique(files) #all targets
+targnames <- gsub(".Rda", "", targnames) #remove .Rda to match later
+sampnames <- mixedsort(unique(c(orgdata$SampleID)))
+#repeat all sample names for the chosen targets in files
+tmp <- rep(sampnames, length(files))
+#creating result data.frame
+targlength <- length(targnames) #length of all targets
+replength <- length(unique(orgdata$SampleID)) #sum(lengths(tst)) #length of total reps for each target
 
 res <- data.frame(
-  Target = rep(subletters[1:8], each = yoo[1:8])
+    TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength),
+    Group = gsub("_." , "", tmp), Breaks = rep(NA, each = replength), 
+    Break1 = rep(NA, each = replength), Break2 = rep(NA, each = replength),
+    Break3 = rep(NA, each = replength)
 )
 
-meh = 
-data.frame(target = rep(subletters[1:8], each=meh))
+res[1, 5:7] <- c(mello[[1]][[1]]$breakpoints)
 
 
-length(subsets$A)
+meck <- list()
+for(i in 1:8){
+  meck[i] <- lapply(mello[[i]], function(x) length(x$breakpoints))
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+foreach(k=1:length(files)) %do% {    #(k in 1:length(files)){  #foreach (k = 1:length(files)) %do% {
+  load(file = files[[k]])
+  try <- unlist.genparams(tst)
+  ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
+  res[ind1:ind2, 5:18] <- plot_sig(est, try)
+  res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
+                                  function(x) unique(x$FeatureSet)))), replength)
+  }
 
 
