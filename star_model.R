@@ -48,54 +48,36 @@ breaks <- data.frame(
   Breaks2 = rep(NA, each = 96), Breaks3 = rep(NA, each = 96)
 )
 
-#double lapply extracts brkpts
+#double lapply extracts brkpts + adding NA to length
 brks <- function(x){ #function for subset breakdate est.
   brkpt <- list()
-  brkpt <- lapply(x, function(y) return(y$breakpoints)) 
+  brkpt <- lapply(x, function(y) return(y$breakpoints))
   #nobrk <- lapply(x, function(y) return(length(y$breakpoints)))
   return(brkpt)
 }
-cello <- lapply(mello, function(x) brks(x))
+breaksp <- lapply(mello, function(x) brks(x))
 
-cello[[1]]
-
-df <- data.frame(matrix(unlist(cello), nrow=96, byrow=T))
-
-df <- data.frame(matrix(unlist(cello), nrow=12, byrow=T),stringsAsFactors=FALSE)
-
-
-
-leng <- function(x){
-  lapply(x, function(y) return(length(y)))
+lengthfc <- function(s, n){ #function for setting length for lists
+  lapply(s, function(t) {length(t) <- n ; t})
 }
-cellolength <- unlist(lapply(cello, function(x) leng(x)))
+n <- max(unlist(lapply(breaksp, lengths))) #max length of all lists
+brkpts <- lapply(breaksp, function(x) lengthfc(x, n)) #same length for all with NA added 
 
-
-empmat <- matrix(data=NA,nrow=96,ncol=5)
+empmat <- matrix(data=NA, nrow=96, ncol=5)
 empmat[1:96, 1] <- matrix(cellolength[1:96], nrow=96)
 for(i in 1:8){
-  for(j in 1:12){
-empmat[i, 2:(2+empmat[i, 1])] <- matrix(cello[[i]][[j]], nrow=1)
-  }
+  #ind2 = n*i ; ind1 = ind2-(n-1)
+  brkpts.unlist <- lapply(brkpts, unlist)
+  ind2 = length(brkpts[[i]])*i ; ind1 = ind2-(length(brkpts[[i]])-1)
+  empmat[ind1:ind2, 2:(2+(n-1))] <- matrix(brkpts.unlist[[i]], byrow = T, nrow=length(brkpts[[i]]))   #[ind1:ind2]
 }
 
-for(i in 1:96){
-empmat[i, 2:(2+empmat[i,1])] <- lapply(cello, unlist)[1][1:(1+empmat[i,1])]
-}
 
-empmat[1, 2:5] <- matrix(cello[[1]][[1]], nrow=1)
 
-m <- matrix(NA, nrow=96, ncol=4)
 
-for(i in 1:8){
-  for(j in 1:12){
-    m <- matrix(cello[[i]][[j]], nrow=1)
-  }
-}
 
-8*1 - 7, 8*2 - 14, .... 
 
-1,...12, 13
+
 
 #changing data to fit fcn
 mdata <- melt(df, id=c("Cycles"))
