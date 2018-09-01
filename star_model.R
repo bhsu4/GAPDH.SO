@@ -22,7 +22,7 @@ brks <- function(subsfcn){ #function for subset breakdate est.
   }
   return(brkpt)
 }
-breaks <- lapply(subs.all, function(x) brks(x)) #breaks is the dynlm eq with breakpoints
+strchange <- lapply(subs.all, function(x) brks(x)) #breaks is the dynlm eq with breakpoints
 
 for(i in 1:8){
   for(j in 2:13){ 
@@ -31,22 +31,27 @@ for(i in 1:8){
            ylim = c(range(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))])), col = i)
     } 
     lines(subslog[[i]][,j])
-    abline(v=breaks[[i]][[j-1]]$breakpoints, col=j-1)
-    text(c(breaks[[i]][[j-1]]$breakpoints), max(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))]), 
+    abline(v=strchange[[i]][[j-1]]$breakpoints, col=j-1)
+    text(c(strchange[[i]][[j-1]]$breakpoints), max(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))]), 
          as.character(j), pos=2, srt=90, cex=0.65)
   }
 }
-return(breaks)
+return(strchange)
 }
 
 #figuring out breakpoinntss into DF or matrix
 mello <- hello(subsets)
 
-#eempty df
+
+
+
+#empty df
 breaks <- data.frame(
   Breaks = rep(NA, each = 96), Breaks1 = rep(NA, each = 96),
   Breaks2 = rep(NA, each = 96), Breaks3 = rep(NA, each = 96)
 )
+
+
 
 #double lapply extracts brkpts + adding NA to length
 brks <- function(x){ #function for subset breakdate est.
@@ -72,7 +77,7 @@ for(i in 1:8){
   empmat[ind1:ind2, 2:(2+(n-1))] <- matrix(brkpts.unlist[[i]], byrow = T, nrow=length(brkpts[[i]]))   #[ind1:ind2]
 }
 
-
+empmat
 
 
 
@@ -116,24 +121,140 @@ res <- data.frame(
     TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength),
     Group = gsub("_." , "", tmp), Breaks = rep(NA, each = replength), 
     Break1 = rep(NA, each = replength), Break2 = rep(NA, each = replength),
-    Break3 = rep(NA, each = replength)
+    Break3 = rep(NA, each = replength), Break4 = rep(NA, each = replength)
 )
 
 res[1, 5:7] <- c(mello[[1]][[1]]$breakpoints)
 
+empmat.df <- data.frame(empmat) %>% 
+                  rename(Breaks = X1, Break1 = X2, Break2 = X3, Break3 = X4, Break4 = X5)
 
-meck <- list()
-for(i in 1:8){
-  meck[i] <- lapply(mello[[i]], function(x) length(x$breakpoints))
-}
+rep <- colnames(res) %in% colnames(empmat.df) 
+res[rep] <- empmat.df
 
-foreach(k=1:length(files)) %do% {    #(k in 1:length(files)){  #foreach (k = 1:length(files)) %do% {
-  load(file = files[[k]])
-  try <- unlist.genparams(tst)
-  ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
-  res[ind1:ind2, 5:18] <- plot_sig(est, try)
-  res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
-                                  function(x) unique(x$FeatureSet)))), replength)
+
+
+
+
+
+######FUNCTION FIX THIS!
+
+#full function
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy", 
+                pattern =  "^targ_")
+
+
+asd <- function(orgdata, getfiles, plot=FALSE){
+  
+  files <- getfiles #pathway file
+  targnames <- unique(files) #all targets
+  targnames <- gsub(".Rda", "", targnames) #remove .Rda to match later
+  sampnames <- mixedsort(unique(c(orgdata$SampleID))) #sorted samplenames
+  #repeat all sample names for the chosen targets in files
+  tmp <- rep(sampnames, length(files))
+  #creating result data.frame
+  targlength <- length(targnames) #length of all targets
+  replength <- length(unique(orgdata$SampleID))
+  
+  #foreach loads in each tester, and outputs strcchange, whole output for breakpt 
+  foreach(k=1:length(files)) %do% {   #load in each file
+    load(file = files[[k]]) #loaded in as tst
+    subs <- unlist.genparams(tst) #tester from unlistgenparams = tst loaded in
+    
+    #using list of dataframes  
+    subslog <- lapply(subs, function(x) x %>% 
+                        mutate_each(funs(log10(.)), 2:13)) #original log10 terms 
+    subslogcb <- lapply(subslog, function(x) x %>% 
+                          dplyr::select(-starts_with("Cycle")) %>% #delete cycle lag
+                          mutate_each(funs(lag(., k=2)), 1:12))  #lagged terms
+    subslogcb <- lapply(subslogcb, function(x) setNames(x, paste0(colnames(x), "_lag"))) #colnames for lagged
+    subs.all <- Map(cbind, subslog, subslogcb) #mapped for column bind for log and logcb
+    subs.all <- lapply(subs.all, function(x) x %>% 
+                         .[mixedsort(colnames(.))] %>% #correct order except Cycles
+    #dplyr::select(noquote(mixedsort(colnames(.)))) %>% #correct order except for Cycles
+                         dplyr::select(starts_with("Cycle"), everything())) #correct order
+    #subs.all <- lapply(subs.all, function(x) x %>% select(-starts_with("Cycle_")))
+    brks <- function(subsfcn){ #function for subset breakdate est.
+      brkpt <- list()
+      for(j in 1:12){ 
+        ind1 = 25-(25-2*j) ; ind2 = ind1+1   #takes col 2,3 ; 3,4 ; etc (real, and lag)
+        brkpt[[j]] <- breakpoints(subsfcn[,ind1] ~ subsfcn[,ind2], data = subsfcn) 
+      }
+      return(brkpt)
+    }
+    #strchange is the whole output of breakpoint examination
+    strchange <- lapply(subs.all, function(x) brks(x)) #breaks is the dynlm eq with breakpoints  
+    
+    #sort empmat first, so that we know how mmany breaks n to use
+    #double lapply extracts brkpts + adding NA to length
+    brkso <- function(x){ #function for extracting ONLY subset breakdate
+      brkpt <- list()
+      brkpt <- lapply(x, function(y) return(y$breakpoints))
+      #nobrk <- lapply(x, function(y) return(length(y$breakpoints)))
+      return(brkpt)
+    }
+    
+    #getting only the breakpoints but with differing lengths
+    breaksp <- lapply(strchange, function(x) brkso(x))
+    
+    #function to make lengths the same
+    lengthfc <- function(s, n){ #function for setting length for lists
+      lapply(s, function(t) {length(t) <- n ; t})
+    }
+    #nmax is length of most number of breakpoints
+    nmax <- max(unlist(lapply(breaksp, lengths))) #max length of all lists
+    #table of the breaks in for each subset
+    nlength <- unlist(lapply(breaksp, lengths))
+    brkpts <- lapply(breaksp, function(x) lengthfc(x, nmax)) #same length for all with NA added 
+
+#GOOD TILL HERE:
+        
+    #empty matrix
+    empmat <- matrix(data=NA, nrow=replength, ncol=(nmax+1))
+    empmat[1:replength, 1] <- matrix(nlength[1:replength], nrow=replength) #number of breaks (1st column)
+    
+    #break dates for the i points into matrix, columns 2 to max in empmat
+    for(i in 1:length(breaksp)){ #first col is num brks, 2 to nmax are breakpoints
+      #ind2 = n*i ; ind1 = ind2-(n-1)
+      brkpts.unlist <- lapply(brkpts, unlist)
+      ind2 = length(brkpts[[i]])*i ; ind1 = ind2-(length(brkpts[[i]])-1)
+      empmat[ind1:ind2, 2:(2+(nmax-1))] <- matrix(brkpts.unlist[[i]], byrow = T, 
+                                               nrow=length(brkpts[[i]]))   #[ind1:ind2]
+    }
+    #empmat[1:replength, 1] <- matrix(sampnames, nrow=replength) from double to character
+    
+    #given break names for the 
+    library(data.table) #setnames lib package
+    breaknames <- unlist(sapply("Breaks", paste0, 1:20, simplify=T)) #breakpoint names to 20 (chosen cutoff)
+    empmat.df <- data.frame(empmat) %>% setnames(., c("Breaks", breaknames[1:nmax])) #names to nmax 
+    #rename(Breaks = X1, Break1 = X2, Break2 = X3, Break3 = X4, Break4 = X5)
+    
+    #empty data frame with target info
+    res0 <- data.frame(
+      TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength),
+      Group = gsub("_\\d+", "", tmp))
+    breaks.mat <- cbind(res0, empmat.df)
   }
-
-
+  
+  #plotting the strcchange break observations  
+  if(plot){
+    for(i in 1:8){
+      for(j in 2:13){ #skip first column since cycle
+       # if(j==2){ #simple connection of dots, then ablines for break obs 
+          plot(subslog[[i]][,j], ylab = expression(log[10](Fluorescence)), type="l",
+               ylim = c(range(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))])), col = i)
+         
+        #lines(subslog[[i]][,j])
+        abline(v=strchange[[i]][[j-1]]$breakpoints, col=1)
+        #text(c(strchange[[i]][[j-1]]$breakpoints), max(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))]), 
+          #   as.character(j), pos=2, srt=90, cex=0.65)
+    ind2 = length(brkpts[[i]])*i ; ind1 = ind2-(length(brkpts[[i]])-(j-1))
+    legend("bottomright", as.character(breaks.mat[ind1,"SampleID"]), bty = "n", cex=0.75)
+      }
+    }
+  }
+  return(breaks.mat)
+} 
+  
+asd(orgdata, getfiles, plot=TRUE)
