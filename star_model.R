@@ -1,5 +1,5 @@
 #keeps first column cycle, log10 rest of fluorescence 
-library(tidyverse) ; library(gtools) ; library(strucchange)
+library(tidyverse) ; library(gtools) ; library(strucchange) ; library(data.table)
 
 hello <- function(subs){
 
@@ -143,10 +143,13 @@ res[rep] <- empmat.df
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy", 
                 pattern =  "^targ_")
+orgdata = mdata #for below
 
-
-asd <- function(orgdata, getfiles, plot=FALSE){
+brkplot <- function(orgdata, getfiles, plot=FALSE){
+#lag currently set at 2, add klag to function for diff lags
+#currently uses log10 for Fluo. add nonlogged function
   
+#defining pathway and important lengths 
   files <- getfiles #pathway file
   targnames <- unique(files) #all targets
   targnames <- gsub(".Rda", "", targnames) #remove .Rda to match later
@@ -157,6 +160,7 @@ asd <- function(orgdata, getfiles, plot=FALSE){
   targlength <- length(targnames) #length of all targets
   replength <- length(unique(orgdata$SampleID))
   
+#using package strucchange to get breakpoints for each curve (lag at 2 set)
   #foreach loads in each tester, and outputs strcchange, whole output for breakpt 
   foreach(k=1:length(files)) %do% {   #load in each file
     load(file = files[[k]]) #loaded in as tst
@@ -208,8 +212,7 @@ asd <- function(orgdata, getfiles, plot=FALSE){
     nlength <- unlist(lapply(breaksp, lengths))
     brkpts <- lapply(breaksp, function(x) lengthfc(x, nmax)) #same length for all with NA added 
 
-#GOOD TILL HERE:
-        
+#create matrix out with ID and breakpoints 
     #empty matrix
     empmat <- matrix(data=NA, nrow=replength, ncol=(nmax+1))
     empmat[1:replength, 1] <- matrix(nlength[1:replength], nrow=replength) #number of breaks (1st column)
@@ -225,7 +228,6 @@ asd <- function(orgdata, getfiles, plot=FALSE){
     #empmat[1:replength, 1] <- matrix(sampnames, nrow=replength) from double to character
     
     #given break names for the 
-    library(data.table) #setnames lib package
     breaknames <- unlist(sapply("Breaks", paste0, 1:20, simplify=T)) #breakpoint names to 20 (chosen cutoff)
     empmat.df <- data.frame(empmat) %>% setnames(., c("Breaks", breaknames[1:nmax])) #names to nmax 
     #rename(Breaks = X1, Break1 = X2, Break2 = X3, Break3 = X4, Break4 = X5)
@@ -237,7 +239,7 @@ asd <- function(orgdata, getfiles, plot=FALSE){
     breaks.mat <- cbind(res0, empmat.df)
   }
   
-  #plotting the strcchange break observations  
+#plotting the strcchange break observations  
   if(plot){
     for(i in 1:8){
       for(j in 2:13){ #skip first column since cycle
@@ -258,3 +260,45 @@ asd <- function(orgdata, getfiles, plot=FALSE){
 } 
   
 asd(orgdata, getfiles, plot=TRUE)
+
+
+####applying LSTAR model thru function
+source("GAPDH.SO/lag_gen.R")
+library(dynlm) ; library(Hmisc)
+
+aiclag <- function(subs, log=TRUE){
+#finding the lag term length that will be used by plotting AIC
+fitsres <- list() ; fitsresaic <- list()
+#convert ts of the data
+if(log){
+  subslog <- lapply(subs, function(x) x %>% 
+                    mutate_each(funs(log10(.)), 2:13)) #original log10 terms 
+  subs = subslog
+}
+subs.ts <- lapply(subs, ts) #time series of data
+subsnames <- lapply(LETTERS[1:8], paste0, 1:12) #list of subset names
+#dynlm formula in list w/ up to 15 lags
+subsformulas <- lapply(subsnames, function(x) lapply(x, get_lag_formulae, n=15)) 
+
+for(j in 1:8) fitsres[[j]] <- lapply(subsformulas[[j]], function(x) lapply(x, 
+                                            function(f) dynlm(formula = as.formula(f), 
+                                              data=subs.ts[[j]]))) #output results of dynlm
+for(j in 1:8) fitsresaic[[j]] <- sapply(fitsres[[j]], 
+                                            function(x) sapply(x,AIC)) #output results of dynlm
+
+#plotting AIC values
+for(j in 1:8){
+  for(i in 1:12){
+    if(i==1 & j==1){
+      #cutoff 15 lags so x=1:15
+      plot(x=1:15, y=fitsresaic[[j]][,i], type = "p", ylim = c(range(fitsresaic)), 
+           ylab = "AIC", xlab = "Lagged Term Set")
+      }
+      points(x=1:15, y=fitsresaic[[j]][,i], col = j)
+    } #plotting all replication sets' AIC
+  }
+return(fitsresaic)
+}
+
+aiclag(subs = subs, log=FALSE) #non-log10 values hard to see AIC comparison
+aiclag(subs = subs) #log10 values easy to see dramatic improvement at lag=2
