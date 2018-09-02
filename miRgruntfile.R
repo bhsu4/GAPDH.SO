@@ -76,13 +76,8 @@ load(file = getmat[[1]]) ; load(file = getmat[[2]]) ; load(file = getmat[[3]]) ;
 l5dat = help1 ; l4dat = help2 ; b5dat = help3 ; b4dat = help4
 
 
-
-
 ####scatterplot matrices for sig models
-library(car)
-library(RColorBrewer)
-library(bayou)
-library(SciViews)
+library(car) ; library(RColorBrewer) ; library(bayou) ; library(SciViews)
 
 #colors
 my_colors <- brewer.pal(nlevels(as.factor(l5dat$ind)), "Set1")
@@ -93,8 +88,7 @@ add.alpha <- function(col, alpha=1){
         function(x) 
           rgb(x[1], x[2], x[3], alpha=alpha))  
 }
-my_colors <- add.alpha(my_colors, alpha=0.75)
-#my_colors <- add.alpha(c("blue", "green", "red"), alpha=0.8)
+my_colors <- add.alpha(my_colors, alpha=0.75) #adding transparency
 
 #panel diagonal as histogram for pairs
 panel.hist <- function(x, ...)
@@ -126,11 +120,15 @@ pairs(~dw.res+ct, data = l5dat, main = "l5",
 par(xpd=TRUE)
 legend("right", as.vector(unique(l5dat$ind)[1:3]), fill=my_colors)
 
-#contour plot
+#contour plot of scatterplot matrix
 library(ggplot2)
 ggplot(l5dat,  mapping = aes(dw.res, ct, col = ind, lty = ind)) +
 geom_density2d(contour = TRUE, size=0.75, linemitre = 3, bins=5) + xlim(range(l5dat$dw.res)) + ylim(range(l5dat$ct)) +
   scale_color_brewer(palette="Reds") + theme_bw()
-#smaller dw.res (more ac) with larger RSS. there's something bad about sig model that goes beyond the eq. increasing variancce
+#key point here!
+#smaller dw.res (more ac) with larger RSS. there's something bad about 
+#sig model that goes beyond the eq., increasing variance
 
 #use ggpairs for scat matrix
+require(GGally)
+ggpairs(l5dat[, c("dw.res", "ct", "ind")], mapping=ggplot2::aes(color = ind))
