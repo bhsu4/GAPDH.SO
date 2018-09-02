@@ -266,16 +266,31 @@ asd(orgdata, getfiles, plot=TRUE)
 source("GAPDH.SO/lag_gen.R")
 library(dynlm) ; library(Hmisc)
 
+#add get lag formulae in there? then no source needed for lag gen
+
 aiclag <- function(subs, log=TRUE){
 #finding the lag term length that will be used by plotting AIC
 fitsres <- list() ; fitsresaic <- list()
-#convert ts of the data
+
+#log10 conversion
 if(log){
   subslog <- lapply(subs, function(x) x %>% 
                     mutate_each(funs(log10(.)), 2:13)) #original log10 terms 
   subs = subslog
 }
-subs.ts <- lapply(subs, ts) #time series of data
+#time series converion of data
+  subs.ts <- lapply(subs, ts) #time series of data
+  
+#establish get lag formulae used for later
+get_lag_formulae <- function(n, nrep){
+    formulae <- list()
+    for(k in 1:n){
+      formulae[[k]] <- paste(nrep, "~", paste(paste0("L(", nrep, ",", 1:k,")"), collapse=" + "), collapse=" ")
+    }
+    return(formulae)
+  }
+
+#constructing formulas
 subsnames <- lapply(LETTERS[1:8], paste0, 1:12) #list of subset names
 #dynlm formula in list w/ up to 15 lags
 subsformulas <- lapply(subsnames, function(x) lapply(x, get_lag_formulae, n=15)) 
