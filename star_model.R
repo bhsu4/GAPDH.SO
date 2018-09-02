@@ -147,7 +147,7 @@ orgdata = mdata #for below
 library(Hmisc) #used for Lag 
 
 brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
-#lag currently set at 2, add klag to function for diff lags
+
 #currently uses log10 for Fluo. add nonlogged function
   
 #defining pathway and important lengths 
@@ -172,7 +172,20 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
                         mutate_each(funs(log10(.)), 2:13)) #original log10 terms 
     subslogcb <- lapply(subslog, function(x) x %>% 
                           dplyr::select(-starts_with("Cycle")) %>% #delete cycle lag
-                          mutate_each(funs(Lag(., shift=klag))))  #lagged terms
+                          mutate_each(funs(Lag(., shift=klag)))) #lagged terms
+#lag terms up to klag chosen
+#    lagterms <- function(klag){
+#      for(k in 1:klag){
+#        lagforms[[k]] <- unlist(sapply("Lag(., shift=", paste0, 1:k, ")"))
+#      }
+#      return(lagforms[[klag]]) #returns specific klags
+#    }
+#    lagschosen <- lagterms(klag)
+#cannot create 3columns for the klag of 1,2,3   
+#    lapply(subslog, function(x) x %>% 
+#             dplyr::select(-starts_with("Cycle")) %>% 
+#             mutate_each(funs(lagterms(klag=3)))) #as.formula(lagschosen[[3]])
+
     subslogcb <- lapply(subslogcb, function(x) setNames(x, paste0(colnames(x), "_lag"))) #colnames for lagged
     subs.all <- Map(cbind, subslog, subslogcb) #mapped for column bind for log and logcb
     subs.all <- lapply(subs.all, function(x) x %>% 
@@ -260,7 +273,7 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
   return(breaks.mat)
 } 
   
-brkplot(orgdata, getfiles, klag=5, plot=TRUE)
+brkplot(orgdata, getfiles, klag=5, plot=FALSE)
 
 
 ####applying LSTAR model thru function
@@ -318,3 +331,59 @@ return(fitsresaic)
 
 aiclag(subs = subs, log=FALSE) #non-log10 values hard to see AIC comparison
 aiclag(subs = subs) #log10 values easy to see dramatic improvement at lag=2
+
+
+####STAR model function
+##plotting LSTAR model to see fit for replication
+lsubsets <- subsets #lsubsets different from subsets_log b/c subsets_log with ts 
+for(i in 1:8){
+  for(j in 2:13){
+    lsubsets[[i]][[j]] <- log10(subsets[[i]][[j]])
+  }
+}
+lsubsets <- subslog
+lsubsets <- lapply(subslog, ts)
+
+tsDyn::lstar(lsubsets[[1]][,2], m=2)
+
+ff <- rowMeans(lsubsets$A[,2:13])
+ff2 <- apply(lsubsets$A[,2:13], 1, median)
+
+try.lstar2 <- tsDyn::lstar(fftest, m=2, d=1)
+try.lstar <- tsDyn::lstar(ff, m=2, d=1) #embedding dimension=2, delay = 1 #mean
+
+plot(x=3:40, try.lstar$fitted.values, type = "l") #ylim = c(5.1, 5.75), xlim=c(1,40))
+for(j in 1:12){
+  for(h in 1:8){
+    points(x=1:40, y=subsets_log[[h]][[j]][,1], cex=0.45)
+  }
+} #plot points for 38 cycles given lag 2try.lstar2 <- tsDyn::lstar(ff2, m=2, d=1) #median replication set
+#lines(x=1:38, try.lstar2$fitted.values, type = "l", ylim = c(5.1, 5.75), col = 2)
+
+df_b5_log <- genparams(est=b5, listdf=lsubsets)
+lines(x=1:40, y=b5_model(1:40, b=df_b5_log$params$b[1], c=df_b5_log$params$c[1],
+                         d=df_b5_log$params$d[1], e=df_b5_log$params$e[1], 
+                         f=df_b5_log$params$f[1]), col=2) #lines for b_5 model
+
+
+#plotting residuals: do we need to forecast, if by looking, resid worse for lstar than log models?
+plot(x=1:38, try.lstar$residuals, type = "l") #reduces branching effect?? doesnt match up
+
+ff <- vector("list", 8)
+for(i in 1:8){
+  ff[[i]] <- rowMeans(lsubsets[[i]][, 2:13])
+} #list of 8 for row means
+
+try.lstar <- vector("list", 8)
+for(i in 1:8){
+  try.lstar[[i]] <- tsDyn::lstar(ff[[i]], m=2, d=1) #run lstar model through each rep
+}
+
+for(i in 1:8){
+  if(i == 1){ #plot residuals/ note: in ln units
+    plot(x = 1:38, y = try.lstar[[i]]$residuals, type = "l", col = 1, cex = 1.5, 
+         ylab = "Residuals", xlab = "Time Series Cycle (t)")
+  }
+  lines(x = 1:38, y = try.lstar[[i]]$residuals, col = i, cex = 1.5)
+}
+legend("bottomright", c(LETTERS[1:8]), col=1:8, ncol = 4, lty = 1)
