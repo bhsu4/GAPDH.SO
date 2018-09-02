@@ -144,8 +144,9 @@ setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy", 
                 pattern =  "^targ_")
 orgdata = mdata #for below
+library(Hmisc) #used for Lag 
 
-brkplot <- function(orgdata, getfiles, plot=FALSE){
+brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
 #lag currently set at 2, add klag to function for diff lags
 #currently uses log10 for Fluo. add nonlogged function
   
@@ -166,12 +167,12 @@ brkplot <- function(orgdata, getfiles, plot=FALSE){
     load(file = files[[k]]) #loaded in as tst
     subs <- unlist.genparams(tst) #tester from unlistgenparams = tst loaded in
     
-    #using list of dataframes  
+    #using list of dataframes 
     subslog <- lapply(subs, function(x) x %>% 
                         mutate_each(funs(log10(.)), 2:13)) #original log10 terms 
     subslogcb <- lapply(subslog, function(x) x %>% 
                           dplyr::select(-starts_with("Cycle")) %>% #delete cycle lag
-                          mutate_each(funs(lag(., k=2)), 1:12))  #lagged terms
+                          mutate_each(funs(Lag(., shift=klag))))  #lagged terms
     subslogcb <- lapply(subslogcb, function(x) setNames(x, paste0(colnames(x), "_lag"))) #colnames for lagged
     subs.all <- Map(cbind, subslog, subslogcb) #mapped for column bind for log and logcb
     subs.all <- lapply(subs.all, function(x) x %>% 
@@ -259,7 +260,7 @@ brkplot <- function(orgdata, getfiles, plot=FALSE){
   return(breaks.mat)
 } 
   
-asd(orgdata, getfiles, plot=TRUE)
+brkplot(orgdata, getfiles, klag=5, plot=TRUE)
 
 
 ####applying LSTAR model thru function
