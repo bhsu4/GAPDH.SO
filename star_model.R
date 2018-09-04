@@ -85,11 +85,12 @@ empmat
 
 
 #changing data to fit fcn
+library(stringr)
 mdata <- melt(df, id=c("Cycles"))
 mdata <- mdata %>%
   dplyr::mutate(TargetName = "A") %>% 
   dplyr::mutate(cat = str_extract(variable, "[A-Z]")) %>% 
-  mutate_each(funs(chartr("ABCDEFGH", "12345678", .)), "cat") %>% 
+  mutate_each(funs(chartr("ABCDEFGH", "12345678", .)), cat) %>% 
   dplyr::mutate(new_idn = str_extract(variable, "\\d+$")) %>% 
   dplyr::mutate(new_id = "KW") %>% 
   dplyr::mutate(SampleID = paste0(new_id, cat, "_", new_idn)) %>% 
@@ -99,42 +100,6 @@ mdata <- mdata %>%
 subsA  <- singtarget.list(mdata, "A") #works for single
 savetarget.list(mdata) #works for general
 load(file = "targ_A.Rda") #loads in as tst
-
-
-#overlaps text when attaching at brkpt
-#create DF of it, return that DF, and paste multiple cycle number on graph
-
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy", 
-                pattern =  "^targ_")
-
-files <- getfiles
-targnames <- unique(files) #all targets
-targnames <- gsub(".Rda", "", targnames) #remove .Rda to match later
-sampnames <- mixedsort(unique(c(orgdata$SampleID)))
-#repeat all sample names for the chosen targets in files
-tmp <- rep(sampnames, length(files))
-#creating result data.frame
-targlength <- length(targnames) #length of all targets
-replength <- length(unique(orgdata$SampleID)) #sum(lengths(tst)) #length of total reps for each target
-
-res <- data.frame(
-    TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength),
-    Group = gsub("_." , "", tmp), Breaks = rep(NA, each = replength), 
-    Break1 = rep(NA, each = replength), Break2 = rep(NA, each = replength),
-    Break3 = rep(NA, each = replength), Break4 = rep(NA, each = replength)
-)
-
-res[1, 5:7] <- c(mello[[1]][[1]]$breakpoints)
-
-empmat.df <- data.frame(empmat) %>% 
-                  rename(Breaks = X1, Break1 = X2, Break2 = X3, Break3 = X4, Break4 = X5)
-
-rep <- colnames(res) %in% colnames(empmat.df) 
-res[rep] <- empmat.df
-
-
-
-
 
 
 ######FUNCTION FIX THIS!
@@ -159,8 +124,9 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
   tmp <- rep(sampnames, length(files))
   #creating result data.frame
   targlength <- length(targnames) #length of all targets
-  replength <- length(unique(orgdata$SampleID))
-  
+  replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
+  sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E
+
 #using package strucchange to get breakpoints for each curve (lag at 2 set)
   #foreach loads in each tester, and outputs strcchange, whole output for breakpt 
   foreach(k=1:length(files)) %do% {   #load in each file
@@ -169,7 +135,7 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
     
     #using list of dataframes 
     subslog <- lapply(subs, function(x) x %>% 
-                        mutate_each(funs(log10(.)), 2:13)) #original log10 terms 
+                        mutate_each(funs(log10(.)), 2:((replength/sublength)+1)))      #original log10 terms 
     subslogcb <- lapply(subslog, function(x) x %>% 
                           dplyr::select(-starts_with("Cycle")) %>% #delete cycle lag
                           mutate_each(funs(Lag(., shift=klag)))) #lagged terms
@@ -195,8 +161,9 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
     #subs.all <- lapply(subs.all, function(x) x %>% select(-starts_with("Cycle_")))
     brks <- function(subsfcn){ #function for subset breakdate est.
       brkpt <- list()
-      for(j in 1:12){ 
-        ind1 = 25-(25-2*j) ; ind2 = ind1+1   #takes col 2,3 ; 3,4 ; etc (real, and lag)
+      for(j in 1:(replength/sublength)){ 
+        ind1 = ((2*(replength/sublength))-(2*(replength/sublength)-2*j)) ; #25-(25-2*j)
+        ind2 = ind1+1   #takes col 2,3 ; 3,4 ; etc (real, and lag) 
         brkpt[[j]] <- breakpoints(subsfcn[,ind1] ~ subsfcn[,ind2], data = subsfcn) 
       }
       return(brkpt)
@@ -255,8 +222,8 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
   
 #plotting the strcchange break observations  
   if(plot){
-    for(i in 1:8){
-      for(j in 2:13){ #skip first column since cycle
+    for(i in 1:sublength){
+      for(j in 2:((replength/sublength)+1)){ #skip first column since cycle
        # if(j==2){ #simple connection of dots, then ablines for break obs 
           plot(subslog[[i]][,j], ylab = expression(log[10](Fluorescence)), type="l",
                ylim = c(range(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))])), col = i)
