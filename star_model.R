@@ -263,6 +263,7 @@ getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO
 load(file = getfiles[[1]])
 brkplot(miRcompData2, getfiles, klag=1, plot=FALSE)
 
+
 ####applying LSTAR model thru function
 source("GAPDH.SO/lag_gen.R")
 library(dynlm) ; library(Hmisc)
@@ -270,54 +271,65 @@ library(dynlm) ; library(Hmisc)
 #add get lag formulae in there? then no source needed for lag gen
 
 aiclag <- function(subs, log=TRUE){
-#finding the lag term length that will be used by plotting AIC
-fitsres <- list() ; fitsresaic <- list()
+  #finding the lag term length that will be used by plotting AIC
+  fitsres <- list() ; fitsresaic <- list()
 
-#log10 conversion
-if(log){
-  subslog <- lapply(subs, function(x) x %>% 
-                    mutate_each(funs(log10(.)), 2:13)) #original log10 terms 
-  subs = subslog
-}
-#time series converion of data
-  subs.ts <- lapply(subs, ts) #time series of data
-  
-#establish get lag formulae used for later
-get_lag_formulae <- function(n, nrep){
-    formulae <- list()
-    for(k in 1:n){
-      formulae[[k]] <- paste(nrep, "~", paste(paste0("L(", nrep, ",", 1:k,")"), collapse=" + "), collapse=" ")
-    }
-    return(formulae)
+  #defining important lengths
+  targnames <- unique(files) #all targets
+  targnames <- gsub(".Rda", "", targnames) #remove .Rda to match later
+  sampnames <- mixedsort(unique(c(orgdata$SampleID))) #sorted samplenames
+  #repeat all sample names for the chosen targets in files
+  tmp <- rep(sampnames, length(files))
+  #creating result data.frame
+  targlength <- length(targnames) #length of all targets
+  replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
+  sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E
+
+  #log10 conversion
+  if(log){
+    subslog <- lapply(subs, function(x) x %>% 
+                      mutate_each(funs(log10(.)), 2:((replength/sublength)+1))) #original log10 terms 
+    subs = subslog
   }
+  #time series converion of data
+    subs.ts <- lapply(subs, ts) #time series of data
+  
+  #establish get lag formulae used for later
+  get_lag_formulae <- function(n, nrep){
+      formulae <- list()
+      for(k in 1:n){
+        formulae[[k]] <- paste(nrep, "~", paste(paste0("L(", nrep, ",", 1:k,")"), 
+                         collapse=" + "), collapse=" ") #generates L(x,1) + L(x,2) + ..L(x,k) 
+      }
+      return(formulae)
+    }
 
-#constructing formulas
-subsnames <- lapply(LETTERS[1:8], paste0, 1:12) #list of subset names
-#dynlm formula in list w/ up to 15 lags
-subsformulas <- lapply(subsnames, function(x) lapply(x, get_lag_formulae, n=15)) 
+  #constructing formulas
+  subsnames <- lapply(LETTERS[1:sublength], paste0, 1:(replength/sublength)) #list of subset names
+  #dynlm formula in list w/ up to 15 lags
+  subsformulas <- lapply(subsnames, function(x) lapply(x, get_lag_formulae, n=15)) 
 
-for(j in 1:8) fitsres[[j]] <- lapply(subsformulas[[j]], function(x) lapply(x, 
+  for(j in 1:sublength) fitsres[[j]] <- lapply(subsformulas[[j]], function(x) lapply(x, 
                                             function(f) dynlm(formula = as.formula(f), 
                                               data=subs.ts[[j]]))) #output results of dynlm
-for(j in 1:8) fitsresaic[[j]] <- sapply(fitsres[[j]], 
+  for(j in 1:sublength) fitsresaic[[j]] <- sapply(fitsres[[j]], 
                                             function(x) sapply(x,AIC)) #output results of dynlm
-
-#plotting AIC values
-for(j in 1:8){
-  for(i in 1:12){
-    if(i==1 & j==1){
-      #cutoff 15 lags so x=1:15
-      plot(x=1:15, y=fitsresaic[[j]][,i], type = "p", ylim = c(range(fitsresaic)), 
-           ylab = "AIC", xlab = "Lagged Term Set")
-      }
-      points(x=1:15, y=fitsresaic[[j]][,i], col = j)
-    } #plotting all replication sets' AIC
-  }
-return(fitsresaic)
+  #plotting AIC values
+  for(j in 1:sublength){
+    for(i in 1:(replength/sublength)){
+      if(i==1 & j==1){
+        #cutoff 15 lags so x=1:15
+        plot(x=1:15, y=fitsresaic[[j]][,i], type = "p", ylim = c(range(fitsresaic)), 
+             ylab = "AIC", xlab = "Lagged Term Set")
+        }
+        points(x=1:15, y=fitsresaic[[j]][,i], col = j)
+      } #plotting all replication sets' AIC
+    }
+  return(fitsresaic)
 }
 
-aiclag(subs = subs, log=FALSE) #non-log10 values hard to see AIC comparison
-aiclag(subs = subs) #log10 values easy to see dramatic improvement at lag=2
+  aiclag(subs = subs, log=FALSE) #non-log10 values hard to see AIC comparison
+  aiclag(subs = subs) #log10 values easy to see dramatic improvement at lag=2
 
 
 ####STAR model function
