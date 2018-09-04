@@ -133,9 +133,13 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
     load(file = files[[k]]) #loaded in as tst
     subs <- unlist.genparams(tst) #tester from unlistgenparams = tst loaded in
     
-    #using list of dataframes 
+    #for any log10(x) where x<=0
+#    try_log10 <- function(x) tryCatch({log10(x)}, error = function(e) NA)
+#    subslog <- lapply(subs, function(x) x %>% 
+#                        mutate_each(funs(try_log10(.)), 2:((replength/sublength)+1))) #original log10 terms 
+
     subslog <- lapply(subs, function(x) x %>% 
-                        mutate_each(funs(log10(.)), 2:((replength/sublength)+1)))      #original log10 terms 
+                        mutate_each(funs(log10(.)), 2:((replength/sublength)+1))) #original log10 terms 
     subslogcb <- lapply(subslog, function(x) x %>% 
                           dplyr::select(-starts_with("Cycle")) %>% #delete cycle lag
                           mutate_each(funs(Lag(., shift=klag)))) #lagged terms
@@ -164,7 +168,10 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
       for(j in 1:(replength/sublength)){ 
         ind1 = ((2*(replength/sublength))-(2*(replength/sublength)-2*j)) ; #25-(25-2*j)
         ind2 = ind1+1   #takes col 2,3 ; 3,4 ; etc (real, and lag) 
-        brkpt[[j]] <- breakpoints(subsfcn[,ind1] ~ subsfcn[,ind2], data = subsfcn) 
+        brkpt[[j]] <- tryCatch({ #tryCatch any NAs for which means no breakpoints
+          breakpoints(subsfcn[,ind1] ~ subsfcn[,ind2], data = subsfcn) 
+      }, error=function(e) {
+          return(list(breakpoints=NA))}) #return NA for breakpoints
       }
       return(brkpt)
     }
@@ -191,6 +198,14 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
     nmax <- max(unlist(lapply(breaksp, lengths))) #max length of all lists
     #table of the breaks in for each subset
     nlength <- unlist(lapply(breaksp, lengths))
+    #nlength above will call NA as length = 1 ; change this to NA for any NAs
+    for(i in 1:sublength){
+      for(j in 1:(replength/sublength)){
+        if(lapply(breaksp, is.na)[[i]][[j]] == "TRUE"){
+          nlength[[((replength/sublength)*i-((replength/sublength)-j))]] <- NA
+        }
+      }
+    }
     brkpts <- lapply(breaksp, function(x) lengthfc(x, nmax)) #same length for all with NA added 
 
 #create matrix out with ID and breakpoints 
@@ -241,7 +256,12 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
 } 
   
 brkplot(orgdata, getfiles, klag=5, plot=FALSE)
-
+#larger data set
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
+                pattern =  "^targ_")
+load(file = getfiles[[1]])
+brkplot(miRcompData2, getfiles, klag=1, plot=FALSE)
 
 ####applying LSTAR model thru function
 source("GAPDH.SO/lag_gen.R")
