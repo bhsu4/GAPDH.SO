@@ -289,6 +289,10 @@ aiclag <- function(subs, log=TRUE){
   if(log){
     subslog <- lapply(subs, function(x) x %>% 
                       mutate_each(funs(log10(.)), 2:((replength/sublength)+1))) #original log10 terms 
+  #tryCatch log10 for negative values (change -Inf to 0?)  
+  # try_log10 <- function(x) tryCatch({log10(x)}, error = function(e) NA)
+  # subslog <- lapply(subs, function(x) x %>% 
+    #                  mutate_each(funs(try_log10(.)), 2:((replength/sublength)+1))) #original log10 terms     
     subs = subslog
   }
   #time series converion of data
@@ -308,7 +312,38 @@ aiclag <- function(subs, log=TRUE){
   subsnames <- lapply(LETTERS[1:sublength], paste0, 1:(replength/sublength)) #list of subset names
   #dynlm formula in list w/ up to 15 lags
   subsformulas <- lapply(subsnames, function(x) lapply(x, get_lag_formulae, n=15)) 
-
+  
+  #proceed with dynlm for log if columns have 0 NAs
+  #subsna <- lapply(subs, is.na) #true = NA for that value
+  subsna <- lapply(subs, function(x) x %>% 
+                     select(-starts_with("Cycle")) %>% #delete cycle lag
+                      mutate_each(funs(is.na(.)), 1:(replength/sublength))) #true = NA for value
+  subsna <- lapply(subsna, colSums) #sum of the NAs, want sum=0
+  
+  #
+  for(i in 1:10){
+    for(j in 1:4){
+      whichna <- which(subsna[[i]][[j]] == 0)
+    }
+  }
+  
+  for(j in 1:sublength) fitsres[[j]] <- lapply(subsformulas[[j]], function(x) lapply(x, 
+                                            function(f) try(dynlm(formula = as.formula(f)), silent=TRUE), 
+                                            data=subs.ts[[j]])) #output results of dynlm
+  
+  
+  #build a function that will skip if subsna is greater than 0 
+  #then lapply thru it to get the output results of dynlm
+  
+  
+  tryCatch({
+    some_fn()
+  }, error = function(e) {
+    print(paste('error:', e))
+  })
+  
+  #######
+  
   for(j in 1:sublength) fitsres[[j]] <- lapply(subsformulas[[j]], function(x) lapply(x, 
                                             function(f) dynlm(formula = as.formula(f), 
                                               data=subs.ts[[j]]))) #output results of dynlm
@@ -321,12 +356,24 @@ aiclag <- function(subs, log=TRUE){
         #cutoff 15 lags so x=1:15
         plot(x=1:15, y=fitsresaic[[j]][,i], type = "p", ylim = c(range(fitsresaic)), 
              ylab = "AIC", xlab = "Lagged Term Set")
-        }
+      }
         points(x=1:15, y=fitsresaic[[j]][,i], col = j)
       } #plotting all replication sets' AIC
+  }
+  #individual subsets AIC plots
+  for(i in 1:sublength){
+    for(j in 1:(replength/sublength)){
+      if(j==1){
+        plot(x=1:15, y=fitsresaic[[i]][,j], type="p", ylim = c(range(fitsresaic[[i]])),
+             ylab = "AIC", xlab = "Lagged Term Set")
+      }
+        points(x=1:15, y=fitsresaic[[i]][,j], col=j)
     }
+    legend("topright", c(subsnames[[i]]), col=1:4, lty=1, cex=0.75)
+  }
   return(fitsresaic)
 }
+
 
   aiclag(subs = subs, log=FALSE) #non-log10 values hard to see AIC comparison
   aiclag(subs = subs) #log10 values easy to see dramatic improvement at lag=2
