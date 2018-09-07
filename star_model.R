@@ -214,21 +214,24 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
     #dplyr::select(noquote(mixedsort(colnames(.)))) %>% #correct order except for Cycles
                          dplyr::select(starts_with("Cycle"), everything())) #correct order
     #subs.all <- lapply(subs.all, function(x) x %>% select(-starts_with("Cycle_")))
-    brks <- function(subsfcn){ #function for subset breakdate est.
-      brkpt <- list()
-      for(j in 1:(replength/sublength)){ 
-        ind1 = ((2*(replength/sublength))-(2*(replength/sublength)-2*j)) ; #25-(25-2*j)
-        ind2 = ind1+1   #takes col 2,3 ; 3,4 ; etc (real, and lag) 
-        brkpt[[j]] <- tryCatch({ #tryCatch any NAs for which means no breakpoints
-          breakpoints(subsfcn[,ind1] ~ subsfcn[,ind2], data = subsfcn) 
-      }, error=function(e) {
-          return(list(breakpoints=NA))}) #return NA for breakpoints
-      }
-      return(brkpt)
-    }
-    #strchange is the whole output of breakpoint examination
-    strchange <- lapply(subs.all, function(x) brks(x)) #breaks is the dynlm eq with breakpoints  
     
+ ##finding the breakpoints for data using struccchange
+    brk_lag_formulae <- function(nrep){ #list length(subs) w/ list of length(subsrep)
+      formulae <- list()
+        formulae <- paste(nrep, "~", paste(paste0(nrep, "Lag", 1:klag), 
+                                collapse=" + "), collapse=" ") #generates A1 ~ A1Lag1 + A1Lag2 + A1Lagk
+      return(formulae)
+    }
+    subsnames <- lapply(LETTERS[1:sublength], paste0, 1:(replength/sublength)) #list of subset names
+    #formulas for breakpoints with inclusion of all lag terms
+    subslagformulas <- lapply(subsnames, function(x) lapply(x, brk_lag_formulae)) 
+    #brksres are breakpoint results: list of subs w/ reps inside [[]][[]]$breakpoints
+    brksres <- list() #brksres is the whole output of breakpoint examination
+    for(j in 1:sublength) brksres[[j]] <- lapply(subslagformulas[[j]], 
+                                                 function(x) breakpoints(formula = as.formula(x), 
+                                                   data=subs.all[[j]])) #output for breakpoints
+  #**ERROR may show: must have minimum segment size > number of regressors (make klag smaller)
+
     #sort empmat first, so that we know how mmany breaks n to use
     #double lapply extracts brkpts + adding NA to length
     brkso <- function(x){ #function for extracting ONLY subset breakdate
@@ -239,7 +242,7 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
     }
     
     #getting only the breakpoints but with differing lengths
-    breaksp <- lapply(strchange, function(x) brkso(x))
+    breaksp <- lapply(brksres, function(x) brkso(x))
     
     #function to make lengths the same
     lengthfc <- function(s, n){ #function for setting length for lists
@@ -259,7 +262,7 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
     }
     brkpts <- lapply(breaksp, function(x) lengthfc(x, nmax)) #same length for all with NA added 
 
-#create matrix out with ID and breakpoints 
+  ##create matrix out with ID and breakpoints 
     #empty matrix
     empmat <- matrix(data=NA, nrow=replength, ncol=(nmax+1))
     empmat[1:replength, 1] <- matrix(nlength[1:replength], nrow=replength) #number of breaks (1st column)
