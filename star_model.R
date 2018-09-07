@@ -132,32 +132,47 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
   foreach(k=1:length(files)) %do% {   #load in each file
     load(file = files[[k]]) #loaded in as tst
     subs <- unlist.genparams(tst) #tester from unlistgenparams = tst loaded in
-    
-    #for any log10(x) where x<=0
-#    try_log10 <- function(x) tryCatch({log10(x)}, error = function(e) NA)
-#    subslog <- lapply(subs, function(x) x %>% 
-#                        mutate_each(funs(try_log10(.)), 2:((replength/sublength)+1))) #original log10 terms 
-
-    subslog <- lapply(subs, function(x) x %>% 
-                        mutate_each(funs(log10(.)), 2:((replength/sublength)+1))) #original log10 terms 
-    subslogcb <- lapply(subslog, function(x) x %>% 
-                          dplyr::select(-starts_with("Cycle")) %>% #delete cycle lag
-                          mutate_each(funs(Lag(., shift=klag)))) #lagged terms
+    #subslog <- lapply(subs, function(x) x %>% 
+    #                    mutate_each(funs(log10(.)), 2:((replength/sublength)+1))) #original log10 terms 
+    subscb <- lapply(subs, function(x) x %>% 
+                      dplyr::select(-starts_with("Cycle"))) #delete cycle lag
 #lag terms up to klag chosen
 #    lagterms <- function(klag){
+#        lagforms <- list()
 #      for(k in 1:klag){
-#        lagforms[[k]] <- unlist(sapply("Lag(., shift=", paste0, 1:k, ")"))
+#        lagforms[[k]] <- unlist(sapply("Lag(x, shift=", paste0, 1:k, ")"))
 #      }
 #      return(lagforms[[klag]]) #returns specific klags
 #    }
 #    lagschosen <- lagterms(klag)
-#cannot create 3columns for the klag of 1,2,3   
-#    lapply(subslog, function(x) x %>% 
-#             dplyr::select(-starts_with("Cycle")) %>% 
-#             mutate_each(funs(lagterms(klag=3)))) #as.formula(lagschosen[[3]])
 
-    subslogcb <- lapply(subslogcb, function(x) setNames(x, paste0(colnames(x), "_lag"))) #colnames for lagged
-    subs.all <- Map(cbind, subslog, subslogcb) #mapped for column bind for log and logcb
+#lagchosen is a list of lists with primary list = lags and secondary list = values with lag(x)
+  lagschosen <- list()
+  lagterms <- function(x, klag){
+    y = Lag(x, shift=klag) #specifiy klag
+    return(y)
+  }
+  for(i in 1:klag){ #list of lists
+    lagschosen[[i]] <- lapply(subscb, function(x) lapply(x, lagterms, klag=i)) #returns list for up to klag
+  }
+  #each subsets cycle length
+  cyclength <- lapply(lapply(subs, function(x) x %>% select(starts_with("Cycle"))), nrow) 
+  
+  lapply(lagschosen[[1]], unlist)
+  
+  data.frame(Cycle = cyclength[[1]], )
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    subscb <- lapply(subscb, function(x) setNames(x, paste0(colnames(x), "_lag"))) #colnames for lagged
+    subs.all <- Map(cbind, subs, subscb) #mapped for column bind for log and logcb
     subs.all <- lapply(subs.all, function(x) x %>% 
                          .[mixedsort(colnames(.))] %>% #correct order except Cycles
     #dplyr::select(noquote(mixedsort(colnames(.)))) %>% #correct order except for Cycles
@@ -315,32 +330,36 @@ aiclag <- function(subs, log=TRUE){
   
   #proceed with dynlm for log if columns have 0 NAs
   #subsna <- lapply(subs, is.na) #true = NA for that value
-  subsna <- lapply(subs, function(x) x %>% 
-                     select(-starts_with("Cycle")) %>% #delete cycle lag
-                      mutate_each(funs(is.na(.)), 1:(replength/sublength))) #true = NA for value
-  subsna <- lapply(subsna, colSums) #sum of the NAs, want sum=0
+  #subsna <- lapply(subs, function(x) x %>% 
+  #                   select(-starts_with("Cycle")) %>% #delete cycle lag
+  #                    mutate_each(funs(is.na(.)), 1:(replength/sublength))) #true = NA for value
+  #subsna <- lapply(subsna, colSums) #sum of the NAs, want sum=0
   
   #
-  for(i in 1:10){
-    for(j in 1:4){
-      whichna <- which(subsna[[i]][[j]] == 0)
-    }
-  }
+  #for(i in 1:10){
+  #  for(j in 1:4){
+  #    whichna <- which(subsna[[i]][[j]] == 0)
+  #  }
+  #}
   
-  for(j in 1:sublength) fitsres[[j]] <- lapply(subsformulas[[j]], function(x) lapply(x, 
-                                            function(f) try(dynlm(formula = as.formula(f)), silent=TRUE), 
-                                            data=subs.ts[[j]])) #output results of dynlm
+  #for(j in 1:sublength) fitsres[[j]] <- lapply(subsformulas[[j]], function(x) lapply(x, 
+  #                                          function(f) try(dynlm(formula = as.formula(f)), silent=TRUE), 
+  #                                          data=subs.ts[[j]])) #output results of dynlm
   
   
   #build a function that will skip if subsna is greater than 0 
   #then lapply thru it to get the output results of dynlm
   
+  #nasubsfunc <- function(x){
+    
+  #}
   
-  tryCatch({
-    some_fn()
-  }, error = function(e) {
-    print(paste('error:', e))
-  })
+  
+  #tryCatch({
+  #  some_fn()
+  #}, error = function(e) {
+  #  print(paste('error:', e))
+  #})
   
   #######
   
