@@ -158,19 +158,164 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
   #each subsets cycle length
   cyclength <- lapply(lapply(subs, function(x) x %>% select(starts_with("Cycle"))), nrow) 
   
-  lapply(lagschosen[[1]], unlist)
+  longme <- lapply(lagschosen[[1]], unlist)
   
-  data.frame(Cycle = cyclength[[1]], )
+  ind1 = (replength/sublength)
+  data.frame(Cycle = cyclength[[1]], A_Lag1 = )
+   
+  #list of 5 lags, each list with 10 reps, and each rep is df with 4 columns 
+  lagschosen <- lapply(lagschosen, function(x) lapply(x, data.frame))
+  
+  #lagschosenn will specify the row which is also the klag specification 
+  lagschosenn <- unlist(lapply(lagschosen, function(x) lapply(x, namechanges)))
+  namechanges <- function(x){
+   print(sum(is.na(x))/(replength/sublength))
+  }
+  
+  for(i in 1:5){
+    for(j in 1:10){
+      colnames(lagschosen) <- replags[]
+    }
+  }
+  
+  nameswee <- function(x){
+    for(k in 1:10){
+    colnames(x[[k]][,1:4]) <- replags[]
+    }
+  }
+  
+  nameswee <- function(x){
+    for(i in 1:5){
+      for(j in 1:10){
+    colnames(x) <- replags[lagschosenn[[i*j]], 1:4]
+      }
+    }
+  }
+  
+  lapply(lagschosen, function(x) lapply(x, nameswee))
+    
+  
+  #extract the data, and Map it into list of df first before adding names
+  
+  subs.allt <- Map(cbind, subs, c(lagschosen[[1]], lagschosen[[2]])) #mapped for column bind for log and logcb
+  
+  
+  mee <- cbind(lagschosen[1:5])
+  
+  ggno <- Map(cbind, lagschosen[[1]], lagschosen[[2]], lagschosen[[3]], lagschosen[[4]], lagschosen[[5]])
+  
+  ggno <- Map(cbind, lagschosen[[1:5]])
+  
+  gg <- Map(cbind, Formula(hehe))
+  
+  #cyclength = length of each subset ; cyclengtht = total length
+  cyclengtht = lapply(cyclength, "*", (replength/sublength))
+  #cumcyclength is cumulative across subsets
+  cumcyclength = cumsum(cyclengtht) #accumulative 
+  #laglength is the klag*reps in each subset
+  laglength = length(replags)/sublength #klags * reps in each subset
+  #wot is each subset's 1:klag unlisted
+  #mysticmac is accumulated subsets' lags
+  #sdata is sequence for names
+  wot <- list() ; mysticmac <- list() ; sdata=list()
+  for(i in 1:sublength){ #number of subsets
+    for(j in 1:klag){ #klag
+      #each subset w/ different length ; ind1 and ind2 capture correct intervals of each subset
+      ind2 = cumcyclength[[i]] ; ind1 = ind2-((cyclengtht[[i]]*(replength/sublength))- 1)
+      #matrix(unlist(lagschosen[[j]])[ind1:ind2], ncol = 4) #does one group in matrix
+      #wot is subset A's (B's,..etc) unlisted klags of data (list of klag=5)
+      wot[[j]] <- unlist(lagschosen[[j]])[grep(LETTERS[i], names(unlist(lagschosen[[j]])))] #LETTERS[i]
+      #mysticmac is accumulated subsets w/ df of rep's lags
+      mysticmac[[i]] <- data.frame(matrix(unlist(wot), ncol = laglength))
+      #ind3, ind4 is every increment for klags*reps in subset
+      ind4 = laglength*i ; ind3 = ind4-(laglength-1)  
+      #ind6 = (replength/sublength)*j ; ind5 = ind6-((replength/sublength)-1)
+      #change name after every subset is inserted
+      #colnames(mysticmac[[i]])[ind5:ind6] <- replags[ind3:ind4][seq(j, laglength, 5)]  
+      sdata[[j]] <- seq(j, laglength, 5) #sdata is sequential of colnames in correct order
+      colnames(mysticmac[[i]]) <- replags[ind3:ind4][unlist(sdata)] #5=klag -- colnames to accumulated
+    }
+  }
+  names(mysticmac) <- LETTERS[1:10] #names for each dataframe within accumulated list
+  
+  
+  
+  
+  
+  lst <- replicate(10, data.frame(Cycle = 1:cyclength[[i]], Lag1 = numeric(),
+                                  stringsAsFactors=FALSE), simplify=FALSE)
+    gg <- Map(cbind, lagschosen[[i]], lagschosen[[i+1]])
+  
     
     
+    }
+  }
+  
+  #create 10 different names each one is list
+  wotnames <- unlist(sapply("wot", paste0, 1:10, simplify=T)) 
+
+
+  wot <- list()
+  for(i in 1:5){
+    wot[[i]] <- unlist(lagschosen[[i]])[grepl("A", names(unlist(lagschosen[[i]])))]
+  }
+  
+  greppingstuff <- function(x){
     
-    
-    
-    
-    
-    
-    
-    
+  }
+
+
+
+  
+  repnames <- unlist(sapply("lagschosen", paste0, "[[", 1:5, "]]", collapse=",", simplify=T)) #repnames
+  
+  hehe <- paste(paste0("lagschosen", "[[", 1:5,"]]"), 
+                         collapse=", ") #lagschosen[[1:k]] with , between  
+  
+  
+  
+  
+  for(i in 1:(replength/sublength)){
+    seqd <- seq(0, length(longme[[1]]), cyclength[[1]])
+    ind1 = seqd[[i]]+1 ; ind2 = seqd[[i+1]]
+  }
+  
+  for(i in 1:10){
+    seqd <- seq()
+  repnames <- unlist(sapply(LETTERS[1:sublength], paste0, 1:4, simplify=T)) #repnames
+  lagsnames <- unlist(sapply("Lag", paste0, 1:klag))  
+  replags <- sapply(repnames, paste0, lagsnames) #[1:5][[1:40]]
+  #create data frames then combine it into a list of kklag data frames
+  
+  for(j in 1:5){ #klags
+    for(i in 1:10){
+    quickie <- data.frame(Cycle = 1:cyclength[[1]])
+    matreplags = matrix(longme[[1]], ncol=(replength/sublength))
+    homer <- cbind(quickie, matreplags)
+    colnames(homer) <- c("Cycle", c(replags[1, 1:4]))
+    }
+  }
+  
+  
+  }
+  
+  n=100
+  lst <- replicate(n,data.frame(y=character(), x=numeric(),
+                                stringsAsFactors=FALSE), simplify=FALSE)
+  
+  names(lst) <- paste0('df', 1:n)
+  nmy <- paste0('y', 1:n)
+  nmx <- paste0('x', 1:n)
+  lst1 <- Map(setNames, lst, as.data.frame(rbind(nmy,nmx)))
+  
+  
+  
+  
+  increment <-length(seq(0, length(longme[[1]]), cyclength[[1]]))-1 #know 4 reps
+  
+  
+  
+  
     subscb <- lapply(subscb, function(x) setNames(x, paste0(colnames(x), "_lag"))) #colnames for lagged
     subs.all <- Map(cbind, subs, subscb) #mapped for column bind for log and logcb
     subs.all <- lapply(subs.all, function(x) x %>% 
