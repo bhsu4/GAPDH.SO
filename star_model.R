@@ -148,12 +148,12 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
 
 #lagchosen is a list of lists with primary list = lags and secondary list = values with lag(x)
   lagschosen <- list()
-  lagterms <- function(x, klag){
-    y = Lag(x, shift=klag) #specifiy klag
+  lagterms <- function(x, nlag){
+    y = Lag(x, shift=nlag) #specifiy nlag
     return(y)
   }
   for(i in 1:klag){ #list of lists
-    lagschosen[[i]] <- lapply(subscb, function(x) lapply(x, lagterms, klag=i)) #returns list for up to klag
+    lagschosen[[i]] <- lapply(subscb, function(x) lapply(x, lagterms, nlag=i)) #returns list for up to klag
   }
   #each subsets cycle length
   cyclength <- lapply(lapply(subs, function(x) x %>% select(starts_with("Cycle"))), nrow) 
@@ -198,11 +198,11 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
       #ind6 = (replength/sublength)*j ; ind5 = ind6-((replength/sublength)-1)
       #change name after every subset is inserted
       #colnames(accsubs[[i]])[ind5:ind6] <- replags[ind3:ind4][seq(j, laglength, 5)]  
-      sdata[[j]] <- seq(j, laglength, 5) #sdata is sequential of colnames in correct order
+      sdata[[j]] <- seq(j, laglength, klag) #sdata is sequential of colnames in correct order
       colnames(accsubs[[i]]) <- replags[ind3:ind4][unlist(sdata)] #5=klag -- colnames to accumulated
     }
   }
-    names(accsubs) <- LETTERS[1:10] #names for each dataframe within accumulated list
+    names(accsubs) <- LETTERS[1:sublength] #names for each dataframe within accumulated list
     #ggno <- Map(cbind, lagschosen[[1]], lagschosen[[2]]) #not automated
     #attach lags with original subs data
     subs.all <- Map(cbind, subs, accsubs) #matched cbind for subs and subs w/ lag
@@ -295,8 +295,8 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
       for(j in 2:((replength/sublength)+1)){ #skip first column since cycle
        # if(j==2){ #simple connection of dots, then ablines for break obs 
           plot(subs[[i]][,j], ylab = "Fluorescence", type="l",
-               ylim = c(range(subs[[i]][-grep("Cycle", colnames(subs[[i]]))])), col = i)
-         
+               #ylim = c(range(subs[[i]][-grep("Cycle", colnames(subs[[i]]))])), col = i)
+                ylim = c(range(subs[[i]][[j]])), col=i)
         #lines(subslog[[i]][,j])
         abline(v=brksres[[i]][[j-1]]$breakpoints, col=1)
         #text(c(strchange[[i]][[j-1]]$breakpoints), max(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))]), 
@@ -311,11 +311,16 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
   
 brkplot(orgdata, getfiles, klag=5, plot=FALSE)
 #larger data set
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont")
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/singular")
+getfiles1 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/singular", 
                 pattern =  "^targ_")
 load(file = getfiles[[1]])
-brkplot(miRcompData2, getfiles, klag=1, plot=FALSE)
+brkplot(miRcompData2, getfiles1, klag=3, plot=FALSE)
+
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall")
+getfiles2 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall", 
+                pattern =  "^targ_")
+wowzers <- brkplot(miRcompData2, getfiles2, klag=3, plot=FALSE)
 
 
 ####applying LSTAR model thru function
