@@ -294,11 +294,11 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
     for(i in 1:sublength){
       for(j in 2:((replength/sublength)+1)){ #skip first column since cycle
        # if(j==2){ #simple connection of dots, then ablines for break obs 
-          plot(subslog[[i]][,j], ylab = expression(log[10](Fluorescence)), type="l",
-               ylim = c(range(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))])), col = i)
+          plot(subs[[i]][,j], ylab = "Fluorescence", type="l",
+               ylim = c(range(subs[[i]][-grep("Cycle", colnames(subs[[i]]))])), col = i)
          
         #lines(subslog[[i]][,j])
-        abline(v=strchange[[i]][[j-1]]$breakpoints, col=1)
+        abline(v=brksres[[i]][[j-1]]$breakpoints, col=1)
         #text(c(strchange[[i]][[j-1]]$breakpoints), max(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))]), 
           #   as.character(j), pos=2, srt=90, cex=0.65)
     ind2 = length(brkpts[[i]])*i ; ind1 = ind2-(length(brkpts[[i]])-(j-1))
