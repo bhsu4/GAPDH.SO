@@ -316,12 +316,16 @@ getfiles1 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.S
                 pattern =  "^targ_")
 load(file = getfiles[[1]])
 brkplot(miRcompData2, getfiles1, klag=3, plot=FALSE)
-
+brkplot(miRcompData2, getfiles1, klag=3, plot=TRUE)
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall")
 getfiles2 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall", 
                 pattern =  "^targ_")
 wowzers <- brkplot(miRcompData2, getfiles2, klag=3, plot=FALSE)
 
+library(profvis)
+profvis({brkplot(miRcompData2, getfiles2, klag=3, plot=FALSE) }) #system periodicity time estimation
+#takes 28 minutes for entire miRcompData2
+#nmax is funky, i don't think it takes the max length breaks which is troubling, new row would fail
 
 ####applying LSTAR model thru function
 source("GAPDH.SO/lag_gen.R")
@@ -329,7 +333,7 @@ library(dynlm) ; library(Hmisc)
 
 #add get lag formulae in there? then no source needed for lag gen
 
-aiclag <- function(subs, log=TRUE){
+aiclag <- function(subs){
   #finding the lag term length that will be used by plotting AIC
   fitsres <- list() ; fitsresaic <- list()
 
@@ -344,16 +348,6 @@ aiclag <- function(subs, log=TRUE){
   replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
   sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E
 
-  #log10 conversion
-  if(log){
-    subslog <- lapply(subs, function(x) x %>% 
-                      mutate_each(funs(log10(.)), 2:((replength/sublength)+1))) #original log10 terms 
-  #tryCatch log10 for negative values (change -Inf to 0?)  
-  # try_log10 <- function(x) tryCatch({log10(x)}, error = function(e) NA)
-  # subslog <- lapply(subs, function(x) x %>% 
-    #                  mutate_each(funs(try_log10(.)), 2:((replength/sublength)+1))) #original log10 terms     
-    subs = subslog
-  }
   #time series converion of data
     subs.ts <- lapply(subs, ts) #time series of data
   
@@ -390,23 +384,7 @@ aiclag <- function(subs, log=TRUE){
   #                                          function(f) try(dynlm(formula = as.formula(f)), silent=TRUE), 
   #                                          data=subs.ts[[j]])) #output results of dynlm
   
-  
-  #build a function that will skip if subsna is greater than 0 
-  #then lapply thru it to get the output results of dynlm
-  
-  #nasubsfunc <- function(x){
-    
-  #}
-  
-  
-  #tryCatch({
-  #  some_fn()
-  #}, error = function(e) {
-  #  print(paste('error:', e))
-  #})
-  
-  #######
-  
+
   for(j in 1:sublength) fitsres[[j]] <- lapply(subsformulas[[j]], function(x) lapply(x, 
                                             function(f) dynlm(formula = as.formula(f), 
                                               data=subs.ts[[j]]))) #output results of dynlm
