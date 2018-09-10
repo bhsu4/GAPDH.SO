@@ -333,7 +333,7 @@ library(dynlm) ; library(Hmisc)
 
 #add get lag formulae in there? then no source needed for lag gen
 
-aiclag <- function(subs){
+aiclag <- function(subs, klag){
   #finding the lag term length that will be used by plotting AIC
   fitsres <- list() ; fitsresaic <- list()
 
@@ -364,57 +364,42 @@ aiclag <- function(subs){
   #constructing formulas
   subsnames <- lapply(LETTERS[1:sublength], paste0, 1:(replength/sublength)) #list of subset names
   #dynlm formula in list w/ up to 15 lags
-  subsformulas <- lapply(subsnames, function(x) lapply(x, get_lag_formulae, n=15)) 
-  
-  #proceed with dynlm for log if columns have 0 NAs
-  #subsna <- lapply(subs, is.na) #true = NA for that value
-  #subsna <- lapply(subs, function(x) x %>% 
-  #                   select(-starts_with("Cycle")) %>% #delete cycle lag
-  #                    mutate_each(funs(is.na(.)), 1:(replength/sublength))) #true = NA for value
-  #subsna <- lapply(subsna, colSums) #sum of the NAs, want sum=0
-  
-  #
-  #for(i in 1:10){
-  #  for(j in 1:4){
-  #    whichna <- which(subsna[[i]][[j]] == 0)
-  #  }
-  #}
-  
-  #for(j in 1:sublength) fitsres[[j]] <- lapply(subsformulas[[j]], function(x) lapply(x, 
-  #                                          function(f) try(dynlm(formula = as.formula(f)), silent=TRUE), 
-  #                                          data=subs.ts[[j]])) #output results of dynlm
-  
-
+  subsformulas <- lapply(subsnames, function(x) lapply(x, get_lag_formulae, n=klag)) 
+  #dynlm formulas and AIC values
   for(j in 1:sublength) fitsres[[j]] <- lapply(subsformulas[[j]], function(x) lapply(x, 
                                             function(f) dynlm(formula = as.formula(f), 
                                               data=subs.ts[[j]]))) #output results of dynlm
   for(j in 1:sublength) fitsresaic[[j]] <- sapply(fitsres[[j]], 
                                             function(x) sapply(x,AIC)) #output results of dynlm
-  #plotting AIC values
+  #plotting AIC values (all)
   for(j in 1:sublength){
     for(i in 1:(replength/sublength)){
       if(i==1 & j==1){
         #cutoff 15 lags so x=1:15
-        plot(x=1:15, y=fitsresaic[[j]][,i], type = "p", ylim = c(range(fitsresaic)), 
+        plot(x=1:klag, y=fitsresaic[[j]][,i], type = "p", ylim = c(range(fitsresaic)), 
              ylab = "AIC", xlab = "Lagged Term Set")
       }
-        points(x=1:15, y=fitsresaic[[j]][,i], col = j)
+        points(x=1:klag, y=fitsresaic[[j]][,i], col = j)
       } #plotting all replication sets' AIC
   }
   #individual subsets AIC plots
   for(i in 1:sublength){
     for(j in 1:(replength/sublength)){
       if(j==1){
-        plot(x=1:15, y=fitsresaic[[i]][,j], type="p", ylim = c(range(fitsresaic[[i]])),
+        plot(x=1:klag, y=fitsresaic[[i]][,j], type="p", ylim = c(range(fitsresaic[[i]])),
              ylab = "AIC", xlab = "Lagged Term Set")
       }
-        points(x=1:15, y=fitsresaic[[i]][,j], col=j)
+        points(x=1:klag, y=fitsresaic[[i]][,j], col=j)
+        splineres <- smooth.spline(rep(1:klag, (replength/sublength)), 
+                                   y=as.vector(fitsresaic[[i]]), spar=0.35)
+        lines(splineres)
     }
     legend("topright", c(subsnames[[i]]), col=1:4, lty=1, cex=0.75)
   }
   return(fitsresaic)
 }
 
+  set1aic <- aiclag(subs = subs, klag=15)
 
   aiclag(subs = subs, log=FALSE) #non-log10 values hard to see AIC comparison
   aiclag(subs = subs) #log10 values easy to see dramatic improvement at lag=2
