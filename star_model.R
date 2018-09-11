@@ -399,12 +399,12 @@ aiclag <- function(subs, klag){
   return(fitsresaic)
 }
 
-  set1aic <- aiclag(subs = subs, klag=15)
+  set1aic <- aiclag(subs = subs, klag=15) 
 
-  aiclag(subs = subs, log=FALSE) #non-log10 values hard to see AIC comparison
-  aiclag(subs = subs) #log10 values easy to see dramatic improvement at lag=2
-
-
+  
+  
+  
+  
 ####STAR model function
 ##plotting LSTAR model to see fit for replication
 lsubsets <- subsets #lsubsets different from subsets_log b/c subsets_log with ts 
@@ -459,3 +459,84 @@ for(i in 1:8){
   lines(x = 1:38, y = try.lstar[[i]]$residuals, col = i, cex = 1.5)
 }
 legend("bottomright", c(LETTERS[1:8]), col=1:8, ncol = 4, lty = 1)
+
+
+detach("package:dplyr")
+wow <- lstar(testingsubts, m=1, d=2,  include="none")
+plot(x=4:40, y=wow$fitted.values, type="l")
+points(x=1:40, y=testingsubts)
+
+
+wow <- vector("list", 10)
+for(i in 1:10){
+    for(j in 2:5){
+      wow[[i]][[j-1]] <- tryCatch({
+        lstar(subs[[i]][,j], m=1, d=1)},
+        error=function(e) rep(NA, 1))
+  }
+}
+
+
+for(i in 1:2){
+  for(j in 1:4){
+    plot(x=2:length(subs[[i]][[1]]), y=wow[[i]][[j]]$fitted.values, type="l")
+    points(x=subs[[i]][[1]], y=subs[[i]][[j+1]])
+  }
+}
+  
+
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall", 
+                pattern =  "^targ_")
+wowzers <- brkplot(miRcompData2, getfiles2, klag=3, plot=FALSE)
+
+plot_lstar <- function(orgdata, getfiles, subs, klag, plot=FALSE){
+##getting the LSTAR model parameters and coefficients
+  
+  #defining important lengths
+  targnames <- unique(files) #all targets
+  targnames <- gsub(".Rda", "", targnames) #remove .Rda to match later
+  sampnames <- mixedsort(unique(c(orgdata$SampleID))) #sorted samplenames
+  #repeat all sample names for the chosen targets in files
+  tmp <- rep(sampnames, length(files))
+  #creating result data.frame
+  targlength <- length(targnames) #length of all targets
+  replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
+  sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E
+  cyclength <- unlist(lapply(subs, nrow))
+  
+  #running lstar function w/ certain lag
+  lstarres <- vector("list", sublength) #empty list of subs: ABCD,..etc
+  for(i in 1:sublength){ #running LSTAR model
+    for(j in 2:((replength/sublength)+1)){
+      lstarres[[i]][[j-1]] <- tryCatch({
+        lstar(subs[[i]][,j], m=1, d=klag)}, #d = lag found through AIC
+        error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag))), 
+                                                 residuals=rep(NA, (cyclength[[i]]-(klag)))))
+        #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
+    }
+  }
+  #res1 is the list of subsets' fitted values and residuals
+  res1 <- list()
+  #matrix with fitted values and residuals as two columned vector
+  for(i in 1:sublength){ #list of dataframes for each subset
+  mat <- matrix( NA, nrow = cyclength[[i]], ncol = (2*(replength/sublength))+1)
+  mat[,1] <- 1:cyclength[[i]] #different cycle lengths
+    for(j in 1:(replength/sublength)){
+      vector <- c(lstarres[[i]][[j]]$fitted.values, lstarres[[i]][[j]]$residuals)
+      ind1 = j*2 ; ind2 = ind1+1 #gets columns 2,3 ; 3,4; 5,6
+      mat[(1+klag):cyclength[[i]], ind1:ind2] <- matrix(vector, ncol=2) #fitted and residuals
+      }
+  res1[[i]] <- data.frame(mat) #df in dataframe
+  }
+  #plotting the LSTAR model w/ actual points
+  if(plot){
+    for(i in 1:sublength){ #plotting the LSTAR fitted curve
+      for(j in 1:(replength/sublength)){ #i for subs, j for reps
+        plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$fitted.values, 
+             ylab="Fluorescence", xlab = "Cycle", type="l")
+        points(x=subs[[i]][[1]], y=subs[[i]][[j+1]]) #actual points
+      }
+    }
+  }
+}
