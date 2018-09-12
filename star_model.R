@@ -490,9 +490,9 @@ getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO
                 pattern =  "^targ_")
 wowzers <- brkplot(miRcompData2, getfiles2, klag=3, plot=FALSE)
 
-plot_lstar <- function(orgdata, getfiles, subs, klag, plot=FALSE){
+plot_lstar <- function(orgdata, getfiles, klag, plot=FALSE){
 ##getting the LSTAR model parameters and coefficients
-  
+  files <- getfiles
   #defining important lengths
   targnames <- unique(files) #all targets
   targnames <- gsub(".Rda", "", targnames) #remove .Rda to match later
@@ -504,12 +504,17 @@ plot_lstar <- function(orgdata, getfiles, subs, klag, plot=FALSE){
   replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
   sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E
   cyclength <- unlist(lapply(subs, nrow))
-  
+
+for(k in 1:length(files)){
+  #loading in data sets to get subs
+  load(file = files[[k]]) #loaded in as tst
+  subs <- unlist.genparams(tst) #tester from unlistgenparams = tst loaded in  
   #running lstar function w/ certain lag
   lstarres <- vector("list", sublength) #empty list of subs: ABCD,..etc
   for(i in 1:sublength){ #running LSTAR model
     for(j in 2:((replength/sublength)+1)){
-      lstarres[[i]][[j-1]] <- tryCatch({
+        #results for LSTAR model 
+        lstarres[[i]][[j-1]] <- tryCatch({
         lstar(subs[[i]][,j], m=1, d=klag)}, #d = lag found through AIC
         error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag))), 
                                                  residuals=rep(NA, (cyclength[[i]]-(klag)))))
@@ -529,14 +534,35 @@ plot_lstar <- function(orgdata, getfiles, subs, klag, plot=FALSE){
       }
   res1[[i]] <- data.frame(mat) #df in dataframe
   }
-  #plotting the LSTAR model w/ actual points
+}
+##plotting the LSTAR model w/ actual points
+  #two graphs on top each other
+  par(mfrow=c(2,1))
+  par(oma=c(4,4,4,4),mar=c(0.25,0.25,0,0))
+  #
   if(plot){
+    #plotting fitted curves and actual values
     for(i in 1:sublength){ #plotting the LSTAR fitted curve
       for(j in 1:(replength/sublength)){ #i for subs, j for reps
+        if(sum(is.na(lstarres[[i]][[j]]$fitted.values >0))){
+          plot(x=subs[[i]][[1]], y=subs[[i]][[j+1]], type="p", 
+               ylab = "Fluorescence", xlab = "Cycle", xaxt = "n")
+          plot(1, type="n" , xlab="n", ylab="", 
+               xlim=c(0, max(subs[[i]][[1]])), ylim=c(0,1))        
+          }
+        else{
         plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$fitted.values, 
-             ylab="Fluorescence", xlab = "Cycle", type="l")
+                 ylab="Fluorescence", xlab = "Cycle", type="l", xaxt = "n",
+                 ylim=c(min(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values)),
+                        max(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values))))
         points(x=subs[[i]][[1]], y=subs[[i]][[j+1]]) #actual points
+        plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$residuals,
+                 ylab="Fluorescence Residuals", xlab = "Cycle", type="p")
+        abline(h=0)
+        }
       }
     }
   }
 }
+
+plot_lstar(miRcompData2, files, klag=3, plot=TRUE)
