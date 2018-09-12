@@ -547,6 +547,7 @@ for(k in 1:length(files)){
         if(sum(is.na(lstarres[[i]][[j]]$fitted.values >0))){
           plot(x=subs[[i]][[1]], y=subs[[i]][[j+1]], type="p", 
                ylab = "Fluorescence", xlab = "Cycle", xaxt = "n")
+          legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
           plot(1, type="n" , xlab="n", ylab="", 
                xlim=c(0, max(subs[[i]][[1]])), ylim=c(0,1))        
           }
@@ -556,13 +557,42 @@ for(k in 1:length(files)){
                  ylim=c(min(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values)),
                         max(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values))))
         points(x=subs[[i]][[1]], y=subs[[i]][[j+1]]) #actual points
+        legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
+        
+        
+        #testing out triangles
+        indrow = i*4-(4-(4-j))
+        points(x=wowzers[which(targnames == wowzers$TargetName),][indrow,][], 
+               y=lstarres[[i]][[j]]$fitted.values, cex=0.45, pch = 17) #actual points
+        
+        wotudoin <- wowzers[which(targnames == wowzers$TargetName),][40,]
+        wotudoin[,"Breaks"] #number of breaks
+        wotudoin2 <- wotudoin[,grep("Breaks\\d+", colnames(wotudoin))]
+        pointers = wotudoin[,grep("Breaks\\d+", colnames(wotudoin))][,which(is.na(wotudoin2) == "FALSE")]
+        
+        lstarres[[1]][[1]]$fitted.values[pointers[[1]],]
+        
+        for(points in 1:wotudoin[,"Breaks"]){
+          indrow=4*i-(4-(4-j))
+          points(x=pointers[[points]], 
+                 y=lstarres[[i]][[j]]$fitted.values[(pointers[[points]]-klag), ], cex=1, pch = 17) #actual points
+        }
+        
+        
+        
+        
+        
+        
         plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$residuals,
                  ylab="Fluorescence Residuals", xlab = "Cycle", type="p")
         abline(h=0)
-        }
+        }      
       }
     }
   }
 }
 
 plot_lstar(miRcompData2, files, klag=3, plot=TRUE)
+
+which(targnamestst == wowzers$TargetName)
+targnamestst <- "targ_dme-miR-7_000268"
