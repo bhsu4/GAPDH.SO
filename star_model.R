@@ -111,6 +111,11 @@ getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO
 orgdata = mdata #for below
 library(Hmisc) #used for Lag 
 
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall")
+getfiles2 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall", 
+                pattern =  "^targ_")
+getfiles <- getfiles2
+
 brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
 
 #currently uses log10 for Fluo. add nonlogged function
@@ -129,6 +134,7 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
 
 #using package strucchange to get breakpoints for each curve (lag at 2 set)
   #foreach loads in each tester, and outputs strcchange, whole output for breakpt 
+  breaksdb <- list() #return this as data.frame
   foreach(k=1:length(files)) %do% {   #load in each file
     load(file = files[[k]]) #loaded in as tst
     subs <- unlist.genparams(tst) #tester from unlistgenparams = tst loaded in
@@ -286,8 +292,28 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
     res0 <- data.frame(
       TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength),
       Group = gsub("_\\d+", "", tmp))
+    res0$TargetID = seq(1, replength*length(files), 1) #each subset's replication is unique ID
+    #breaks 1st normalization with repetitive columns
     breaks.mat <- cbind(res0, empmat.df)
+    
+  ##database for breakpoints w/ foreign key to TargetID
+    #non-NA breakpoints extracted by targetname 
+    nonares0 <- res0[which(res0==targnames[[k]]),][which(is.na(nlength) == FALSE),]
+    #targID is targetID, breakseq is 1:n for number of breaks
+    targID <- list() ; breakseq <- list()
+      for(i in 1:nrow(nonares0)){ #sum of the number of targetIDs to input
+        #targID is targetID repeated n times equal to number of breakpoints
+        targID[[i]] <- rep(nonares0$TargetID[i], nlength[which(is.na(nlength)==FALSE)][i])
+        breakseq[[i]] <- 1:length(targID[[i]])  
+      }
+      breakspun <- unlist(breaksp)[which(is.na(unlist(breaksp))==FALSE)] #non-NA breakpoints
+      breaksdb[[k]] <- cbind(matrix(unlist(targID), ncol=1), 
+                         matrix(unlist(breakseq), ncol=1), 
+                         matrix(breakspun, ncol=1)) #database for breakpoints
   }
+  finaldb <- data.frame(do.call(rbind, breaksdb))
+  colnames(finaldb) <- c("TargetID", "BreakSeq", "Breakpoints")
+  finals <- list(Targets = res0, Breaks = finaldb)
   
 #plotting the strcchange break observations  
   if(plot){
@@ -306,10 +332,10 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
       }
     }
   }
-  return(breaks.mat)
+  return(finals)
 } 
   
-brkplot(orgdata, getfiles, klag=5, plot=FALSE)
+testdb <- brkplot(orgdata, getfiles, klag=3, plot=FALSE)
 #larger data set
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/singular")
 getfiles1 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/singular", 
@@ -562,8 +588,7 @@ for(k in 1:length(files)){
         
         #testing out triangles
         indrow = i*4-(4-(4-j))
-        points(x=wowzers[which(targnames == wowzers$TargetName),][indrow,][], 
-               y=lstarres[[i]][[j]]$fitted.values, cex=0.45, pch = 17) #actual points
+
         
         wotudoin <- wowzers[which(targnames == wowzers$TargetName),][40,]
         wotudoin[,"Breaks"] #number of breaks
@@ -575,10 +600,22 @@ for(k in 1:length(files)){
         for(points in 1:wotudoin[,"Breaks"]){
           indrow=4*i-(4-(4-j))
           points(x=pointers[[points]], 
-                 y=lstarres[[i]][[j]]$fitted.values[(pointers[[points]]-klag), ], cex=1, pch = 17) #actual points
+                 y=lstarres[[i]][[j]]$fitted.values[(pointers[[points]]-klag), ], 
+                 cex=1, pch = 17) #actual points
+          polygon(x = c(pointers[[points]]-2, pointers[[points]]+2, pointers[[points]]+2,
+                        pointers[[points]]-2, pointers[[points]]-2),
+                  y = c(min(par("usr")), min(par("usr")), 
+                        max(par("usr")), max(par("usr")), min(par("usr"))),
+                  col = rgb(0,0,0,alpha=0.15)) 
         }
         
         
+        
+        polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, res1[[i]][,k][1]+2, 
+                      res1[[i]][,k][1]-2, res1[[i]][,k][1]-2), 
+                y = c(min(par("usr")), min(par("usr")), 
+                      max(par("usr")), max(par("usr")), min(par("usr"))),
+                col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
         
         
         
