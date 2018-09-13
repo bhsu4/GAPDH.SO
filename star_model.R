@@ -116,7 +116,7 @@ getfiles2 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.S
                 pattern =  "^targ_")
 getfiles <- getfiles2
 
-brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
+brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
 
 #currently uses log10 for Fluo. add nonlogged function
   
@@ -234,8 +234,8 @@ brkplot <- function(orgdata, getfiles, klag, plot=FALSE){
     #brksres are breakpoint results: list of subs w/ reps inside [[]][[]]$breakpoints
     brksres <- list() #brksres is the whole output of breakpoint examination
     for(j in 1:sublength) brksres[[j]] <- lapply(subslagformulas[[j]], 
-                                                 function(x) breakpoints(formula = as.formula(x), 
-                                                   data=subs.all[[j]])) #output for breakpoints
+                                            function(x) breakpoints(formula = as.formula(x), 
+                                              breaks = kbreaks, data=subs.all[[j]])) #output for breakpoints
   #**ERROR may show: must have minimum segment size > number of regressors (make klag smaller)
 
     #sort empmat first, so that we know how mmany breaks n to use
@@ -587,8 +587,33 @@ for(k in 1:length(files)){
         
         
         #testing out triangles
+        indij = 40*(k-1)+(4*(i-1))+j
+        if(sum(specbreak$TargetID %in% indij) > 0){ #consider using %in%
+          specbreakat <- specbreak$Breakpoints[which(specbreak$TargetID == indij)]
+          specbreaknlength <- length(specbreakat)
+          for(z in 1:specbreaknlength){
+          points(x=specbreak$Breakpoints[which(specbreak$TargetID == indij)][[z]], 
+                 y=lstarres[[i]][[j]]$fitted.values[(specbreakat[[z]]-klag), ], 
+                 cex=1, pch = 17) #actual points
+            
+            #may encounter error if cycle is less than 4 since starts at cyc 4
+          }
+        }
+          
+        spectarg <- testdb$Targets[which(testdb$Targets$TargetName == targnames[[k]]),]
+        specbreak <- testdb$Breaks[testdb$Breaks$TargetID %in% spectarg$TargetID, ]
+        
+        for(specnum in 1:length(unique(specbreak$TargetID))){
+        which(spectarg$TargetID == unique(specbreak$TargetID)[[specnum]])
+        
+          
+        }
+        
+        
+        inds <- which(testdb$Breaks$TargetID %in% spectarg$TargetID)
+        
         indrow = i*4-(4-(4-j))
-
+      
         
         wotudoin <- wowzers[which(targnames == wowzers$TargetName),][40,]
         wotudoin[,"Breaks"] #number of breaks
