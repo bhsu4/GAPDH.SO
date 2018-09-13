@@ -177,19 +177,18 @@ brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
   cyclengtht = lapply(cyclength, "*", (replength/sublength))
   #cumcyclength is cumulative across subsets
   cumcyclength = cumsum(cyclengtht) #accumulative 
+  #create lag names
+  #for(i in 1:sublength){
+  repnames <- unlist(sapply(LETTERS[1:sublength], paste0, 
+                      1:(replength/sublength), simplify=T)) #subset rep names
+  lagsnames <- unlist(sapply("Lag", paste0, 1:klag)) #Lag1, ..., Lagk names
+  replags <- sapply(repnames, paste0, lagsnames) #[1:klag][[1:klag*reps*subs]] names for klags
+  #}
   #laglength is the klag*reps in each subset
   laglength = length(replags)/sublength #klags * reps in each subset
-  #create lag names
-  for(i in 1:sublength){
-    repnames <- unlist(sapply(LETTERS[1:sublength], paste0, 
-                              1:(replength/sublength), simplify=T)) #subset rep names
-    lagsnames <- unlist(sapply("Lag", paste0, 1:klag)) #Lag1, ..., Lagk names
-    replags <- sapply(repnames, paste0, lagsnames) #[1:klag][[1:klag*reps*subs]] names for klags
-  }
   #subslag is each subset's 1:klag unlisted
   #accsubs is accumulated subsets' lags
-  #sdata is sequence for names
-  subslag <- list() ; accsubs <- list() ; sdata=list()
+  subslag <- list() ; accsubs <- list() 
   for(i in 1:sublength){ #number of subsets
     for(j in 1:klag){ #klag
       #each subset w/ different length ; ind1 and ind2 capture correct intervals of each subset
@@ -198,14 +197,21 @@ brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
       #subslag is subset A's (B's,..etc) unlisted klags of data (list of klag=5)
       subslag[[j]] <- unlist(lagschosen[[j]])[grep(LETTERS[i], names(unlist(lagschosen[[j]])))] #LETTERS[i]
       #accsubs is accumulated subsets w/ df of rep's lags
+      #accsubs[[i]] <- matrix(unlist(subslag), ncol = laglength)
+      }
       accsubs[[i]] <- data.frame(matrix(unlist(subslag), ncol = laglength))
-      #ind3, ind4 is every increment for klags*reps in subset
-      ind4 = laglength*i ; ind3 = ind4-(laglength-1)  
-      #ind6 = (replength/sublength)*j ; ind5 = ind6-((replength/sublength)-1)
-      #change name after every subset is inserted
-      #colnames(accsubs[[i]])[ind5:ind6] <- replags[ind3:ind4][seq(j, laglength, 5)]  
-      sdata[[j]] <- seq(j, laglength, klag) #sdata is sequential of colnames in correct order
-      colnames(accsubs[[i]]) <- replags[ind3:ind4][unlist(sdata)] #5=klag -- colnames to accumulated
+  }
+  #sdata is sequence for names
+  sdata=list()
+  for(i in 1:sublength){
+    for(j in 1:klag){
+    #ind3, ind4 is every increment for klags*reps in subset
+    ind4 = laglength*i ; ind3 = ind4-(laglength-1)  
+    #ind6 = (replength/sublength)*j ; ind5 = ind6-((replength/sublength)-1)
+    #change name after every subset is inserted
+    #colnames(accsubs[[i]])[ind5:ind6] <- replags[ind3:ind4][seq(j, laglength, 5)]  
+    sdata[[j]] <- seq(j, laglength, klag) #sdata is sequential of colnames in correct order
+    colnames(accsubs[[i]]) <- replags[ind3:ind4][unlist(sdata)] #5=klag -- colnames to accumulated
     }
   }
     names(accsubs) <- LETTERS[1:sublength] #names for each dataframe within accumulated list
@@ -335,7 +341,7 @@ brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
   return(finals)
 } 
   
-testdb <- brkplot(orgdata, getfiles, klag=3, plot=FALSE)
+testdb <- brkplot(miRcompData2, getfiles, klag=3, plot=FALSE)
 #larger data set
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/singular")
 getfiles1 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/singular", 
@@ -529,12 +535,12 @@ plot_lstar <- function(orgdata, getfiles, klag, plot=FALSE){
   targlength <- length(targnames) #length of all targets
   replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
   sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E
-  cyclength <- unlist(lapply(subs, nrow))
 
 for(k in 1:length(files)){
   #loading in data sets to get subs
   load(file = files[[k]]) #loaded in as tst
   subs <- unlist.genparams(tst) #tester from unlistgenparams = tst loaded in  
+  cyclength <- unlist(lapply(subs, nrow))
   #running lstar function w/ certain lag
   lstarres <- vector("list", sublength) #empty list of subs: ABCD,..etc
   for(i in 1:sublength){ #running LSTAR model
