@@ -656,7 +656,7 @@ for(k in 1:length(files)){
                   max(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values))))
       points(x=subs[[i]][[1]], y=subs[[i]][[j+1]]) #actual points
       legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
-  ###PART 2: Breakpoints as Squares for NON-LSTAR Models
+  ###PART 2: Breakpoints as Squares for LSTAR Models
     #indij for indicator with i,j used
      indij = 40*(k-1)+(4*(i-1))+j
     #sum of the TRUE > 0 then we plot square break points
@@ -679,14 +679,28 @@ for(k in 1:length(files)){
     #since starts at cyc 4, no need to filter through cycles < 4 when creating testdb
      leftbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-0.5-klag]
      rightbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]+0.5-klag]
-     avgCT = (leftbound+rightbound)/2
+     avgCTfittedvalue = (leftbound+rightbound)/2
     #estimated CT value
-     points(x=diff2_dfCT[[i]][[j]], y=avgCT, pch=17, cex=1)
+     points(x=diff2_dfCT[[i]][[j]], y=avgCTfittedvalue, pch=17, cex=1)
+    #grey box +/- 2 cycles about estimated CT 
+     polygon(x = c(diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]+2, diff2_dfCT[[i]][[j]]+2, 
+                   diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]-2), 
+             y = c(min(par("usr")), min(par("usr")), 
+                   max(par("usr")), max(par("usr")), min(par("usr"))),
+             col= rgb(0,0,0,alpha=0.15))
   ###PART 4: Residuals Plotting
     #residuals
      plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$residuals,
           ylab="Residuals", xlab = "Cycle", type="p", cex.lab=0.75)
           abline(h=0)
+    #estimated CT value
+     points(x=diff2_dfCT[[i]][[j]], y=0, pch=17, cex=1)
+    #grey box +/- 2 cycles about estimated CT 
+     polygon(x = c(diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]+2, diff2_dfCT[[i]][[j]]+2, 
+                   diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]-2), 
+             y = c(min(par("usr")), min(par("usr")), 
+                   max(par("usr")), max(par("usr")), min(par("usr"))),
+             col= rgb(0,0,0,alpha=0.15))
         }
       }
     }
