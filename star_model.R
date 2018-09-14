@@ -568,127 +568,131 @@ for(k in 1:length(files)){
   }
 }
 ##plotting the LSTAR model w/ actual points
-  #two graphs on top each other
-  dev.off()
+ #two graphs on top each other
   par(mfrow=c(2,1))
   par(oma=c(4,4,4,4),mar=c(0.25,0.25,0,0))
-  #
+#start of plot
   if(plot){
-  ###clarifying specific targetdb and breakdb
+  ##REF PART 2: Clarifying Specific targetdb and breakdb
     #specific target chosen from k files
     spectarg <- testdb$Targets[which(testdb$Targets$TargetName == targnames[[k]]),]
     #specific break points for target
     specbreak <- testdb$Breaks[testdb$Breaks$TargetID %in% spectarg$TargetID, ]
+  ##REF (REF PART 3): Empty Lists for Second Derivative Maximum Estimate  
+    diff_df <- vector("list", 10) ; diff2_df <- vector("list", 10) 
+    
   ###plotting fitted curves and actual values
-    for(i in 1:sublength){ #plotting the LSTAR fitted curve
-      for(j in 1:(replength/sublength)){ #i for subs, j for reps
-        if(sum(is.na(lstarres[[i]][[j]]$fitted.values >0))){
-          plot(x=subs[[i]][[1]], y=subs[[i]][[j+1]], type="p", 
-               ylab = "Fluorescence", xlab = "Cycle", xaxt = "n")
-          legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
-          
-        ###squares for breakpoints
-          #indij for indicator with i,j used
-          indij = 40*(k-1)+(4*(i-1))+j
-          #sum of the TRUE > 0 then we plot square break points
-          if(sum(specbreak$TargetID %in% indij) > 0){ 
-            #specific breakpoint cycle number
-            specbreakat <- specbreak$Breakpoints[which(specbreak$TargetID == indij)]
-            #how many breakpoints for that subset
-            specbreaknlength <- length(specbreakat)
-            #drawing all squares 
-            for(z in 1:specbreaknlength){
-              points(x=specbreak$Breakpoints[which(specbreak$TargetID == indij)][[z]], 
-                     y=subs[[i]][[j+1]][specbreakat[[z]]],
-                     cex=1, pch = 15) #actual points
-                  }
-                }
-          else{}
-          #if(length(is.na(diff2_dfCT[[i]][[j]]))){
-          #estimated CT value
-          points(x=diff2_dfCT[[i]][[j]], 
-                 y=lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-klag],
-                 pch=17, cex=1)
-         # }
-          #empty residuals
-          plot(1, type="n" , xlab="n", ylab="Residuals", 
-               xlim=c(0, max(subs[[i]][[1]])), ylim=c(0,1), cex.lab=0.75)        
-        }
-        else{
-        plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$fitted.values, 
-                 ylab="Fluorescence", xlab = "", type="l", xaxt = "n",
-                 ylim=c(min(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values)),
-                        max(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values))))
-        points(x=subs[[i]][[1]], y=subs[[i]][[j+1]]) #actual points
-        legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
-
-     ###testing out triangles
-        #indij for indicator with i,j used
-        indij = 40*(k-1)+(4*(i-1))+j
-        #sum of the TRUE > 0 then we plot triangle points
-        if(sum(specbreak$TargetID %in% indij) > 0){ 
-          #specific breakpoint cycle number
-          specbreakat <- specbreak$Breakpoints[which(specbreak$TargetID == indij)]
-          #how many breakpoints for that subset
-          specbreaknlength <- length(specbreakat)
-          #drawing all triangles 
-          for(z in 1:specbreaknlength){
-          points(x=specbreak$Breakpoints[which(specbreak$TargetID == indij)][[z]], 
-                 y=lstarres[[i]][[j]]$fitted.values[(specbreakat[[z]]-klag), ], 
-                 cex=1, pch = 15) #actual points
-          }
-        }
-        else{}
-            
-            #may encounter error if cycle is less than 4 since starts at cyc 4
-            #filter through cycles < 4 when creating testdb
-avgCT = (lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-0.5-klag]+lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]+0.5-klag])/2
-        #estimated CT value
-          points(x=diff2_dfCT[[i]][[j]], 
-                 y=avgCT,
-                 pch=17, cex=1)
-        #residuals
-        plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$residuals,
-                 ylab="Residuals", xlab = "Cycle", type="p", cex.lab=0.75)
-        abline(h=0)
-        }
-      }
+  for(i in 1:sublength){ #plotting the LSTAR fitted curve
+    for(j in 1:(replength/sublength)){ #i for subs, j for reps
+  
+  ##REF PART 3: Creating First and Second Derivatives for Maximum Estimation          
+    #nonsubtractable first row    
+    #lstarres[[i]][[j]]$fitted.values[-1,] 
+    #nonsubtractable last row
+    #lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
+    #NO LSTAR Model Fit      
+    if(sum(is.na(lstarres[[i]][[j]]$fitted.values)) > 0 ){
+      diff_df[[i]][[j]] <-  rep(NA, length(lstarres[[i]][[j]]$fitted.values)-1)
+      diff2_df[[i]][[j]] <- rep(NA, length(diff_df[[i]][[j]])-1)
+    }
+    #LSTAR Model
+    else{
+      diff_df[[i]][[j]] <-  lstarres[[i]][[j]]$fitted.values[-1,]  - lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
+      diff2_df[[i]][[j]] <- diff_df[[i]][[j]][-1] - diff_df[[i]][[j]][-length(diff_df[[i]][[j]])]
     }
   }
 }
-  diff_df <- vector("list", 10) ; diff2_df <- vector("list", 10) 
-  for(i in 1:10){
-    for(j in 1:4){
-      #non-subtractable first row
-      #lstarresnonf <- lstarres[[i]][[j]]$fitted.values[-1,]
-      #non-subtractable last row
-      #lstarresnonl <- lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
-      if(sum(is.na(lstarres[[i]][[j]]$fitted.values)) > 0 ){
-      diff_df[[i]][[j]] <-  rep(NA, length(lstarres[[i]][[j]]$fitted.values)-1)
-      diff2_df[[i]][[j]] <- rep(NA, length(diff_df[[i]][[j]])-1)
-      }
-      else{
-      diff_df[[i]][[j]] <-  lstarres[[i]][[j]]$fitted.values[-1,] - lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
-      diff2_df[[i]][[j]] <- diff_df[[i]][[j]][-1] - diff_df[[i]][[j]][-length(diff_df[[i]][[j]])]
-      }
-    }
-  }
   #list <- unlist(lstarres, recursive = FALSE) #list of 40 equation output
   #listfittedvalues <- lapply(list, function(x) x$fitted.values) #list of 40 fitted values
   #listdftst <- do.call("cbind", listfittedvalues) #different length, cannot cbind unless NA added
-  diff2_dfmax <- lapply(diff2_df, function(x) lapply(x, which.max))
-  CTmid <- function(x) (x+(klag+1)+(x+(klag+1)+1))/2
-  diff2_dfCT <- lapply(diff2_dfmax, function(x) lapply(x, CTmid))
-  
-  
-  
-  
-diff_df <- lstarres[[1]][[1]]$fitted.values[-1,] - lstarres[[1]][[1]]$fitted.values[-nrow(lstarres[[1]][[1]]$fitted.values),]
+  diff2_dfmax <- lapply(diff2_df, function(x) lapply(x, which.max)) #cycle at max (w/o klag)
+  CTmid <- function(x) (x+(klag+1)+(x+(klag+1)+1))/2 #average of cycles
+  diff2_dfCT <- lapply(diff2_dfmax, function(x) lapply(x, CTmid)) #midpoint of cycle at 2nd dermax
 
-diff2_df <- diff_df[-1] - diff_df[-length(diff_df)]
-
-
-
+  ###plotting fitted curves and actual values
+  for(i in 1:sublength){ #plotting the LSTAR fitted curve
+    for(j in 1:(replength/sublength)){ #i for subs, j for reps
+#####All NO LSTAR Models#####        
+  ###PART 1: NO LSTAR Model Fits with Breakpoints as Squares
+    #NO LSTAR model list of NAs           
+    if(sum(is.na(lstarres[[i]][[j]]$fitted.values >0))){
+      plot(x=subs[[i]][[1]], y=subs[[i]][[j+1]], type="p", 
+           ylab = "Fluorescence", xlab = "Cycle", xaxt = "n")
+      legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
+  ###PART 2: Breakpoints as Squares for NON-LSTAR Models
+    #indij for indicator with i,j used
+     indij = 40*(k-1)+(4*(i-1))+j
+    #sum of the TRUE > 0 then we plot square break points
+    if(sum(specbreak$TargetID %in% indij) > 0){ 
+    #specific breakpoint cycle number
+    specbreakat <- specbreak$Breakpoints[which(specbreak$TargetID == indij)]
+    #how many breakpoints for that subset
+    specbreaknlength <- length(specbreakat)
+   ##All Squares: No LSTAR fit, but Breakpoints present
+    for(z in 1:specbreaknlength){
+     points(x=specbreak$Breakpoints[which(specbreak$TargetID == indij)][[z]], 
+            y=subs[[i]][[j+1]][specbreakat[[z]]],
+            cex=1, pch = 15) #actual points
+        }
+      }
+    else{}
+  ###PART 3: Estimating CT Values w/ no LSTAR Model: NO CT
+    #estimated CT value
+    points(x=diff2_dfCT[[i]][[j]], 
+           y=lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-klag],
+           pch=17, cex=1)
+  ###PART 4: Empty Residuals Since NO LSTAR
+    plot(1, type="n" , xlab="n", ylab="Residuals", 
+         xlim=c(0, max(subs[[i]][[1]])), ylim=c(0,1), cex.lab=0.75)        
+    }
+        
+#####All LSTAR Models#####        
+  ###PART 1: NO LSTAR Model Fits with Breakpoints as Squares
+    #LSTAR model fits               
+    else{
+      plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$fitted.values, 
+           ylab="Fluorescence", xlab = "", type="l", xaxt = "n",
+           ylim=c(min(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values)),
+                  max(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values))))
+      points(x=subs[[i]][[1]], y=subs[[i]][[j+1]]) #actual points
+      legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
+  ###PART 2: Breakpoints as Squares for NON-LSTAR Models
+    #indij for indicator with i,j used
+     indij = 40*(k-1)+(4*(i-1))+j
+    #sum of the TRUE > 0 then we plot square break points
+    if(sum(specbreak$TargetID %in% indij) > 0){ 
+    #specific breakpoint cycle number
+    specbreakat <- specbreak$Breakpoints[which(specbreak$TargetID == indij)]
+    #how many breakpoints for that subset
+    specbreaknlength <- length(specbreakat)
+    ##All Squares: LSTAR fit with n Breakpoints present
+    for(z in 1:specbreaknlength){
+      points(x=specbreak$Breakpoints[which(specbreak$TargetID == indij)][[z]], 
+             y=lstarres[[i]][[j]]$fitted.values[(specbreakat[[z]]-klag), ], 
+             cex=1, pch = 15) #actual points
+        }
+      }
+    else{}
+  ###PART 3: Estimating CT Values w/ LSTAR Model by Slope Midpoint
+    #estimated CT value            
+    #*Shouldn't Display Error: klag=3, Encounter error if cycle is less than 4 
+    #since starts at cyc 4, no need to filter through cycles < 4 when creating testdb
+     leftbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-0.5-klag]
+     rightbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]+0.5-klag]
+     avgCT = (leftbound+rightbound)/2
+    #estimated CT value
+     points(x=diff2_dfCT[[i]][[j]], y=avgCT, pch=17, cex=1)
+  ###PART 4: Residuals Plotting
+    #residuals
+     plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$residuals,
+          ylab="Residuals", xlab = "Cycle", type="p", cex.lab=0.75)
+          abline(h=0)
+        }
+      }
+    }
+  } #if(plot)
+}
+  
 plot_lstar(miRcompData2, files, klag=3, plot=TRUE)
 
 which(targnamestst == wowzers$TargetName)
