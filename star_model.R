@@ -310,7 +310,7 @@ brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
       for(i in 1:nrow(nonares0)){ #sum of the number of targetIDs to input
         #targID is targetID repeated n times equal to number of breakpoints
         targID[[i]] <- rep(nonares0$TargetID[i], nlength[which(is.na(nlength)==FALSE)][i])
-        breakseq[[i]] <- 1:length(targID[[i]])  
+        breakseq[[i]] <- 1:length(targID[[i]]) #if 2 breaks, 1:2; 3 breaks, 1:3
       }
       breakspun <- unlist(breaksp)[which(is.na(unlist(breaksp))==FALSE)] #non-NA breakpoints
       breaksdb[[k]] <- cbind(matrix(unlist(targID), ncol=1), 
@@ -516,7 +516,7 @@ for(i in 1:2){
   }
 }
   
-
+detach("package:dplyr")
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall", 
                 pattern =  "^targ_")
@@ -547,7 +547,7 @@ for(k in 1:length(files)){
     for(j in 2:((replength/sublength)+1)){
         #results for LSTAR model 
         lstarres[[i]][[j-1]] <- tryCatch({
-        lstar(subs[[i]][,j], m=1, d=klag)}, #d = lag found through AIC
+        tsDyn::lstar(subs[[i]][,j], m=1, d=klag)}, #d = lag found through AIC
         error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag))), 
                                                  residuals=rep(NA, (cyclength[[i]]-(klag)))))
         #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
@@ -569,96 +569,125 @@ for(k in 1:length(files)){
 }
 ##plotting the LSTAR model w/ actual points
   #two graphs on top each other
+  dev.off()
   par(mfrow=c(2,1))
   par(oma=c(4,4,4,4),mar=c(0.25,0.25,0,0))
   #
   if(plot){
-    #plotting fitted curves and actual values
+  ###clarifying specific targetdb and breakdb
+    #specific target chosen from k files
+    spectarg <- testdb$Targets[which(testdb$Targets$TargetName == targnames[[k]]),]
+    #specific break points for target
+    specbreak <- testdb$Breaks[testdb$Breaks$TargetID %in% spectarg$TargetID, ]
+  ###plotting fitted curves and actual values
     for(i in 1:sublength){ #plotting the LSTAR fitted curve
       for(j in 1:(replength/sublength)){ #i for subs, j for reps
         if(sum(is.na(lstarres[[i]][[j]]$fitted.values >0))){
           plot(x=subs[[i]][[1]], y=subs[[i]][[j+1]], type="p", 
                ylab = "Fluorescence", xlab = "Cycle", xaxt = "n")
           legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
-          plot(1, type="n" , xlab="n", ylab="", 
-               xlim=c(0, max(subs[[i]][[1]])), ylim=c(0,1))        
-          }
+          
+        ###squares for breakpoints
+          #indij for indicator with i,j used
+          indij = 40*(k-1)+(4*(i-1))+j
+          #sum of the TRUE > 0 then we plot square break points
+          if(sum(specbreak$TargetID %in% indij) > 0){ 
+            #specific breakpoint cycle number
+            specbreakat <- specbreak$Breakpoints[which(specbreak$TargetID == indij)]
+            #how many breakpoints for that subset
+            specbreaknlength <- length(specbreakat)
+            #drawing all squares 
+            for(z in 1:specbreaknlength){
+              points(x=specbreak$Breakpoints[which(specbreak$TargetID == indij)][[z]], 
+                     y=subs[[i]][[j+1]][specbreakat[[z]]],
+                     cex=1, pch = 15) #actual points
+                  }
+                }
+          else{}
+          #if(length(is.na(diff2_dfCT[[i]][[j]]))){
+          #estimated CT value
+          points(x=diff2_dfCT[[i]][[j]], 
+                 y=lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-klag],
+                 pch=17, cex=1)
+         # }
+          #empty residuals
+          plot(1, type="n" , xlab="n", ylab="Residuals", 
+               xlim=c(0, max(subs[[i]][[1]])), ylim=c(0,1), cex.lab=0.75)        
+        }
         else{
         plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$fitted.values, 
-                 ylab="Fluorescence", xlab = "Cycle", type="l", xaxt = "n",
+                 ylab="Fluorescence", xlab = "", type="l", xaxt = "n",
                  ylim=c(min(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values)),
                         max(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values))))
         points(x=subs[[i]][[1]], y=subs[[i]][[j+1]]) #actual points
         legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
-        
-        
-        #testing out triangles
+
+     ###testing out triangles
+        #indij for indicator with i,j used
         indij = 40*(k-1)+(4*(i-1))+j
-        if(sum(specbreak$TargetID %in% indij) > 0){ #consider using %in%
+        #sum of the TRUE > 0 then we plot triangle points
+        if(sum(specbreak$TargetID %in% indij) > 0){ 
+          #specific breakpoint cycle number
           specbreakat <- specbreak$Breakpoints[which(specbreak$TargetID == indij)]
+          #how many breakpoints for that subset
           specbreaknlength <- length(specbreakat)
+          #drawing all triangles 
           for(z in 1:specbreaknlength){
           points(x=specbreak$Breakpoints[which(specbreak$TargetID == indij)][[z]], 
                  y=lstarres[[i]][[j]]$fitted.values[(specbreakat[[z]]-klag), ], 
-                 cex=1, pch = 17) #actual points
-            
-            #may encounter error if cycle is less than 4 since starts at cyc 4
+                 cex=1, pch = 15) #actual points
           }
         }
-          
-        spectarg <- testdb$Targets[which(testdb$Targets$TargetName == targnames[[k]]),]
-        specbreak <- testdb$Breaks[testdb$Breaks$TargetID %in% spectarg$TargetID, ]
-        
-        for(specnum in 1:length(unique(specbreak$TargetID))){
-        which(spectarg$TargetID == unique(specbreak$TargetID)[[specnum]])
-        
-          
-        }
-        
-        
-        inds <- which(testdb$Breaks$TargetID %in% spectarg$TargetID)
-        
-        indrow = i*4-(4-(4-j))
-      
-        
-        wotudoin <- wowzers[which(targnames == wowzers$TargetName),][40,]
-        wotudoin[,"Breaks"] #number of breaks
-        wotudoin2 <- wotudoin[,grep("Breaks\\d+", colnames(wotudoin))]
-        pointers = wotudoin[,grep("Breaks\\d+", colnames(wotudoin))][,which(is.na(wotudoin2) == "FALSE")]
-        
-        lstarres[[1]][[1]]$fitted.values[pointers[[1]],]
-        
-        for(points in 1:wotudoin[,"Breaks"]){
-          indrow=4*i-(4-(4-j))
-          points(x=pointers[[points]], 
-                 y=lstarres[[i]][[j]]$fitted.values[(pointers[[points]]-klag), ], 
-                 cex=1, pch = 17) #actual points
-          polygon(x = c(pointers[[points]]-2, pointers[[points]]+2, pointers[[points]]+2,
-                        pointers[[points]]-2, pointers[[points]]-2),
-                  y = c(min(par("usr")), min(par("usr")), 
-                        max(par("usr")), max(par("usr")), min(par("usr"))),
-                  col = rgb(0,0,0,alpha=0.15)) 
-        }
-        
-        
-        
-        polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, res1[[i]][,k][1]+2, 
-                      res1[[i]][,k][1]-2, res1[[i]][,k][1]-2), 
-                y = c(min(par("usr")), min(par("usr")), 
-                      max(par("usr")), max(par("usr")), min(par("usr"))),
-                col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
-        
-        
-        
-        
+        else{}
+            
+            #may encounter error if cycle is less than 4 since starts at cyc 4
+            #filter through cycles < 4 when creating testdb
+avgCT = (lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-0.5-klag]+lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]+0.5-klag])/2
+        #estimated CT value
+          points(x=diff2_dfCT[[i]][[j]], 
+                 y=avgCT,
+                 pch=17, cex=1)
+        #residuals
         plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$residuals,
-                 ylab="Fluorescence Residuals", xlab = "Cycle", type="p")
+                 ylab="Residuals", xlab = "Cycle", type="p", cex.lab=0.75)
         abline(h=0)
-        }      
+        }
       }
     }
   }
 }
+  diff_df <- vector("list", 10) ; diff2_df <- vector("list", 10) 
+  for(i in 1:10){
+    for(j in 1:4){
+      #non-subtractable first row
+      #lstarresnonf <- lstarres[[i]][[j]]$fitted.values[-1,]
+      #non-subtractable last row
+      #lstarresnonl <- lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
+      if(sum(is.na(lstarres[[i]][[j]]$fitted.values)) > 0 ){
+      diff_df[[i]][[j]] <-  rep(NA, length(lstarres[[i]][[j]]$fitted.values)-1)
+      diff2_df[[i]][[j]] <- rep(NA, length(diff_df[[i]][[j]])-1)
+      }
+      else{
+      diff_df[[i]][[j]] <-  lstarres[[i]][[j]]$fitted.values[-1,] - lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
+      diff2_df[[i]][[j]] <- diff_df[[i]][[j]][-1] - diff_df[[i]][[j]][-length(diff_df[[i]][[j]])]
+      }
+    }
+  }
+  #list <- unlist(lstarres, recursive = FALSE) #list of 40 equation output
+  #listfittedvalues <- lapply(list, function(x) x$fitted.values) #list of 40 fitted values
+  #listdftst <- do.call("cbind", listfittedvalues) #different length, cannot cbind unless NA added
+  diff2_dfmax <- lapply(diff2_df, function(x) lapply(x, which.max))
+  CTmid <- function(x) (x+(klag+1)+(x+(klag+1)+1))/2
+  diff2_dfCT <- lapply(diff2_dfmax, function(x) lapply(x, CTmid))
+  
+  
+  
+  
+diff_df <- lstarres[[1]][[1]]$fitted.values[-1,] - lstarres[[1]][[1]]$fitted.values[-nrow(lstarres[[1]][[1]]$fitted.values),]
+
+diff2_df <- diff_df[-1] - diff_df[-length(diff_df)]
+
+
 
 plot_lstar(miRcompData2, files, klag=3, plot=TRUE)
 
