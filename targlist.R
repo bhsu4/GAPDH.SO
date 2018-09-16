@@ -1,7 +1,7 @@
 get.repl <- function(tst){ #function for secondary rep group 
   repl <- list()
   for(k in 1:length(unique(tst$SampleID))){
-    if (dim(tst)==0) {print("no such combo")} else {
+    if (dim(tst)[[1]]==0) {print("no such combo")} else {
       #   print(k); print( unique(tst$SampleID)[k])
       repl[[k]] <- tst[which(tst$SampleID == unique(tst$SampleID)[k]),] #creating four reps within 10 reps
     } #tst is a list of 10
@@ -64,6 +64,7 @@ savetarget.list <- function(orgdata){
   mirc.order <- order(mirc.gr,decreasing = FALSE) 
   ndata <- orgdata[mirc.order,]
   ndata <- cbind(orgdata[mirc.order, ], group = mirc.gr[mirc.order]) #both orders same
+  ndata <- ndata[mixedorder(ndata$SampleID),] #sorting order
   unique(ndata$group) #only 10 groups 
   
   for(h in 1:length(targnames)) { #repeats this 758 times for 10 by 4 lists
