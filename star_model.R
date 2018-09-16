@@ -824,22 +824,32 @@ for(k in 1:length(files)){
    #final featureset vector
    #featset <- unlist(lapply(unlist.tst, function(x) rep(unique(x),(replength/sublength))))
   
-   
+  ##Rbind for Entire tst to make DF
+   #rbindedtst <- list() 
+   #for(i in 1:10){
+   #   rbindedtst[[i]] <- do.call(rbind, tst[[i]])
+   #  #rbindedtst[[i]] <- rbindedtst[[i]][order(rbindedtst[[i]]$SampleID),]
+   #}
+   #rbindedtst <- lapply(tst, function(x) do.call(rbind, x))
+   #rbindedtst.df <- do.call(rbind, rbindedtst)
+   #rbindedtst.df <- rbindedtst.df[order(rbindedtst.df$SampleID),]
    
    #cyclength = length of each subset ; cyclengtht = total length
    cyclengtht = lapply(cyclength, "*", (replength/sublength))
    #cumcyclength is cumulative across subsets
    cumcyclength = cumsum(cyclengtht) #accumulative 
-   
+   #unlisting tst
    tst.unl <- unlist(lapply(tst, function(x) unlist(x)))
+   #selecting only FeatureSet
    featset <- tst.unl[grep("FeatureSet", names(tst.unl))]
    cycfeatset <- featset[cumcyclength]
+   #each subset's featureset replicated
    featsetf <- list()
-   for(i in 1:10){
+   for(i in 1:sublength){
      featsetf[[i]] <- rep(cycfeatset[[i]], (replength/sublength))
    }
+  ##Finalized FeatureSet Matrix 
    featset.mat <- matrix(unlist(featsetf), ncol=1)
-   
    
  ###PART 5: Finalizing Matrix Output   
   indk2 = replength*k ; indk1 = indk2-(replength-1)
