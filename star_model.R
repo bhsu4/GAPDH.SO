@@ -341,7 +341,7 @@ brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
   return(finals)
 } 
   
-testdb <- brkplot(miRcompData2, getfiles, klag=3, plot=FALSE)
+testdb <- brkplot(miRcompData2, getfiles, klag=2, plot=FALSE)
 #larger data set
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/singular")
 getfiles1 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/singular", 
@@ -566,7 +566,7 @@ for(k in 1:length(files)){
       }
   res1[[i]] <- data.frame(mat) #df in dataframe
   }
-}
+
 ##plotting the LSTAR model w/ actual points
  #two graphs on top each other
   par(mfrow=c(2,1))
@@ -701,13 +701,24 @@ for(k in 1:length(files)){
              y = c(min(par("usr")), min(par("usr")), 
                    max(par("usr")), max(par("usr")), min(par("usr"))),
              col= rgb(0,0,0,alpha=0.15))
+          }
         }
       }
-    }
-  } #if(plot)
-}
+    } #if(plot)
+
+  ###Creating Matrix Output w/ TargID, AC, RSS, RSSGrey
   
-plot_lstar(miRcompData2, files, klag=3, plot=TRUE)
+  
+  
+  
+  }#k files
+}
+
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
+                pattern =  "^targ_")
+plot_lstar(miRcompData2, getfiles, klag=2, plot=FALSE)
+plot_lstar(miRcompData2, getfiles, klag=2, plot=TRUE)
 
 which(targnamestst == wowzers$TargetName)
 targnamestst <- "targ_dme-miR-7_000268"
