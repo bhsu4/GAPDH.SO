@@ -535,6 +535,28 @@ plot_lstar <- function(orgdata, getfiles, klag, plot=FALSE){
   targlength <- length(targnames) #length of all targets
   replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
   sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E
+  
+ ###Setting Up LSTAR Output Matrix  
+  res <- data.frame(
+    #target categories
+    TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength), 
+    Group = gsub("_." , "", tmp), FeatureSet = rep(NA, each = replength), 
+    #parameter est for LSTAR
+    const.L = rep(NA, targlength * replength), phi.L1 = rep(NA, targlength * replength), 
+    const.H = rep(NA, targlength * replength), phi.H1 = rep(NA, targlength * replength),
+    gamma = rep(NA, targlength * replength), th = rep(NA, targlength * replength),
+    #dw statistics
+    r.amp = rep(NA, targlength * replength), 
+    dw.amp = rep(NA, targlength * replength), 
+    p.amp = rep(NA, targlength * replength), 
+    r.res = rep(NA, targlength * replength), 
+    dw.res = rep(NA, targlength * replength), 
+    p.res = rep(NA, targlength * replength), 
+    #rss and getPar statistics
+    rss = rep(NA, targlength * replength), 
+    rssgrey = rep(NA, targlength * replength), 
+    ct = rep(NA, targlength * replength)
+  )
 
 for(k in 1:length(files)){
   #loading in data sets to get subs
@@ -706,12 +728,127 @@ for(k in 1:length(files)){
       }
     } #if(plot)
 
-  ###Creating Matrix Output w/ TargID, AC, RSS, RSSGrey
+####Creating Matrix Output w/ TargID, AC, RSS, RSSGrey
+ ###PART 1: Creating the LSTAR Model's RSS and RSSGrey
+   #list of lists of RSS
+   rsslstar <- lapply(lstarres, function(x) lapply(x, function(x) sum(x$residuals^2)))
+   #vector of 1:(replength) for RSS
+   unlist.rsslstar <- unlist(unlist(rsslstar, recursive = FALSE)) #numeric vector
+   #cycles for CT
+   unlistcycCT <- unlist(unlist(diff2_dfCT, recursive=FALSE))
+   #*Possible Error: UnlistcycCT suggests 3:46, if <4 then klag-adjusted is from 0:3 (shown below)
+   #ex. at 3.5, then 3.5-(klag=2) = 1.5 +/- 2 cycles (grey), which is 0:3.  
+   rsslstarg <- vector('list', sublength) 
+   for(i in 1:(sublength)){
+     for(j in 1:(replength/sublength)){
+       #combined indicator with i and j
+       indij = ((replength/sublength)*(i-1))+j  
+       #klag-adjusted upper cycle b/c unlistcycCT[[indij]] is actual cycles for 3:46 (klag=2)
+       #unlistcycCT[[indij]] - klag to fit lstarres$residuals 1:44 formmat
+       uppercyc = floor(unlistcycCT[[indij]]-klag+2) #+2 cycles
+       #klag-adjusted lower cycle
+       lowercyc = ceiling(unlistcycCT[[indij]]-klag-2) #-2cycles
+       #list of lists of rss grey region
+       rsslstarg[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)
+     }
+   }
+   #unlisted 1:(replength) of rss grey region
+   unlist.rsslstarg= unlist(rsslstarg, recursive = FALSE)
+   ##Creating RSS Matrix
+   rss.mat <- matrix(c(unlist.rsslstar, unlist.rsslstarg, unlistcycCT), ncol=3)
   
+ ###PART 2: LSTAR Parameter Coefficients  
+   #generate coefficients of LSTAR model
+   unlparams <- function(x){
+     if(sum(is.na(x$fitted.values)) == 0){
+       unlist(x$model.specific$par, recursive = FALSE)
+     }
+     else{ rep(NA, 6) }
+   }
+   #list of replength=40 of coefficients
+   lstarparamsl <- unlist(lapply(lstarres, function(x) lapply(x, unlparams)), recursive = FALSE)
+   #matrix of lstar coefficients
+   lstarparams <- do.call("rbind", lstarparamsl)
+   ##LSTAR Model Parameters
+   lstarparams.mat <- matrix(lstarparams, ncol=6)
   
+ ###PART 3: Durbin Watson Statistics
+   #list of replength=40 of LSTAR models
+   unlist.lstarmod <- unlist(lstarres, recursive=FALSE)
+   cyclength <- lapply(subs, nrow)
+   #replicated cycle length for each replicate
+   repcyclength <- unlist(lapply(cyclength, function(x) rep(x, (replength/sublength))))
+   #unlist.repcyc is the klag start of cycles
+   unlist.repcyc <- list()
+   for(i in 1:replength){
+     unlist.repcyc[[i]] <- (1+klag):repcyclength[[i]] 
+   }
+   #output of durbin-watson for amplification and residuals
+   reg.amp <- list() ; reg.res <- list() #dynlm amp and res
+   for(i in 1:replength){
+     if(sum(is.na(unlist.lstarmod[[i]]$fitted.values)) == 0){ #non-NAs (LSTAR fits)
+       reg.amp[[i]] <- dynlm(as.numeric(unlist.lstarmod[[i]]$fitted.values) ~ unlist.repcyc[[i]]) #problems with zoo
+       reg.res[[i]] <- dynlm(unlist.lstarmod[[i]]$residuals ~ unlist.repcyc[[i]])
+     }
+     else{
+       reg.amp[[i]] <- NA
+       reg.res[[i]] <- NA
+     }
+   }
+   ##Finding Durbin Watson Statistics of Amplification and Residuals  
+   durbinfunc <- function(x){
+     tryCatch({
+       durbinWatsonTest(x) #durbin watson for unlisted
+     }, error=function(e) {
+       return(list(r=NA, dw=NA, p=NA)) #error when durbinWatson(NA)
+     })
+   }
+   ampdurbwat <- lapply(reg.amp, durbinfunc)
+   resdurbwat <- lapply(reg.res, durbinfunc)
+   #printing only autocorr, dw, and p-value
+   matrixdw <- function(x){
+     matrix(c(x$r, x$dw, x$p), ncol=3)
+   }
+   ##Creating DW-Statistics Matrix
+   ampdw.mat <- do.call(rbind, lapply(ampdurbwat, matrixdw))
+   resdw.mat <- do.call(rbind, lapply(resdurbwat, matrixdw))
+   dw.mat <- cbind(ampdw.mat, resdw.mat)
   
+ ###PART 4: Finding the Feature Set
+   #FeatureSet for each group
+   unlist.tst <- lapply(tst, function(x) unlist(x, recursive=FALSE)$FeatureSet) #rep in sub has same FeatureSet 
+   # featsetl <- list()
+   #  for(i in 1:10){
+   #     featsetl[[i]] <- unlist.tst[[i]][seq(1, length(unlist.tst[[i]]), cyclength[[i]]*4)]
+   #   }
+   #final featureset vector
+   #featset <- unlist(lapply(unlist.tst, function(x) rep(unique(x),(replength/sublength))))
   
+   
+   
+   #cyclength = length of each subset ; cyclengtht = total length
+   cyclengtht = lapply(cyclength, "*", (replength/sublength))
+   #cumcyclength is cumulative across subsets
+   cumcyclength = cumsum(cyclengtht) #accumulative 
+   
+   tst.unl <- unlist(lapply(tst, function(x) unlist(x)))
+   featset <- tst.unl[grep("FeatureSet", names(tst.unl))]
+   cycfeatset <- featset[cumcyclength]
+   featsetf <- list()
+   for(i in 1:10){
+     featsetf[[i]] <- rep(cycfeatset[[i]], (replength/sublength))
+   }
+   featset.mat <- matrix(unlist(featsetf), ncol=1)
+   
+   
+ ###PART 5: Finalizing Matrix Output   
+  indk2 = replength*k ; indk1 = indk2-(replength-1)
+  res[indk1:indk2, "FeatureSet"] <- featset.mat
+  res[indk1:indk2,5:10] <- lstarparams.mat
+  res[indk1:indk2,11:16] <- dw.mat
+  res[indk1:indk2,17:19] <- rss.mat
   }#k files
+  return(res)
 }
 
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
