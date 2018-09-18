@@ -521,7 +521,7 @@ getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO
                 pattern =  "^targ_")
 wowzers <- brkplot(miRcompData2, getfiles2, klag=3, plot=FALSE)
 
-plot_lstar <- function(orgdata, getfiles, klag, plot=FALSE){
+plot_lstar <- function(orgdata, getfiles, klag, testdb, plot=FALSE){
 ##getting the LSTAR model parameters and coefficients
   #targets
   files <- getfiles
@@ -879,8 +879,8 @@ detach("package:dplyr") ; library(dynlm) ; library(car)
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
                 pattern =  "^targ_")
-plot_lstar(miRcompData2, getfiles, klag=2, plot=FALSE)
-testingplotmat <- plot_lstar(miRcompData2, getfiles, klag=2, plot=TRUE)
+plot_lstar(miRcompData2, getfiles, klag=2, testdb = testdb, plot=FALSE)
+testingplotmat <- plot_lstar(miRcompData2, getfiles, klag=2, testdb = testdb, plot=TRUE)
 
 which(targnamestst == wowzers$TargetName)
 targnamestst <- "targ_dme-miR-7_000268"
