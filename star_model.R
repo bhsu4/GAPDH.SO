@@ -340,11 +340,11 @@ brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
   }
   return(finals)
 } 
-  
+library(foreach) ; library(Hmisc)
 testdb <- brkplot(miRcompData2, getfiles, klag=2, plot=FALSE)
 #larger data set
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/singular")
-getfiles1 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/singular", 
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
                 pattern =  "^targ_")
 load(file = getfiles[[1]])
 brkplot(miRcompData2, getfiles1, klag=3, plot=FALSE)
@@ -516,7 +516,6 @@ for(i in 1:2){
   }
 }
   
-detach("package:dplyr")
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall", 
                 pattern =  "^targ_")
@@ -524,6 +523,7 @@ wowzers <- brkplot(miRcompData2, getfiles2, klag=3, plot=FALSE)
 
 plot_lstar <- function(orgdata, getfiles, klag, plot=FALSE){
 ##getting the LSTAR model parameters and coefficients
+  #targets
   files <- getfiles
   #defining important lengths
   targnames <- unique(files) #all targets
@@ -630,7 +630,13 @@ for(k in 1:length(files)){
   diff2_dfmax <- lapply(diff2_df, function(x) lapply(x, which.max)) #cycle at max (w/o klag)
   CTmid <- function(x) (x+(klag+1)+(x+(klag+1)+1))/2 #average of cycles
   diff2_dfCT <- lapply(diff2_dfmax, function(x) lapply(x, CTmid)) #midpoint of cycle at 2nd dermax
-
+  
+  CTrepNA <- function(x){
+    if(length(x) == 0){ x <- NA }
+    else{x}
+  }
+  diff2_dfCT <- lapply(diff2_dfCT, function(x) lapply(x, CTrepNA))
+  
   ###plotting fitted curves and actual values
   for(i in 1:sublength){ #plotting the LSTAR fitted curve
     for(j in 1:(replength/sublength)){ #i for subs, j for reps
@@ -745,11 +751,19 @@ for(k in 1:length(files)){
        indij = ((replength/sublength)*(i-1))+j  
        #klag-adjusted upper cycle b/c unlistcycCT[[indij]] is actual cycles for 3:46 (klag=2)
        #unlistcycCT[[indij]] - klag to fit lstarres$residuals 1:44 formmat
-       uppercyc = floor(unlistcycCT[[indij]]-klag+2) #+2 cycles
-       #klag-adjusted lower cycle
-       lowercyc = ceiling(unlistcycCT[[indij]]-klag-2) #-2cycles
-       #list of lists of rss grey region
-       rsslstarg[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)
+       if(sum(is.na(unlistcycCT[[indij]])) > 0){
+         print(paste(k, "-", indij, "no CT"))
+         rsslstarg[[i]][[j]] <- NA
+       }
+       else if(sum(isTRUE(unlistcycCT[[indij]] > cyclength[[i]]-(klag+1))) > 0){ #strict upper bound
+         uppercyc = cyclength[[i]]-klag
+         lowercyc = ceiling(unlistcycCT[[indij]]-klag-2)}
+       else{ 
+         uppercyc = floor(unlistcycCT[[indij]]-klag+2)  #+2 cycles
+         #klag-adjusted lower cycle
+         lowercyc = ceiling(unlistcycCT[[indij]]-klag-2)} #-2cycles }
+         #list of lists of rss grey region
+         rsslstarg[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2) 
      }
    }
    #unlisted 1:(replength) of rss grey region
@@ -860,12 +874,13 @@ for(k in 1:length(files)){
   }#k files
   return(res)
 }
-
+#LSTAR cannot run with dplyr in library
+detach("package:dplyr") ; library(dynlm) ; library(car)
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
                 pattern =  "^targ_")
 plot_lstar(miRcompData2, getfiles, klag=2, plot=FALSE)
-plot_lstar(miRcompData2, getfiles, klag=2, plot=TRUE)
+testingplotmat <- plot_lstar(miRcompData2, getfiles, klag=2, plot=TRUE)
 
 which(targnamestst == wowzers$TargetName)
 targnamestst <- "targ_dme-miR-7_000268"
