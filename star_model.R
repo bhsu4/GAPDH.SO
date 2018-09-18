@@ -1,121 +1,3 @@
-#keeps first column cycle, log10 rest of fluorescence 
-library(tidyverse) ; library(gtools) ; library(strucchange) ; library(data.table)
-
-hello <- function(subs){
-
-subslog <- lapply(subs, function(x) x %>% 
-                  mutate_each(funs(log10(.)), 2:13)) #original log10 terms 
-subslogcb <- lapply(subslog, function(x) x %>% 
-                      select(-starts_with("Cycle")) %>% #delete cycle lag
-                      mutate_each(funs(lag(., k=2)), 1:12))  #lagged terms
-subslogcb <- lapply(subslogcb, function(x) setNames(x, paste0(colnames(x), "_lag"))) #colnames for lagged
-subs.all <- Map(cbind, subslog, subslogcb) #mapped for column bind for log and logcb
-subs.all <- lapply(subs.all, function(x) x %>% 
-                     select(noquote(mixedsort(colnames(.)))) %>% #correct order except for Cycles
-                     select(starts_with("Cycle"), everything())) #correct order
-#subs.all <- lapply(subs.all, function(x) x %>% select(-starts_with("Cycle_")))
-brks <- function(subsfcn){ #function for subset breakdate est.
-  brkpt <- list()
-  for(j in 1:12){ 
-    ind1 = 25-(25-2*j) ; ind2 = ind1+1   #takes col 2,3 ; 3,4 ; etc (real, and lag)
-    brkpt[[j]] <- breakpoints(subsfcn[,ind1] ~ subsfcn[,ind2], data = subsfcn) 
-  }
-  return(brkpt)
-}
-strchange <- lapply(subs.all, function(x) brks(x)) #breaks is the dynlm eq with breakpoints
-
-for(i in 1:8){
-  for(j in 2:13){ 
-    if(j==2){
-      plot(subslog[[i]][,j], ylab = expression(log[10](Fluorescence)), type="l",
-           ylim = c(range(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))])), col = i)
-    } 
-    lines(subslog[[i]][,j])
-    abline(v=strchange[[i]][[j-1]]$breakpoints, col=j-1)
-    text(c(strchange[[i]][[j-1]]$breakpoints), max(subslog[[i]][-grep("Cycle", colnames(subslog[[i]]))]), 
-         as.character(j), pos=2, srt=90, cex=0.65)
-  }
-}
-return(strchange)
-}
-
-#figuring out breakpoinntss into DF or matrix
-mello <- hello(subsets)
-
-
-
-
-#empty df
-breaks <- data.frame(
-  Breaks = rep(NA, each = 96), Breaks1 = rep(NA, each = 96),
-  Breaks2 = rep(NA, each = 96), Breaks3 = rep(NA, each = 96)
-)
-
-
-
-#double lapply extracts brkpts + adding NA to length
-brks <- function(x){ #function for subset breakdate est.
-  brkpt <- list()
-  brkpt <- lapply(x, function(y) return(y$breakpoints))
-  #nobrk <- lapply(x, function(y) return(length(y$breakpoints)))
-  return(brkpt)
-}
-breaksp <- lapply(mello, function(x) brks(x))
-
-lengthfc <- function(s, n){ #function for setting length for lists
-  lapply(s, function(t) {length(t) <- n ; t})
-}
-n <- max(unlist(lapply(breaksp, lengths))) #max length of all lists
-brkpts <- lapply(breaksp, function(x) lengthfc(x, n)) #same length for all with NA added 
-
-empmat <- matrix(data=NA, nrow=96, ncol=5)
-empmat[1:96, 1] <- matrix(cellolength[1:96], nrow=96)
-for(i in 1:8){
-  #ind2 = n*i ; ind1 = ind2-(n-1)
-  brkpts.unlist <- lapply(brkpts, unlist)
-  ind2 = length(brkpts[[i]])*i ; ind1 = ind2-(length(brkpts[[i]])-1)
-  empmat[ind1:ind2, 2:(2+(n-1))] <- matrix(brkpts.unlist[[i]], byrow = T, nrow=length(brkpts[[i]]))   #[ind1:ind2]
-}
-
-empmat
-
-
-
-
-
-
-#changing data to fit fcn
-library(stringr)
-mdata <- melt(df, id=c("Cycles"))
-mdata <- mdata %>%
-  dplyr::mutate(TargetName = "A") %>% 
-  dplyr::mutate(cat = str_extract(variable, "[A-Z]")) %>% 
-  mutate_each(funs(chartr("ABCDEFGH", "12345678", .)), cat) %>% 
-  dplyr::mutate(new_idn = str_extract(variable, "\\d+$")) %>% 
-  dplyr::mutate(new_id = "KW") %>% 
-  dplyr::mutate(SampleID = paste0(new_id, cat, "_", new_idn)) %>% 
-  select(starts_with("Cycle"), starts_with("SampleID"), starts_with("TargetName"), 
-         starts_with("value"), -starts_with("new"), -starts_with("variable")) %>% 
-  rename(dRn = value)
-subsA  <- singtarget.list(mdata, "A") #works for single
-savetarget.list(mdata) #works for general
-load(file = "targ_A.Rda") #loads in as tst
-
-
-######FUNCTION FIX THIS!
-
-#full function
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy")
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy", 
-                pattern =  "^targ_")
-orgdata = mdata #for below
-library(Hmisc) #used for Lag 
-
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall")
-getfiles2 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall", 
-                pattern =  "^targ_")
-getfiles <- getfiles2
-
 brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
 
 #currently uses log10 for Fluo. add nonlogged function
@@ -340,30 +222,6 @@ brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
   }
   return(finals)
 } 
-library(foreach) ; library(Hmisc)
-testdb <- brkplot(miRcompData2, getfiles, klag=2, plot=FALSE)
-#larger data set
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
-                pattern =  "^targ_")
-load(file = getfiles[[1]])
-brkplot(miRcompData2, getfiles1, klag=3, plot=FALSE)
-brkplot(miRcompData2, getfiles1, klag=3, plot=TRUE)
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall")
-getfiles2 <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall", 
-                pattern =  "^targ_")
-wowzers <- brkplot(miRcompData2, getfiles2, klag=3, plot=FALSE)
-
-library(profvis)
-profvis({brkplot(miRcompData2, getfiles2, klag=3, plot=FALSE) }) #system periodicity time estimation
-#takes 28 minutes for entire miRcompData2
-#nmax is funky, i don't think it takes the max length breaks which is troubling, new row would fail
-
-####applying LSTAR model thru function
-source("GAPDH.SO/lag_gen.R")
-library(dynlm) ; library(Hmisc)
-
-#add get lag formulae in there? then no source needed for lag gen
 
 aiclag <- function(subs, klag){
   #finding the lag term length that will be used by plotting AIC
@@ -431,97 +289,7 @@ aiclag <- function(subs, klag){
   return(fitsresaic)
 }
 
-  set1aic <- aiclag(subs = subs, klag=15) 
-
-  
-  
-  
-  
-####STAR model function
-##plotting LSTAR model to see fit for replication
-lsubsets <- subsets #lsubsets different from subsets_log b/c subsets_log with ts 
-for(i in 1:8){
-  for(j in 2:13){
-    lsubsets[[i]][[j]] <- log10(subsets[[i]][[j]])
-  }
-}
-lsubsets <- subslog
-lsubsets <- lapply(subslog, ts)
-
-tsDyn::lstar(lsubsets[[1]][,2], m=2)
-
-ff <- rowMeans(lsubsets$A[,2:13])
-ff2 <- apply(lsubsets$A[,2:13], 1, median)
-
-try.lstar2 <- tsDyn::lstar(fftest, m=2, d=1)
-try.lstar <- tsDyn::lstar(ff, m=2, d=1) #embedding dimension=2, delay = 1 #mean
-
-plot(x=3:40, try.lstar$fitted.values, type = "l") #ylim = c(5.1, 5.75), xlim=c(1,40))
-for(j in 1:12){
-  for(h in 1:8){
-    points(x=1:40, y=subsets_log[[h]][[j]][,1], cex=0.45)
-  }
-} #plot points for 38 cycles given lag 2try.lstar2 <- tsDyn::lstar(ff2, m=2, d=1) #median replication set
-#lines(x=1:38, try.lstar2$fitted.values, type = "l", ylim = c(5.1, 5.75), col = 2)
-
-df_b5_log <- genparams(est=b5, listdf=lsubsets)
-lines(x=1:40, y=b5_model(1:40, b=df_b5_log$params$b[1], c=df_b5_log$params$c[1],
-                         d=df_b5_log$params$d[1], e=df_b5_log$params$e[1], 
-                         f=df_b5_log$params$f[1]), col=2) #lines for b_5 model
-
-
-#plotting residuals: do we need to forecast, if by looking, resid worse for lstar than log models?
-plot(x=1:38, try.lstar$residuals, type = "l") #reduces branching effect?? doesnt match up
-
-ff <- vector("list", 8)
-for(i in 1:8){
-  ff[[i]] <- rowMeans(lsubsets[[i]][, 2:13])
-} #list of 8 for row means
-
-try.lstar <- vector("list", 8)
-for(i in 1:8){
-  try.lstar[[i]] <- tsDyn::lstar(ff[[i]], m=2, d=1) #run lstar model through each rep
-}
-
-for(i in 1:8){
-  if(i == 1){ #plot residuals/ note: in ln units
-    plot(x = 1:38, y = try.lstar[[i]]$residuals, type = "l", col = 1, cex = 1.5, 
-         ylab = "Residuals", xlab = "Time Series Cycle (t)")
-  }
-  lines(x = 1:38, y = try.lstar[[i]]$residuals, col = i, cex = 1.5)
-}
-legend("bottomright", c(LETTERS[1:8]), col=1:8, ncol = 4, lty = 1)
-
-
-detach("package:dplyr")
-wow <- lstar(testingsubts, m=1, d=2,  include="none")
-plot(x=4:40, y=wow$fitted.values, type="l")
-points(x=1:40, y=testingsubts)
-
-
-wow <- vector("list", 10)
-for(i in 1:10){
-    for(j in 2:5){
-      wow[[i]][[j-1]] <- tryCatch({
-        lstar(subs[[i]][,j], m=1, d=1)},
-        error=function(e) rep(NA, 1))
-  }
-}
-
-
-for(i in 1:2){
-  for(j in 1:4){
-    plot(x=2:length(subs[[i]][[1]]), y=wow[[i]][[j]]$fitted.values, type="l")
-    points(x=subs[[i]][[1]], y=subs[[i]][[j+1]])
-  }
-}
-  
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall")
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall", 
-                pattern =  "^targ_")
-wowzers <- brkplot(miRcompData2, getfiles2, klag=3, plot=FALSE)
-
-plot_lstar <- function(orgdata, getfiles, klag, testdb, plot=FALSE){
+plot_lstar <- function(orgdata, getfiles, klag, breakdb, plot=FALSE){
 ##getting the LSTAR model parameters and coefficients
   #targets
   files <- getfiles
@@ -597,9 +365,9 @@ for(k in 1:length(files)){
   if(plot){
   ##REF PART 2: Clarifying Specific targetdb and breakdb
     #specific target chosen from k files
-    spectarg <- testdb$Targets[which(testdb$Targets$TargetName == targnames[[k]]),]
+    spectarg <- breakdb$Targets[which(breakdb$Targets$TargetName == targnames[[k]]),]
     #specific break points for target
-    specbreak <- testdb$Breaks[testdb$Breaks$TargetID %in% spectarg$TargetID, ]
+    specbreak <- breakdb$Breaks[breakdb$Breaks$TargetID %in% spectarg$TargetID, ]
   ##REF (REF PART 3): Empty Lists for Second Derivative Maximum Estimate  
     diff_df <- vector("list", 10) ; diff2_df <- vector("list", 10) 
     
@@ -704,7 +472,7 @@ for(k in 1:length(files)){
   ###PART 3: Estimating CT Values w/ LSTAR Model by Slope Midpoint
     #estimated CT value            
     #*Shouldn't Display Error: klag=3, Encounter error if cycle is less than 4 
-    #since starts at cyc 4, no need to filter through cycles < 4 when creating testdb
+    #since starts at cyc 4, no need to filter through cycles < 4 when creating breakdb
      leftbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-0.5-klag]
      rightbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]+0.5-klag]
      avgCTfittedvalue = (leftbound+rightbound)/2
@@ -874,13 +642,3 @@ for(k in 1:length(files)){
   }#k files
   return(res)
 }
-#LSTAR cannot run with dplyr in library
-detach("package:dplyr") ; library(dynlm) ; library(car)
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
-                pattern =  "^targ_")
-plot_lstar(miRcompData2, getfiles, klag=2, testdb = testdb, plot=FALSE)
-testingplotmat <- plot_lstar(miRcompData2, getfiles, klag=2, testdb = testdb, plot=TRUE)
-
-which(targnamestst == wowzers$TargetName)
-targnamestst <- "targ_dme-miR-7_000268"
