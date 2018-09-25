@@ -289,7 +289,7 @@ aiclag <- function(subs, klag){
   return(fitsresaic)
 }
 
-plot_lstar <- function(orgdata, getfiles, klag, breakdb, plot=FALSE){
+plot_lstar <- function(orgdata, getfiles, klag, mdim, breakdb, plot=FALSE){
 ##getting the LSTAR model parameters and coefficients
   #targets
   files <- getfiles
@@ -337,13 +337,13 @@ for(k in 1:length(files)){
     for(j in 2:((replength/sublength)+1)){
         #results for LSTAR model 
         lstarres[[i]][[j-1]] <- tryCatch({
-        tsDyn::lstar(subs[[i]][,j], m=1, d=klag)}, #d = lag found through AIC
+        tsDyn::lstar(subs[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
         error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag))), 
                                                  residuals=rep(NA, (cyclength[[i]]-(klag)))))
         #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
     }
   }
-  #res1 is the list of subsets' fitted values and residuals
+    #res1 is the list of subsets' fitted values and residuals
   res1 <- list()
   #matrix with fitted values and residuals as two columned vector
   for(i in 1:sublength){ #list of dataframes for each subset
@@ -352,7 +352,7 @@ for(k in 1:length(files)){
     for(j in 1:(replength/sublength)){
       vector <- c(lstarres[[i]][[j]]$fitted.values, lstarres[[i]][[j]]$residuals)
       ind1 = j*2 ; ind2 = ind1+1 #gets columns 2,3 ; 3,4; 5,6
-      mat[(1+klag):cyclength[[i]], ind1:ind2] <- matrix(vector, ncol=2) #fitted and residuals
+      mat[(1+(klag*mdim)):cyclength[[i]], ind1:ind2] <- matrix(vector, ncol=2) #fitted and residuals
       }
   res1[[i]] <- data.frame(mat) #df in dataframe
   }
@@ -396,7 +396,7 @@ for(k in 1:length(files)){
   #listfittedvalues <- lapply(list, function(x) x$fitted.values) #list of 40 fitted values
   #listdftst <- do.call("cbind", listfittedvalues) #different length, cannot cbind unless NA added
   diff2_dfmax <- lapply(diff2_df, function(x) lapply(x, which.max)) #cycle at max (w/o klag)
-  CTmid <- function(x) (x+(klag+1)+(x+(klag+1)+1))/2 #average of cycles
+  CTmid <- function(x) (x+(klag*mdim+1)+(x+(klag*mdim+1)+1))/2 #average of cycles
   diff2_dfCT <- lapply(diff2_dfmax, function(x) lapply(x, CTmid)) #midpoint of cycle at 2nd dermax
   
   CTrepNA <- function(x){
@@ -435,7 +435,7 @@ for(k in 1:length(files)){
   ###PART 3: Estimating CT Values w/ no LSTAR Model: NO CT
     #estimated CT value
     points(x=diff2_dfCT[[i]][[j]], 
-           y=lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-klag],
+           y=lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-(klag*mdim)],
            pch=17, cex=1)
   ###PART 4: Empty Residuals Since NO LSTAR
     plot(1, type="n" , xlab="n", ylab="Residuals", 
@@ -446,7 +446,7 @@ for(k in 1:length(files)){
   ###PART 1: NO LSTAR Model Fits with Breakpoints as Squares
     #LSTAR model fits               
     else{
-      plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$fitted.values, 
+      plot(x=(1+(klag*mdim)):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$fitted.values, 
            ylab="Fluorescence", xlab = "", type="l", xaxt = "n",
            ylim=c(min(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values)),
                   max(unlist(subs[[i]][[j+1]], lstarres[[i]][[j]]$fitted.values))))
@@ -464,7 +464,7 @@ for(k in 1:length(files)){
     ##All Squares: LSTAR fit with n Breakpoints present
     for(z in 1:specbreaknlength){
       points(x=specbreak$Breakpoints[which(specbreak$TargetID == indij)][[z]], 
-             y=lstarres[[i]][[j]]$fitted.values[(specbreakat[[z]]-klag), ], 
+             y=lstarres[[i]][[j]]$fitted.values[(specbreakat[[z]]-klag*mdim), ], 
              cex=1, pch = 15) #actual points
         }
       }
@@ -473,8 +473,8 @@ for(k in 1:length(files)){
     #estimated CT value            
     #*Shouldn't Display Error: klag=3, Encounter error if cycle is less than 4 
     #since starts at cyc 4, no need to filter through cycles < 4 when creating breakdb
-     leftbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-0.5-klag]
-     rightbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]+0.5-klag]
+     leftbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-0.5-(klag*mdim)]
+     rightbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]+0.5-(klag*mdim)]
      avgCTfittedvalue = (leftbound+rightbound)/2
     #estimated CT value
      points(x=diff2_dfCT[[i]][[j]], y=avgCTfittedvalue, pch=17, cex=1)
@@ -486,7 +486,7 @@ for(k in 1:length(files)){
              col= rgb(0,0,0,alpha=0.15))
   ###PART 4: Residuals Plotting
     #residuals
-     plot(x=(1+klag):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$residuals,
+     plot(x=(1+(klag*mdim)):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$residuals,
           ylab="Residuals", xlab = "Cycle", type="p", cex.lab=0.75)
           abline(h=0)
     #estimated CT value
