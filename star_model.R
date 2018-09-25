@@ -312,7 +312,7 @@ plot_lstar <- function(orgdata, getfiles, klag, mdim, breakdb, plot=FALSE){
     #parameter est for LSTAR
     #const.L = rep(NA, targlength * replength), phi.L1 = rep(NA, targlength * replength), 
     #const.H = rep(NA, targlength * replength), phi.H1 = rep(NA, targlength * replength),
-    gamma = rep(NA, targlength * replength), th = rep(NA, targlength * replength),
+    #gamma = rep(NA, targlength * replength), th = rep(NA, targlength * replength),
     #dw statistics
     r.amp = rep(NA, targlength * replength), 
     dw.amp = rep(NA, targlength * replength), 
@@ -325,7 +325,6 @@ plot_lstar <- function(orgdata, getfiles, klag, mdim, breakdb, plot=FALSE){
     rssgrey = rep(NA, targlength * replength), 
     ct = rep(NA, targlength * replength)
   )
-  
 
 for(k in 1:length(files)){
   #loading in data sets to get subs
@@ -395,7 +394,7 @@ for(k in 1:length(files)){
   ###Removing all Neg to Pos CT values
     #unlist the first derivative slopes
     unl.diff_df <- lapply(diff_df, function(x) unlist(x, recursive=TRUE))
-    for(i in 1:10){
+    for(i in 1:sublength){
       for(k in 1:length(unl.diff_df[[i]])){
         if(unl.diff_df[[i]][[k]] < 0){
           unl.diff_df[[i]][[k]] <- NA #replace all neg with NA
@@ -405,9 +404,9 @@ for(k in 1:length(files)){
     }
     #diff_dfl is the list of diff_df with NAs
     #get output diff2_df
-    diff_dfl <- vector("list", 10)
-      for(i in 1:10){
-        for(j in 1:4){
+    diff_dfl <- vector("list", sublength)
+      for(i in 1:sublength){
+        for(j in 1:(replength/sublength)){
           ind2 = length(diff_df[[i]][[j]])*j ; ind1 = ind2 - (length(diff_df[[i]][[j]])-1)
           diff_dfl[[i]][[j]] <- unl.diff_df[[i]][ind1:ind2]
           diff2_df[[i]][[j]] <- diff_dfl[[i]][[j]][-1] - diff_dfl[[i]][[j]][-length(diff_dfl[[i]][[j]])]
@@ -659,9 +658,14 @@ for(k in 1:length(files)){
  ###PART 5: Finalizing Matrix Output   
   indk2 = replength*k ; indk1 = indk2-(replength-1)
   res[indk1:indk2, "FeatureSet"] <- featset.mat
-  res[indk1:indk2,5:(5+klag*mdim*2-1)] <- lstarparams.mat
-  res[indk1:indk2,(5+klag*mdim*2):((5+klag*mdim*2)+5)] <- dw.mat
-  res[indk1:indk2,((5+klag*mdim*2)+5+1):((5+klag*mdim*2)+5+3)] <- rss.mat
-  }#k files
+  res[indk1:indk2, 5:10] <- dw.mat
+  res[indk1:indk2, 11:13] <- rss.mat
+#  resp <- data.frame()
+#  resp[indk1:indk2, ] <- lstarparams.mat
+#  colnames(resp) <- names(lstarparamsl[[1]])
+#  data.frame(as.name(names(lstarparamsl[[1]])[[1]]) = rep(NA, targlength * replength))
+
+  
+    }#k files
   return(res)
 }
