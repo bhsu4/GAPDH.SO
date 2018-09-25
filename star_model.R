@@ -310,8 +310,8 @@ plot_lstar <- function(orgdata, getfiles, klag, mdim, breakdb, plot=FALSE){
     TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength), 
     Group = gsub("_." , "", tmp), FeatureSet = rep(NA, each = replength), 
     #parameter est for LSTAR
-    const.L = rep(NA, targlength * replength), phi.L1 = rep(NA, targlength * replength), 
-    const.H = rep(NA, targlength * replength), phi.H1 = rep(NA, targlength * replength),
+    #const.L = rep(NA, targlength * replength), phi.L1 = rep(NA, targlength * replength), 
+    #const.H = rep(NA, targlength * replength), phi.H1 = rep(NA, targlength * replength),
     gamma = rep(NA, targlength * replength), th = rep(NA, targlength * replength),
     #dw statistics
     r.amp = rep(NA, targlength * replength), 
@@ -325,6 +325,7 @@ plot_lstar <- function(orgdata, getfiles, klag, mdim, breakdb, plot=FALSE){
     rssgrey = rep(NA, targlength * replength), 
     ct = rep(NA, targlength * replength)
   )
+  
 
 for(k in 1:length(files)){
   #loading in data sets to get subs
@@ -388,10 +389,31 @@ for(k in 1:length(files)){
     #LSTAR Model
     else{
       diff_df[[i]][[j]] <-  lstarres[[i]][[j]]$fitted.values[-1,]  - lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
-      diff2_df[[i]][[j]] <- diff_df[[i]][[j]][-1] - diff_df[[i]][[j]][-length(diff_df[[i]][[j]])]
+      }
     }
   }
-}
+  ###Removing all Neg to Pos CT values
+    #unlist the first derivative slopes
+    unl.diff_df <- lapply(diff_df, function(x) unlist(x, recursive=TRUE))
+    for(i in 1:10){
+      for(k in 1:length(unl.diff_df[[i]])){
+        if(unl.diff_df[[i]][[k]] < 0){
+          unl.diff_df[[i]][[k]] <- NA #replace all neg with NA
+            }
+        else{}
+        }
+    }
+    #diff_dfl is the list of diff_df with NAs
+    #get output diff2_df
+    diff_dfl <- vector("list", 10)
+      for(i in 1:10){
+        for(j in 1:4){
+          ind2 = length(diff_df[[i]][[j]])*j ; ind1 = ind2 - (length(diff_df[[i]][[j]])-1)
+          diff_dfl[[i]][[j]] <- unl.diff_df[[i]][ind1:ind2]
+          diff2_df[[i]][[j]] <- diff_dfl[[i]][[j]][-1] - diff_dfl[[i]][[j]][-length(diff_dfl[[i]][[j]])]
+        }
+      }
+  #diff2_df[[i]][[j]] <- diff_df[[i]][[j]][-1] - diff_df[[i]][[j]][-length(diff_df[[i]][[j]])]
   #list <- unlist(lstarres, recursive = FALSE) #list of 40 equation output
   #listfittedvalues <- lapply(list, function(x) x$fitted.values) #list of 40 fitted values
   #listdftst <- do.call("cbind", listfittedvalues) #different length, cannot cbind unless NA added
@@ -523,13 +545,14 @@ for(k in 1:length(files)){
          print(paste(k, "-", indij, "no CT"))
          rsslstarg[[i]][[j]] <- NA
        }
-       else if(sum(isTRUE(unlistcycCT[[indij]] > cyclength[[i]]-(klag+1))) > 0){ #strict upper bound
-         uppercyc = cyclength[[i]]-klag
-         lowercyc = ceiling(unlistcycCT[[indij]]-klag-2)}
+       else if(sum(isTRUE(unlistcycCT[[indij]] > cyclength[[i]]-(klag*mdim+1))) > 0){ #strict upper bound
+         uppercyc = cyclength[[i]]-(klag*mdim)
+         lowercyc = ceiling(unlistcycCT[[indij]]-(klag*mdim)-2)
+         rsslstarg[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)} 
        else{ 
-         uppercyc = floor(unlistcycCT[[indij]]-klag+2)  #+2 cycles
+         uppercyc = floor(unlistcycCT[[indij]]-(klag*mdim)+2)  #+2 cycles
          #klag-adjusted lower cycle
-         lowercyc = ceiling(unlistcycCT[[indij]]-klag-2)} #-2cycles }
+         lowercyc = ceiling(unlistcycCT[[indij]]-(klag*mdim)-2)} #-2cycles }
          #list of lists of rss grey region
          rsslstarg[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2) 
      }
@@ -545,14 +568,14 @@ for(k in 1:length(files)){
      if(sum(is.na(x$fitted.values)) == 0){
        unlist(x$model.specific$par, recursive = FALSE)
      }
-     else{ rep(NA, 6) }
+     else{ rep(NA, (klag*mdim*2)) }
    }
    #list of replength=40 of coefficients
    lstarparamsl <- unlist(lapply(lstarres, function(x) lapply(x, unlparams)), recursive = FALSE)
    #matrix of lstar coefficients
    lstarparams <- do.call("rbind", lstarparamsl)
    ##LSTAR Model Parameters
-   lstarparams.mat <- matrix(lstarparams, ncol=6)
+   lstarparams.mat <- matrix(lstarparams, ncol=(klag*mdim*2))
   
  ###PART 3: Durbin Watson Statistics
    #list of replength=40 of LSTAR models
@@ -563,7 +586,7 @@ for(k in 1:length(files)){
    #unlist.repcyc is the klag start of cycles
    unlist.repcyc <- list()
    for(i in 1:replength){
-     unlist.repcyc[[i]] <- (1+klag):repcyclength[[i]] 
+     unlist.repcyc[[i]] <- (1+klag*mdim):repcyclength[[i]] 
    }
    #output of durbin-watson for amplification and residuals
    reg.amp <- list() ; reg.res <- list() #dynlm amp and res
@@ -636,9 +659,9 @@ for(k in 1:length(files)){
  ###PART 5: Finalizing Matrix Output   
   indk2 = replength*k ; indk1 = indk2-(replength-1)
   res[indk1:indk2, "FeatureSet"] <- featset.mat
-  res[indk1:indk2,5:10] <- lstarparams.mat
-  res[indk1:indk2,11:16] <- dw.mat
-  res[indk1:indk2,17:19] <- rss.mat
+  res[indk1:indk2,5:(5+klag*mdim*2-1)] <- lstarparams.mat
+  res[indk1:indk2,(5+klag*mdim*2):((5+klag*mdim*2)+5)] <- dw.mat
+  res[indk1:indk2,((5+klag*mdim*2)+5+1):((5+klag*mdim*2)+5+3)] <- rss.mat
   }#k files
   return(res)
 }
