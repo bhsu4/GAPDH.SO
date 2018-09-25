@@ -338,8 +338,8 @@ for(k in 1:length(files)){
         #results for LSTAR model 
         lstarres[[i]][[j-1]] <- tryCatch({
         tsDyn::lstar(subs[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
-        error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag))), 
-                                                 residuals=rep(NA, (cyclength[[i]]-(klag)))))
+        error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
+                                                 residuals=rep(NA, (cyclength[[i]]-(klag*mdim)))))
         #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
     }
   }
@@ -347,7 +347,7 @@ for(k in 1:length(files)){
   res1 <- list()
   #matrix with fitted values and residuals as two columned vector
   for(i in 1:sublength){ #list of dataframes for each subset
-  mat <- matrix( NA, nrow = cyclength[[i]], ncol = (2*(replength/sublength))+1)
+  mat <- matrix( NA, nrow = cyclength[[i]], ncol = (2*(replength/sublength)+1))
   mat[,1] <- 1:cyclength[[i]] #different cycle lengths
     for(j in 1:(replength/sublength)){
       vector <- c(lstarres[[i]][[j]]$fitted.values, lstarres[[i]][[j]]$residuals)
@@ -395,13 +395,13 @@ for(k in 1:length(files)){
     #unlist the first derivative slopes
     unl.diff_df <- lapply(diff_df, function(x) unlist(x, recursive=TRUE))
     for(i in 1:sublength){
-      for(k in 1:length(unl.diff_df[[i]])){
-        if(unl.diff_df[[i]][[k]] < 0){
-          unl.diff_df[[i]][[k]] <- NA #replace all neg with NA
+        for(y in 1:length(unl.diff_df[[i]])){
+      if(unl.diff_df[[i]][[y]] < 0 & is.na(unl.diff_df[[i]][[y]]) == FALSE){
+          unl.diff_df[[i]][[y]] <- NA #replace all neg with NA
             }
         else{}
         }
-    }
+      }
     #diff_dfl is the list of diff_df with NAs
     #get output diff2_df
     diff_dfl <- vector("list", sublength)
@@ -518,9 +518,9 @@ for(k in 1:length(files)){
              y = c(min(par("usr")), min(par("usr")), 
                    max(par("usr")), max(par("usr")), min(par("usr"))),
              col= rgb(0,0,0,alpha=0.15))
-          }
-        }
-      }
+          } #else
+        } #i
+      } #j
     } #if(plot)
 
 ####Creating Matrix Output w/ TargID, AC, RSS, RSSGrey
@@ -546,8 +546,7 @@ for(k in 1:length(files)){
        }
        else if(sum(isTRUE(unlistcycCT[[indij]] > cyclength[[i]]-(klag*mdim+1))) > 0){ #strict upper bound
          uppercyc = cyclength[[i]]-(klag*mdim)
-         lowercyc = ceiling(unlistcycCT[[indij]]-(klag*mdim)-2)
-         rsslstarg[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)} 
+         lowercyc = ceiling(unlistcycCT[[indij]]-(klag*mdim)-2)}
        else{ 
          uppercyc = floor(unlistcycCT[[indij]]-(klag*mdim)+2)  #+2 cycles
          #klag-adjusted lower cycle
@@ -567,14 +566,15 @@ for(k in 1:length(files)){
      if(sum(is.na(x$fitted.values)) == 0){
        unlist(x$model.specific$par, recursive = FALSE)
      }
-     else{ rep(NA, (klag*mdim*2)) }
+     else{ rep(NA, ((klag*mdim)+4)) }
    }
    #list of replength=40 of coefficients
    lstarparamsl <- unlist(lapply(lstarres, function(x) lapply(x, unlparams)), recursive = FALSE)
    #matrix of lstar coefficients
    lstarparams <- do.call("rbind", lstarparamsl)
    ##LSTAR Model Parameters
-   lstarparams.mat <- matrix(lstarparams, ncol=(klag*mdim*2))
+   lstarparams.mat <- matrix(lstarparams, ncol=((klag*mdim)+4)) 
+   #klag*mdim for phiL and phiH, 4 from const.L, const.H, gamma, th
   
  ###PART 3: Durbin Watson Statistics
    #list of replength=40 of LSTAR models
@@ -660,12 +660,11 @@ for(k in 1:length(files)){
   res[indk1:indk2, "FeatureSet"] <- featset.mat
   res[indk1:indk2, 5:10] <- dw.mat
   res[indk1:indk2, 11:13] <- rss.mat
-#  resp <- data.frame()
-#  resp[indk1:indk2, ] <- lstarparams.mat
-#  colnames(resp) <- names(lstarparamsl[[1]])
-#  data.frame(as.name(names(lstarparamsl[[1]])[[1]]) = rep(NA, targlength * replength))
-
+  resp <- data.frame()
+  resp[indk1:indk2, ] <- lstarparams.mat
+  colnames(resp) <- names(lstarparamsl[[1]])
+  data.frame(as.name(names(lstarparamsl[[1]])[[1]]) = rep(NA, targlength * replength))
   
-    }#k files
-  return(res)
+    } #k files
+  return(list(res=res, parres = resp))
 }

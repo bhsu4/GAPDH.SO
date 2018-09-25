@@ -23,13 +23,13 @@ load(file = "targ_A.Rda") #loads in as tst
 
 #load in functions for LSTAR
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/")
-source("GAPDH.SO/star_model")
+source("GAPDH.SO/STAR_model.R")
 
 #larger data set
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
                 pattern =  "^targ_")
-library(foreach) ; library(Hmisc)
+library(foreach) ; library(Hmisc) ; library(dplyr)
 testdb <- brkplot(miRcompData2, getfiles, klag=2, plot=FALSE)
 
 #AIC quality control for GAPDH.SO
@@ -41,5 +41,6 @@ detach("package:dplyr") ; library(dynlm) ; library(car)
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
                 pattern =  "^targ_")
-tstlstarmat <- plot_lstar(miRcompData2, getfiles, klag=2, testdb = testdb, plot=FALSE) #noplot
-tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=2, testdb = testdb, plot=TRUE) #plot
+tstlstarmat <- plot_lstar(miRcompData2, getfiles, klag=2, breakdb = testdb, plot=FALSE) #noplot
+tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=2, breakdb = testdb, plot=TRUE) #plot
+tstlstarmat3 <- plot_lstar(miRcompData2, getfiles, klag=2, mdim=2, breakdb = testdb, plot=TRUE) #plot
