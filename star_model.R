@@ -660,11 +660,16 @@ for(k in 1:length(files)){
   res[indk1:indk2, "FeatureSet"] <- featset.mat
   res[indk1:indk2, 5:10] <- dw.mat
   res[indk1:indk2, 11:13] <- rss.mat
-  resp <- data.frame()
-  resp[indk1:indk2, ] <- lstarparams.mat
+  
+  if(k==1){
+  resp <- data.frame(lstarparams.mat)
+  }
+  else{
+  resp[indk1:indk2, 1:(1+(klag*mdim+4-1))] <- lstarparams.mat
+  }
   colnames(resp) <- names(lstarparamsl[[1]])
-  data.frame(as.name(names(lstarparamsl[[1]])[[1]]) = rep(NA, targlength * replength))
   
     } #k files
-  return(list(res=res, parres = resp))
+  allres <- cbind(res, resp)
+  return(allres)
 }
