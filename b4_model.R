@@ -13,7 +13,7 @@ plot_b4 <- function(listdf, par){
   for(k in 2:length(listdf)){
     lines(x=xs, y=b4_model(xs, b=par$params$b[k], c=par$params$c[k],
                                d=par$params$d[k], e=par$params$e[k]), col=k)
-    for(j in 2:length(try[[i]])){
+    for(j in 2:length(listdf[[i]])){
       for(h in 1:length(listdf)){
         points(x=xs, y=listdf[[h]][,j][1:cycmax], cex=0.45)
       }
