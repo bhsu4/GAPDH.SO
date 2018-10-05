@@ -112,6 +112,55 @@ abs_quant <- function(df_mod, subsets, dil = "reps"){
 abs_quant(df_b4, subsets = subsets)
 
 
-  
+rel_quant <- function(df_mod, subsetsC, subsetsT){
+  ##key lengths defined
+  replength = length(subsets[[1]])-1 
+  sublength = length(subsets)
+  ##finding start and end of exp phase 
+  res1 <- list()
+  for(i in 1:sublength){
+    res1[[i]] <- getPar(df_mod$fits[[i]], type = "curve", cp = "cpD2", eff = "sliwin")
+    res1[[i]] <- res1[[i]][-2,]
+  }
+  CTval <- ceiling(do.call(cbind, res1))
+  ###Proposition #1: m_{an}
+  ##empty matrices for replication results
+  pkn.repsC <- matrix(rep(NA, replength*sublength), nrow = sublength)
+  pkn.repsT <- matrix(rep(NA, replength*sublength), nrow = sublength)
+  ykn.repsC <- matrix(rep(NA, replength*sublength), nrow = sublength)
+  ykn.repsT <- matrix(rep(NA, replength*sublength), nrow = sublength)
+  pkn.eachC <- rep(NA, replength) ; pkn.eachT <- rep(NA, replength)
+  ykn.eachC <- rep(NA, replength) ; ykn.eachT <- rep(NA, replength)
+  ##finding replication values
+  #pkn = estimator of efficiency for kth reaction in exp phase
+  #mkn = 1 + pkn
+  #ykn = fluorescence sum in exp phase
+  for(i in 1:sublength){
+    for(j in 2:(replength+1)){
+      texp = CTval[[i]]
+      pkn.numC = sum(subsetsC[[i]][,j][1:nexp]) - subsetsC[[i]][,j][texp] - sum(subsetsC[[i]][,j][1:(nexp-1)])
+      pkn.denC = sum(subsetsC[[i]][,j][texp:nexp])
+      pkn.numT = sum(subsetsT[[i]][,j][1:nexp]) - subsetsT[[i]][,j][texp] - sum(subsetsT[[i]][,j][1:(nexp-1)])
+      pkn.denT = sum(subsetsT[[i]][,j][texp:nexp])
+      #empty frames
+      pkn.eachC[j-1] <- pkn.numC/pkn.denC ; pkn.eachT[j-1] <- pkn.numT/pkn.denT
+      ykn.eachC[j-1] <- sum(subsetsC[[i]][,j]); ykn.eachT[j-1] <- sum(subsetsT[[i]][,j])
+    }
+    #fill in matrix
+    pkn.repsC[i,1:replength] <- pkn.eachC ; pkn.repsT[i,1:replength] <- pkn.eachT
+    ykn.repsC[i,1:replength] <- ykn.eachC ; ykn.repsT[i,1:replength] <- ykn.eachT
+  }
+  ##accumulated amounts inside Sigma
+  mkn.repsC <- (1+pkn.repsC)^(replength+1) ; mkn.repsT <- (1+pkn.repsT)^(replength+1)
+  mknC <- rowSums(mkn.repsC) ; mknT <- rowSums(mkn.repsT)
+  yknC <- rowSums(ykn.repsC) ; yknT <- rowSums(ykn.repsT)
+  pknC <- rowSums(pkn.repsC) ; pknT <- rowSums(pkn.repsT)
+  sigmaC = pknC*yknC/mknC ; sigmaT = pknT*yknT/mknT
+  ##constants outside Sigma
+  manC = (1/replength)*pknC*yknC/mknC
+  manT = (1/replength)*pknT*yknT/mknT
+  #return(list(m = mkn, y = ykn, p = pkn))
+  return(list(mC = manC, mT = manT))
+}
   
   
