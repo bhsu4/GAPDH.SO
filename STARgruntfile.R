@@ -29,7 +29,7 @@ source("GAPDH.SO/STAR_model.R")
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
                 pattern =  "^targ_")
-library(foreach) ; library(Hmisc) ; library(dplyr)
+library(foreach) ; library(Hmisc) ; library(dplyr) ; library(strucchange)
 testdb <- brkplot(miRcompData2, getfiles, klag=2, plot=FALSE)
 
 #AIC quality control for GAPDH.SO

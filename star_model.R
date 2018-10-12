@@ -339,7 +339,8 @@ for(k in 1:length(files)){
         lstarres[[i]][[j-1]] <- tryCatch({
         tsDyn::lstar(subs[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
         error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
-                                                 residuals=rep(NA, (cyclength[[i]]-(klag*mdim)))))
+                               residuals=rep(NA, (cyclength[[i]]-(klag*mdim))),
+                               model.specific=list(coefficients = rep(NA, (4+2*mdim)))))
         #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
     }
   }
