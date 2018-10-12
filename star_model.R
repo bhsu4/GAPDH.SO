@@ -427,6 +427,68 @@ for(k in 1:length(files)){
   }
   diff2_dfCT <- lapply(diff2_dfCT, function(x) lapply(x, CTrepNA))
   
+  #End of RSS, RSS Grey
+ ###Beginning of RSSthres, RSS Red
+ ###CT with Threshold STAR
+  lstarcoef <- vector("list", sublength) #empty list of subs: ABCD,..etc
+  cycCT.thover <- vector("list", sublength)
+  #lstarcoef is list of lists of all coefficients 
+  #cycCT.thover is list of lists of all cycles' LSTAR fitted > LSTAR threshold
+  for(i in 1:10){
+    for(j in 1:4){
+      lstarcoef[[i]][[j]] <- lstarres[[i]][[j]]$model.specific$coefficients #coeffs
+      if(sum(is.na(lstarcoef[[i]][[j]])) == 0){
+        #cycles greater than threshold in lagged format
+        cycCT.thover[[i]][[j]] <- which(lstarres[[i]][[j]]$fitted.values > lstarcoef[[i]][[j]]["th"])
+      }
+      else{cycCT.thover[[i]][[j]] <- NA} #NAs for no LSTAR fits
+    }
+  }
+  overth.diff <- function(x){ #diff takes lagged difference, rle shows lengths of lagged diff
+    #ex. x = 4,5,6,7,10,13,25,26,27,28,29,30
+    #lengths are 3,2,1,5 these are how many of those differences (max this)
+    #values are 1,3,12,1 these are diffrences (this needs to be = 1)
+    if(sum(is.na(x)) == 0){ rle(diff(x)) }
+    else{ list(lengths=NA) }
+  }      
+  overth.diffcyc <- function(x){ #fitting conditions above
+    #max lengths and choose values of 1
+    #logic here is that: in cases where more fluctuations, more noise, multiple times when
+    #cycles cross threshold. take the cycle that has most cycles after threshold that is 
+    #higher than the threshold continuously
+    if(sum(is.na(x)) == 0){ which(x$lengths == max(x$lengths) & x$values == 1) }
+    else{ NA }
+  }
+  #difftimes are rle (run length encoding) lagged diff
+  difftimes <- lapply(cycCT.thover, function(x) lapply(x, overth.diff))
+  #cycle index for cycle in list of those > threshold
+  index.length <- lapply(difftimes, function(x) lapply(x, overth.diffcyc))
+  index.unl <- unlist(index.length, recursive = FALSE)
+  index.unl <- lapply(index.unl, max) #if two same length of lagged diff, choose latter cycles
+  #final CT list
+  cycCT.th <- list()
+  #find the intermediate CT value (intermediate means 0.5) surpassing threshold
+  for(i in 1:sublength){
+    for(j in 1:(replength/sublength)){
+      ind = j+(replength/sublength)*(i-1)
+      if(sum(is.na(index.unl[[ind]])) > 0){ #any NAs get NA
+        cycCT.th[[ind]] <- NA
+      }
+      else if(index.unl[[ind]] > 1){ #more than one string of consec > threshold
+        #ex. 1,2,3,4,5,6,7,8,9,10,.....,24 (20th term), 28,29,30,....
+        #difftimes lengths: 11, 1, 5, 1, 1, 1, 11
+        #          values:  1, 3, 1, 3, 1, 4, 1
+        #index.unl = 7, take sum of 1:6 of the lengths = 20, so 21st is our chosen pt
+        tmd <- sum(difftimes[[i]][[j]]$lengths[1:(index.unl[[ind]]-1)]) #sum of before
+        cycCT.th[[ind]] <- (cycCT.thover[[i]][[j]][[tmd+1]] + (cycCT.thover[[i]][[j]][[tmd+1]]-1))/2 + (mdim*klag) #actual pt after add
+      }
+      else{ 
+        #at index = 1, just take that first point, and point-1 , find average
+        cycCT.th[[ind]] <- (cycCT.thover[[i]][[j]][[1]] + (cycCT.thover[[i]][[j]][[1]]-1))/2 + (mdim*klag) #actual pt after addition of mdim*klag
+      }
+    }
+  } 
+  
   ###plotting fitted curves and actual values
   for(i in 1:sublength){ #plotting the LSTAR fitted curve
     for(j in 1:(replength/sublength)){ #i for subs, j for reps
