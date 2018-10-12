@@ -567,14 +567,14 @@ for(k in 1:length(files)){
      if(sum(is.na(x$fitted.values)) == 0){
        unlist(x$model.specific$par, recursive = FALSE)
      }
-     else{ rep(NA, ((klag*mdim)+4)) }
+     else{ rep(NA, ((2*mdim)+4)) }
    }
    #list of replength=40 of coefficients
    lstarparamsl <- unlist(lapply(lstarres, function(x) lapply(x, unlparams)), recursive = FALSE)
    #matrix of lstar coefficients
    lstarparams <- do.call("rbind", lstarparamsl)
    ##LSTAR Model Parameters
-   lstarparams.mat <- matrix(lstarparams, ncol=((klag*mdim)+4)) 
+   lstarparams.mat <- matrix(lstarparams, ncol=((2*mdim)+4)) 
    #klag*mdim for phiL and phiH, 4 from const.L, const.H, gamma, th
   
  ###PART 3: Durbin Watson Statistics
@@ -666,7 +666,7 @@ for(k in 1:length(files)){
   resp <- data.frame(lstarparams.mat)
   }
   else{
-  resp[indk1:indk2, 1:(1+(klag*mdim+4-1))] <- lstarparams.mat
+  resp[indk1:indk2, 1:(1+(2*mdim+4-1))] <- lstarparams.mat
   }
   colnames(resp) <- names(lstarparamsl[[1]])
   
