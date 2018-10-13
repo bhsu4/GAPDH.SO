@@ -323,7 +323,9 @@ plot_lstar <- function(orgdata, getfiles, klag, mdim, breakdb, plot=FALSE){
     #rss and getPar statistics
     rss = rep(NA, targlength * replength), 
     rssgrey = rep(NA, targlength * replength), 
-    ct = rep(NA, targlength * replength)
+    ct = rep(NA, targlength * replength), 
+    rssred = rep(NA, targlength*replength), 
+    ctth = rep(NA, targlength*replength)
   )
 
 for(k in 1:length(files)){
@@ -669,23 +671,26 @@ for(k in 1:length(files)){
      for(j in 1:(replength/sublength)){
        #combined indicator with i and j
        indij = ((replength/sublength)*(i-1))+j  
-       #klag-adjusted upper cycle b/c unlistcycCT[[indij]] is actual cycles for 3:46 (klag=2)
-       #unlistcycCT[[indij]] - klag to fit lstarres$residuals 1:44 formmat
-       #if(sum(is.na(unlistcycCTthr[[indij]])) > 0){
-       #  rsslstarr[[i]][[j]] <- NA
-       #  print(paste(k, "-", indij, "no CTth"))
-       #}
+       #all NA values
+       if(sum(is.na(unlistcycCTthr[[indij]])) > 0){
+         #this does not go through, will have to run this at the end
+         rsslstarr[[i]][[j]] <- NA
+       }
        #filter out low values, change to NA unlistcycCTthr
-       if(sum(isTRUE(unlistcycCTthr[[indij]] > cyclength[[i]]-(klag*mdim+1))) > 0){ #strict upper bound
+       else if(sum(isTRUE(unlistcycCTthr[[indij]] > (cyclength[[i]]-(klag*mdim+1)))) > 0){ #strict upper bound
          uppercyc = cyclength[[i]]-(klag*mdim)
          lowercyc = ceiling(unlistcycCTthr[[indij]]-(klag*mdim)-2)}
-       else if(sum(is.na(unlistcycCTthr[[indij]])) == 0){ 
+       else{    #(sum(is.na(unlistcycCTthr[[indij]])) == 0){ 
          uppercyc = floor(unlistcycCTthr[[indij]]-(klag*mdim)+2)  #+2 cycles
          #klag-adjusted lower cycle
          lowercyc = ceiling(unlistcycCTthr[[indij]]-(klag*mdim)-2)} #-2cycles 
-       else{rsslstarr[[i]][[j]] <- NA}
        #list of lists of rss red region
-       rsslstarr[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2) 
+       rsslstarr[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)
+       #rsslstarr provies RSS for NA values, we undo this here (rewrite above, need both)
+       if(sum(is.na(unlistcycCTthr[[indij]])) > 0){ 
+         rsslstarr[[i]][[j]] <- NA 
+         print(paste(k, "-", indij, "no CTth"))}
+       else{}
      }
    }
    #unlisted 1:(replength) of rss grey region
@@ -794,7 +799,7 @@ for(k in 1:length(files)){
   indk2 = replength*k ; indk1 = indk2-(replength-1)
   res[indk1:indk2, "FeatureSet"] <- featset.mat
   res[indk1:indk2, 5:10] <- dw.mat
-  res[indk1:indk2, 11:13] <- rss.mat
+  res[indk1:indk2, 11:15] <- rss.mat
   
   if(k==1){
   resp <- data.frame(lstarparams.mat)
