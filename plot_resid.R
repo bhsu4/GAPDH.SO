@@ -13,7 +13,9 @@ plot_resid <- function(listdf, params) {
         lines(y=resids[[i]][ind1:ind2], x=params$fits[[i]]$DATA$Cycles[ind1:ind2], col=k)
       }
     }
-    title(main= paste(names(params$fits[i]), sub=params$fits$A$MODEL$name, sep = ", "))
+    legend("bottomleft", c(paste(names(params$fit[i]), subs=params$fits$A$MODEL$name, sep = ",")),
+           bty = "n", cex=1.25)
+    #title(main= paste(names(params$fits[i]), sub=params$fits$A$MODEL$name, sep = ", "))
   }
 }
 

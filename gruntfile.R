@@ -46,7 +46,7 @@ subsetsb_b5 <- genparamsbase(subsets, df_b5, subsets)
 plot_eff(Cycles, subsetsb_b5, subsets, subsets, "slant", 11)
 plot_eff(Cycles, subsetsb_b5, subsets, subsets, "flat", 11)
 
-curve_b5 <- curvefunc(df_b5, b5_model, subsetsb_b5)
+curve_b5 <- curvefunc(df_b5, b5_model, subsetsb_b5, 5)
 plot_eff(Cycles, subsetsb_b5, subsets, curve_b5, "slant", 11)
 
 #### confirmation on curve values fitted
