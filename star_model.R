@@ -441,6 +441,7 @@ for(k in 1:length(files)){
     for(j in 1:4){
       indicator <- j+4*(i-1)
       lstarcoef[[indicator]] <- lstarres.unl[[indicator]]$model.specific$coefficients #coeffs
+      lstarcoef[[indicator]]["th"] <- abs(lstarcoef[[indicator]]["th"])
       if(sum(is.na(lstarcoef[[indicator]])) > 0){cycCT.unl[[indicator]] <- NA}
       else{
         #cycles greater than threshold in lagged format
