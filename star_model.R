@@ -428,21 +428,27 @@ for(k in 1:length(files)){
   diff2_dfCT <- lapply(diff2_dfCT, function(x) lapply(x, CTrepNA))
   
   #End of RSS, RSS Grey
- ###Beginning of RSSthres, RSS Red
+ ###ADDED THRESHOLD CT VALUE: Beginning of RSSthres, RSS Red
  ###CT with Threshold STAR
   lstarcoef <- vector("list", sublength) #empty list of subs: ABCD,..etc
   cycCT.thover <- vector("list", sublength)
+  cycCT.unl <- list() 
   #lstarcoef is list of lists of all coefficients 
   #cycCT.thover is list of lists of all cycles' LSTAR fitted > LSTAR threshold
+  #cycCT.unl temporary unlisted CT.thover, because list of lists didn't work with which statement
+  lstarres.unl = unlist(lstarres, recursive = FALSE)
   for(i in 1:10){
     for(j in 1:4){
-      lstarcoef[[i]][[j]] <- lstarres[[i]][[j]]$model.specific$coefficients #coeffs
-      if(sum(is.na(lstarcoef[[i]][[j]])) == 0){
+      indicator <- j+4*(i-1)
+      lstarcoef[[indicator]] <- lstarres.unl[[indicator]]$model.specific$coefficients #coeffs
+      if(sum(is.na(lstarcoef[[indicator]])) > 0){cycCT.unl[[indicator]] <- NA}
+      else{
         #cycles greater than threshold in lagged format
-        cycCT.thover[[i]][[j]] <- which(lstarres[[i]][[j]]$fitted.values > lstarcoef[[i]][[j]]["th"])
+        cycCT.unl[[indicator]] <- which(lstarres.unl[[indicator]]$fitted.values > lstarcoef[[indicator]]["th"])
       }
-      else{cycCT.thover[[i]][[j]] <- NA} #NAs for no LSTAR fits
     }
+    ind2 = 4*i ; ind1 = ind2-(4-1)
+    cycCT.thover[[i]] <- cycCT.unl[ind1:ind2] #back to list of lists
   }
   overth.diff <- function(x){ #diff takes lagged difference, rle shows lengths of lagged diff
     #ex. x = 4,5,6,7,10,13,25,26,27,28,29,30
@@ -466,13 +472,13 @@ for(k in 1:length(files)){
   index.unl <- unlist(index.length, recursive = FALSE)
   index.unl <- lapply(index.unl, max) #if two same length of lagged diff, choose latter cycles
   #final CT list
-  cycCT.th <- list()
+  cycCT.th <- vector("list", sublength)
   #find the intermediate CT value (intermediate means 0.5) surpassing threshold
   for(i in 1:sublength){
     for(j in 1:(replength/sublength)){
       ind = j+(replength/sublength)*(i-1)
       if(sum(is.na(index.unl[[ind]])) > 0){ #any NAs get NA
-        cycCT.th[[ind]] <- NA
+        cycCT.th[[i]][[j]] <- NA
       }
       else if(index.unl[[ind]] > 1){ #more than one string of consec > threshold
         #ex. 1,2,3,4,5,6,7,8,9,10,.....,24 (20th term), 28,29,30,....
@@ -480,11 +486,11 @@ for(k in 1:length(files)){
         #          values:  1, 3, 1, 3, 1, 4, 1
         #index.unl = 7, take sum of 1:6 of the lengths = 20, so 21st is our chosen pt
         tmd <- sum(difftimes[[i]][[j]]$lengths[1:(index.unl[[ind]]-1)]) #sum of before
-        cycCT.th[[ind]] <- (cycCT.thover[[i]][[j]][[tmd+1]] + (cycCT.thover[[i]][[j]][[tmd+1]]-1))/2 + (mdim*klag) #actual pt after add
+        cycCT.th[[i]][[j]] <- (cycCT.thover[[i]][[j]][[tmd+1]] + (cycCT.thover[[i]][[j]][[tmd+1]]-1))/2 + (mdim*klag) #actual pt after add
       }
       else{ 
         #at index = 1, just take that first point, and point-1 , find average
-        cycCT.th[[ind]] <- (cycCT.thover[[i]][[j]][[1]] + (cycCT.thover[[i]][[j]][[1]]-1))/2 + (mdim*klag) #actual pt after addition of mdim*klag
+        cycCT.th[[i]][[j]] <- (cycCT.thover[[i]][[j]][[1]] + (cycCT.thover[[i]][[j]][[1]]-1))/2 + (mdim*klag) #actual pt after addition of mdim*klag
       }
     }
   } 
@@ -554,7 +560,7 @@ for(k in 1:length(files)){
       }
     else{}
   ###PART 3: Estimating CT Values w/ LSTAR Model by Slope Midpoint
-    #estimated CT value            
+    ##A. SECOND DERIVATIVE METHOD: estimated CT value            
     #*Shouldn't Display Error: klag=3, Encounter error if cycle is less than 4 
     #since starts at cyc 4, no need to filter through cycles < 4 when creating breakdb
      leftbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]-0.5-(klag*mdim)]
@@ -568,7 +574,21 @@ for(k in 1:length(files)){
              y = c(min(par("usr")), min(par("usr")), 
                    max(par("usr")), max(par("usr")), min(par("usr"))),
              col= rgb(0,0,0,alpha=0.15))
+     ##B. LSTAR THRESHOLD METHOD: estimated CT value            
+     leftbound <- lstarres[[i]][[j]]$fitted.values[cycCT.th[[i]][[j]]-0.5-(klag*mdim)]
+     rightbound <- lstarres[[i]][[j]]$fitted.values[cycCT.th[[i]][[j]]+0.5-(klag*mdim)]
+     avgCTfittedvalue = (leftbound+rightbound)/2
+     #estimated CT value
+     points(x=cycCT.th[[i]][[j]], y=avgCTfittedvalue, pch=17, cex=1, col="red")
+     #grey box +/- 2 cycles about estimated CT 
+     polygon(x = c(cycCT.th[[i]][[j]]-2, cycCT.th[[i]][[j]]+2, cycCT.th[[i]][[j]]+2, 
+                   cycCT.th[[i]][[j]]-2, cycCT.th[[i]][[j]]-2), 
+             y = c(min(par("usr")), min(par("usr")), 
+                   max(par("usr")), max(par("usr")), min(par("usr"))),
+             col= rgb(1,0,0,alpha=0.15))     
+     
   ###PART 4: Residuals Plotting
+   ##A. SECOND DERIVATIVE METHOD: estimated CT value            
     #residuals
      plot(x=(1+(klag*mdim)):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$residuals,
           ylab="Residuals", xlab = "Cycle", type="p", cex.lab=0.75)
@@ -581,6 +601,15 @@ for(k in 1:length(files)){
              y = c(min(par("usr")), min(par("usr")), 
                    max(par("usr")), max(par("usr")), min(par("usr"))),
              col= rgb(0,0,0,alpha=0.15))
+    ##B. LSTAR THRESHOLD METHOD: estimated CT value            
+     #estimated CT value
+     points(x=cycCT.th[[i]][[j]], y=0, pch=17, cex=1, col="red")
+     #grey box +/- 2 cycles about estimated CT 
+     polygon(x = c(cycCT.th[[i]][[j]]-2, cycCT.th[[i]][[j]]+2, cycCT.th[[i]][[j]]+2, 
+                   cycCT.th[[i]][[j]]-2, cycCT.th[[i]][[j]]-2), 
+             y = c(min(par("usr")), min(par("usr")), 
+                   max(par("usr")), max(par("usr")), min(par("usr"))),
+             col= rgb(1,0,0,alpha=0.15))
           } #else
         } #i
       } #j
