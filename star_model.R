@@ -591,7 +591,7 @@ for(k in 1:length(files)){
              y = c(min(par("usr")), min(par("usr")), 
                    max(par("usr")), max(par("usr")), min(par("usr"))),
              col= rgb(1,0,0,alpha=0.15))}
-     else if(cycCT.th[[i]][[j]]<(0.5+klag*mdim)){ print(paste("OB", i, "-", j, "- no redCT")) }
+     else if(cycCT.th[[i]][[j]]<(0.5+klag*mdim)){ }
      
   ###PART 4: Residuals Plotting
    ##A. SECOND DERIVATIVE METHOD: estimated CT value            
@@ -632,8 +632,10 @@ for(k in 1:length(files)){
    rsslstar <- lapply(lstarres, function(x) lapply(x, function(x) sum(x$residuals^2)))
    #vector of 1:(replength) for RSS
    unlist.rsslstar <- unlist(unlist(rsslstar, recursive = FALSE)) #numeric vector
-   #cycles for CT
+   #cycles for CT SDM
    unlistcycCT <- unlist(unlist(diff2_dfCT, recursive=FALSE))
+   #cycles for CT LSTAR THRESHOLD
+   unlistcycCTthr <- unlist(unlist(cycCT.th, recursive=FALSE))
    #*Possible Error: UnlistcycCT suggests 3:46, if <4 then klag-adjusted is from 0:3 (shown below)
    #ex. at 3.5, then 3.5-(klag=2) = 1.5 +/- 2 cycles (grey), which is 0:3.  
    rsslstarg <- vector('list', sublength) 
@@ -654,14 +656,44 @@ for(k in 1:length(files)){
          uppercyc = floor(unlistcycCT[[indij]]-(klag*mdim)+2)  #+2 cycles
          #klag-adjusted lower cycle
          lowercyc = ceiling(unlistcycCT[[indij]]-(klag*mdim)-2)} #-2cycles }
-         #list of lists of rss grey region
-         rsslstarg[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2) 
+       #list of lists of rss grey region
+       rsslstarg[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2) 
+     }
+   }
+  ##rsslstarr THRESHOLD CT for +/- 2 cycles
+   #add NA to those that are outside lower bound first
+   unlistcycCTthr[which(unlistcycCTthr < (0.5+klag*mdim+2))] <- NA
+   #rss for red box
+   rsslstarr <- vector('list', sublength) 
+   for(i in 1:(sublength)){
+     for(j in 1:(replength/sublength)){
+       #combined indicator with i and j
+       indij = ((replength/sublength)*(i-1))+j  
+       #klag-adjusted upper cycle b/c unlistcycCT[[indij]] is actual cycles for 3:46 (klag=2)
+       #unlistcycCT[[indij]] - klag to fit lstarres$residuals 1:44 formmat
+       #if(sum(is.na(unlistcycCTthr[[indij]])) > 0){
+       #  rsslstarr[[i]][[j]] <- NA
+       #  print(paste(k, "-", indij, "no CTth"))
+       #}
+       #filter out low values, change to NA unlistcycCTthr
+       if(sum(isTRUE(unlistcycCTthr[[indij]] > cyclength[[i]]-(klag*mdim+1))) > 0){ #strict upper bound
+         uppercyc = cyclength[[i]]-(klag*mdim)
+         lowercyc = ceiling(unlistcycCTthr[[indij]]-(klag*mdim)-2)}
+       else if(sum(is.na(unlistcycCTthr[[indij]])) == 0){ 
+         uppercyc = floor(unlistcycCTthr[[indij]]-(klag*mdim)+2)  #+2 cycles
+         #klag-adjusted lower cycle
+         lowercyc = ceiling(unlistcycCTthr[[indij]]-(klag*mdim)-2)} #-2cycles 
+       else{rsslstarr[[i]][[j]] <- NA}
+       #list of lists of rss red region
+       rsslstarr[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2) 
      }
    }
    #unlisted 1:(replength) of rss grey region
    unlist.rsslstarg= unlist(rsslstarg, recursive = FALSE)
+   unlist.rsslstarr= unlist(rsslstarr, recursive = FALSE)
    ##Creating RSS Matrix
-   rss.mat <- matrix(c(unlist.rsslstar, unlist.rsslstarg, unlistcycCT), ncol=3)
+   rss.mat <- matrix(c(unlist.rsslstar, unlist.rsslstarg, unlistcycCT, 
+                                        unlist.rsslstarr, unlistcycCTthr), ncol=5)
   
  ###PART 2: LSTAR Parameter Coefficients  
    #generate coefficients of LSTAR model
