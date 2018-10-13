@@ -14,7 +14,7 @@ plot_b5 <- function(listdf, par){
        lines(x=xs, y=b5_model(xs, b=par$params$b[k], c=par$params$c[k],
                               d=par$params$d[k], e=par$params$e[k], 
                               f=par$params$f[k]), col=k)
-    for(j in 2:length(try[[i]])){
+    for(j in 2:length(listdf[[k]])){
       for(h in 1:length(listdf)){
         points(x=xs, y=listdf[[h]][,j][1:cycmax], cex=0.45)
       }
