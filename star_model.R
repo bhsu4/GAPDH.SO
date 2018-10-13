@@ -534,7 +534,7 @@ for(k in 1:length(files)){
     }
         
 #####All LSTAR Models#####        
-  ###PART 1: NO LSTAR Model Fits with Breakpoints as Squares
+  ###PART 1: LSTAR Model Fits with Breakpoints as Squares
     #LSTAR model fits               
     else{
       plot(x=(1+(klag*mdim)):length(subs[[i]][[1]]), y=lstarres[[i]][[j]]$fitted.values, 
@@ -580,13 +580,18 @@ for(k in 1:length(files)){
      rightbound <- lstarres[[i]][[j]]$fitted.values[cycCT.th[[i]][[j]]+0.5-(klag*mdim)]
      avgCTfittedvalue = (leftbound+rightbound)/2
      #estimated CT value
+     if(cycCT.th[[i]][[j]]>(0.5+klag*mdim)){
+      #if explanation: at d*m = 1, 2:40 -> earliest cycle cross threshold is 1st cycle
+      #which has intermediate at 0.5. Actual cycle is 0.5 + d*m (whch is 1) = 1.5.
+      #Thus, anything less than 1.5 + 2 cycle range = 3.5 cannot have RSSred
      points(x=cycCT.th[[i]][[j]], y=avgCTfittedvalue, pch=17, cex=1, col="red")
      #grey box +/- 2 cycles about estimated CT 
      polygon(x = c(cycCT.th[[i]][[j]]-2, cycCT.th[[i]][[j]]+2, cycCT.th[[i]][[j]]+2, 
                    cycCT.th[[i]][[j]]-2, cycCT.th[[i]][[j]]-2), 
              y = c(min(par("usr")), min(par("usr")), 
                    max(par("usr")), max(par("usr")), min(par("usr"))),
-             col= rgb(1,0,0,alpha=0.15))     
+             col= rgb(1,0,0,alpha=0.15))}
+     else if(cycCT.th[[i]][[j]]<(0.5+klag*mdim)){ print(paste("OB", i, "-", j, "- no redCT")) }
      
   ###PART 4: Residuals Plotting
    ##A. SECOND DERIVATIVE METHOD: estimated CT value            
@@ -604,6 +609,10 @@ for(k in 1:length(files)){
              col= rgb(0,0,0,alpha=0.15))
     ##B. LSTAR THRESHOLD METHOD: estimated CT value            
      #estimated CT value
+     if(cycCT.th[[i]][[j]]>(0.5+klag*mdim)){ 
+     #if explanation: at d*m = 1, 2:40 -> earliest cycle cross threshold is 1st cycle
+     #which has intermediate at 0.5. Actual cycle is 0.5 + d*m (whch is 1) = 1.5.
+     #Thus, anything less than 1.5 + 2 cycle range = 3.5 cannot have RSSred
      points(x=cycCT.th[[i]][[j]], y=0, pch=17, cex=1, col="red")
      #grey box +/- 2 cycles about estimated CT 
      polygon(x = c(cycCT.th[[i]][[j]]-2, cycCT.th[[i]][[j]]+2, cycCT.th[[i]][[j]]+2, 
@@ -611,6 +620,7 @@ for(k in 1:length(files)){
              y = c(min(par("usr")), min(par("usr")), 
                    max(par("usr")), max(par("usr")), min(par("usr"))),
              col= rgb(1,0,0,alpha=0.15))
+     }
           } #else
         } #i
       } #j
