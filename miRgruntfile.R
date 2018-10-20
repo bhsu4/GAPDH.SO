@@ -106,8 +106,8 @@ l5dat[,"logrss"] <- log10(l5dat$rss)
 hist(l5dat$logrss, n=30, xlim = c(2.5,5))
 l5dat[,"ind"] <- ifelse(l5dat$logrss <= 3.3, "small", ifelse(l5dat$logrss >3.7, "big", "ok"))
 
-spm(~dw.res+ct | ind, data=l5dat , oma=c(4,4,6,12), regLine = F, smooth = F, cex=0.75, 
-                  pch=c(17,18,19,20) , col=my_colors, main="Scatter plot l5", legend=F)
+spm(~dw.res+ct | ind, data=l5dat, oma=c(4,4,6,4), reg.line = F, smooth = F, cex=0.75, 
+                  pch=c(17,18,19,20), col=my_colors, main="Scatter plot l5", legend.plot=F)
 par(xpd=TRUE)
 legend("right", as.vector(unique(l5dat$ind)[1:3]), fill=my_colors)
 
