@@ -208,7 +208,7 @@ plot_eff_yaxt <- function(xs, listdf, sub, sl_df, baseline, slantk){
 }
 
 dev.off()
-par(oma=c(4,2,0.5,0.5),mar=c(0.25,0.25,0,0),mfrow=c(4,4),pch=16)
+par(oma=c(4,4,0.5,0.5),mar=c(0.25,0.25,0,0),mfrow=c(4,4),pch=16)
 
 subsetsb_b4 <- genparamsbase(subsets, df_b4, subsets)
 curve_b4 <- curvefunc(df_b4, b4_model, subsetsb_b4, 4)
@@ -247,7 +247,7 @@ source("GAPDH.SO/plot_resid.R")
 b5resids <- lapply(df_b5$fits, resid)
 
 dev.off()
-par(oma=c(4,2,0.5,0.5),mar=c(0.25,0.25,0.75,0.75),mfrow=c(2,4),pch=16)
+par(oma=c(2,2,0.5,0.5),mar=c(1.25,2,0.75,0.75),mfrow=c(2,4),pch=16)
 plot_resid(subsets, df_b5)
 
 plot_resid_axis <- function(params){
@@ -364,5 +364,87 @@ ggplot(l5dat,  mapping = aes(dw.res, ct, col = ind, lty = ind)) +
 #smaller dw.res (more ac) with larger RSS. there's something bad about 
 #sig model that goes beyond the eq., increasing variance
 
+#miRcompData Branching Residuals
+try_b5 <- genparams(est=b5, listdf=try)
 
+plot_resid_axis <- function(params){
+  cyclength = lapply(params$fits, function(x) max(x$DATA[,1]))
+  
+  for (i in 1:length(params$fits)){
+    if(i == 1 ){
+      for(k in 1:4){
+        resids <- lapply(params$fits, resid)
+        
+        if(k == 1) plot(y=resids[[i]][1:cyclength[[i]]], 
+                        x=params$fits[[i]]$DATA$Cycles[1:cyclength[[i]]], 
+                        ylim=c(-200,200), type="l", 
+                        xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
+        axis(2,at=seq(-200,200,50)) # add a new x-axis
+        if(k > 1){
+          ind2 <- cyclength[[i]]*k
+          ind1 <- ind2-(cyclength[[i]]-1)
+          lines(y=resids[[i]][ind1:ind2], x=params$fits[[i]]$DATA$Cycles[ind1:ind2], col=k)
+        }
+      }
+    } 
+    if(i == 2 |i==3 | i==4 | i==5){
+      for(k in 1:4){
+        resids <- lapply(params$fits, resid)
+        
+        if(k == 1) plot(y=resids[[i]][1:cyclength[[i]]], 
+                        x=params$fits[[i]]$DATA$Cycles[1:cyclength[[i]]], 
+                        ylim=c(-200,200), type="l", 
+                        xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
+        #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+        if(k > 1){
+          ind2 <- cyclength[[i]]*k
+          ind1 <- ind2-(cyclength[[i]]-1)
+          lines(y=resids[[i]][ind1:ind2], x=params$fits[[i]]$DATA$Cycles[ind1:ind2], col=k)
+        }
+      }
+    }
+    if(i == 6){
+      for(k in 1:4){
+        resids <- lapply(params$fits, resid)
+        
+        if(k == 1) plot(y=resids[[i]][1:cyclength[[i]]], 
+                        x=params$fits[[i]]$DATA$Cycles[1:cyclength[[i]]], 
+                        ylim=c(-200,200), type="l", 
+                        xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+        axis(2,at=seq(-200,200,50)) # add a new x-axis
+        if(k > 1){
+          ind2 <- cyclength[[i]]*k
+          ind1 <- ind2-(cyclength[[i]]-1)
+          lines(y=resids[[i]][ind1:ind2], x=params$fits[[i]]$DATA$Cycles[ind1:ind2], col=k)
+        }
+      }
+    }
+    
+    if(i==7 | i==8 | i==9 | i==10){
+      for(k in 1:4){
+        resids <- lapply(params$fits, resid)
+        
+        if(k == 1) plot(y=resids[[i]][1:cyclength[[i]]], 
+                        x=params$fits[[i]]$DATA$Cycles[1:cyclength[[i]]], 
+                        ylim=c(-200,200), type="l", 
+                        xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+        #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+        if(k > 1){
+          ind2 <- cyclength[[i]]*k
+          ind1 <- ind2-(cyclength[[i]]-1)
+          lines(y=resids[[i]][ind1:ind2], x=params$fits[[i]]$DATA$Cycles[ind1:ind2], col=k)
+        }
+      }
+    }
+    title(main= paste(names(params$fits[i]), sub=params$fits$A$MODEL$name, sep = ", "))
+  }
+}
+b5resids <- lapply(try_b5$fits, resid)
+dev.off()
+m <- matrix(c(1,2,3,4,5,6,7,8,9,10),nrow = 2, ncol = 5, byrow = TRUE)
+layout(mat = m)
+par(oma=c(4,4,4,4),mar=c(0.5,0.75,1,0))
+
+plot_b5(try, try_b5) #plot of the data fluo
+plot_resid_axis(try_b5) #each rep vs. 1 uniform curve
 
