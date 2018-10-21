@@ -29,11 +29,12 @@ subplot_l4 <- function(listdf){
   #plot the model
 for(i in 1:length(listdf)){
   xs = listdf[[i]]$Cycle
-  plot(x=xs, y=l4_model(xs, b=par[[i]]$params$b[1], c=par[[i]]$params$c[1],
+  tryCatch({plot(x=xs, y=l4_model(xs, b=par[[i]]$params$b[1], c=par[[i]]$params$c[1],
                             d=par[[i]]$params$d[1], e=par[[i]]$params$e[1]), type="l",  
        xlab="Cycle", ylab="Fluorescence", 
        ylim=c(range(unlist(listdf[[i]])[(names(unlist(listdf[[i]]))[!grepl("Cycle", 
-                                         names(unlist(listdf[[i]])))])]))) #xaxt="n", yaxt="n"
+                                         names(unlist(listdf[[i]])))])])))}, 
+  error = function(e){})#xaxt="n", yaxt="n"
   for(k in 2:length(par[[i]]$params)){
     lines(x=xs, y=l4_model(xs, b=par[[i]]$params$b[k], c=par[[i]]$params$c[k],
                                d=par[[i]]$params$d[k], e=par[[i]]$params$e[k]), col=k)
