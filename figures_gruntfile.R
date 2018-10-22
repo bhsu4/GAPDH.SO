@@ -446,5 +446,167 @@ layout(mat = m)
 par(oma=c(4,4,4,4),mar=c(0.5,0.75,1,0))
 
 plot_b5(try, try_b5) #plot of the data fluo
+subplot_b5(try)
 plot_resid_axis(try_b5) #each rep vs. 1 uniform curve
+#for fits that have mediocre, good signal fits, we see the same branching trend
+#fits with noise don't have that pattern
+
+#residuals with each replicate as curve of its own
+b5_resultsG <- sub_genparams(b5, subsets$G)
+b4_resultsG <- sub_genparams(b4, subsets$G)
+l5_resultsG <- sub_genparams(l5, subsets$G)
+l4_resultsG <- sub_genparams(l4, subsets$G)
+
+subplot_resid_4x <- function(params){
+  
+  for(k in 1:12){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1) plot(y=resids[[k]][1:40], 
+                    x=params$fits[[1]]$DATA$Cycles[1:40], 
+                    type="l", ylim = c(-11900,9000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
+                    xlab="", ylab="", yaxt = "n")
+    #axis(side=2, at=seq(-2000, 2000, by=2000)) #-8000,8000 and -2000,2000
+    
+    if(k > 1){
+      ind2 <- 40*k
+      ind1 <- ind2-39*(k)-(k-1)
+      lines(y=resids[[k]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
+    }
+  }
+}
+
+subplot_resid_4xy <- function(params){
+  
+  for(k in 1:12){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1) plot(y=resids[[k]][1:40], 
+                    x=params$fits[[1]]$DATA$Cycles[1:40], 
+                    type="l", ylim = c(-11900,9000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
+                    xlab="", ylab="", yaxt = "n")
+    axis(side=2, at=seq(-8000, 8000, by=4000)) #-8000,8000 and -2000,2000
+    
+    if(k > 1){
+      ind2 <- 40*k
+      ind1 <- ind2-39*(k)-(k-1)
+      lines(y=resids[[k]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
+    }
+  }
+}
+
+subplot_resid_5xy <- function(params){
+  
+  for(k in 1:12){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1) plot(y=resids[[k]][1:40], 
+                    x=params$fits[[1]]$DATA$Cycles[1:40], 
+                    type="l", ylim = c(-3000,3000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
+                    xlab="", ylab="", yaxt = "n", xaxt="n")
+    axis(side=2, at=seq(-2000, 2000, by=2000)) #-8000,8000 and -2000,2000
+    
+    if(k > 1){
+      ind1 = 1; ind2=40
+      #ind2 <- 40*k
+      #ind1 <- ind2-39*(k)-(k-1)
+      lines(y=resids[[k]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
+    }
+  }
+}
+
+subplot_resid_5x <- function(params){
+  
+  for(k in 1:12){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1) plot(y=resids[[k]][1:40], 
+                    x=params$fits[[1]]$DATA$Cycles[1:40], 
+                    type="l", ylim = c(-3000,3000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
+                    xlab="", ylab="", yaxt = "n", xaxt="n")
+    #axis(side=2, at=seq(-2000, 2000, by=2000)) #-8000,8000 and -2000,2000
+    
+    if(k > 1){
+      ind1 = 1 ; ind2 = 40
+      #ind2 <- 40*k
+      #ind1 <- ind2-39*(k)-(k-1)
+      lines(y=resids[[k]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
+    }
+  }
+}
+
+dev.off()
+par(mfrow=c(2,2))
+par(oma=c(4,4,0.5,4),mar=c(0,0.25,0,0))
+
+subplot_resid_5xy(l5_resultsG)
+subplot_resid_5x(b5_resultsG)
+subplot_resid_4xy(l4_resultsG)
+subplot_resid_4x(b4_resultsG)
+mtext(text="Cycles", side=1, line=2, outer=TRUE)
+mtext(text= "Residuals", side=2, line=2, outer=TRUE)
+
+#miRcomp of each rep as own curve residual
+subplot_resid_each <- function(tester){
+  
+b5_tryI <- sub_genparams(b5, tester)
+b4_tryI <- sub_genparams(b4, tester)
+l5_tryI <- sub_genparams(l5, tester)
+l4_tryI <- sub_genparams(l4, tester)
+cyclength = tester[,1]
+
+tryresid <- function(x) {tryCatch({resid(x)}, error = function(e) {rep(NA, max(cyclength))})}
+residsl5 <- lapply(l5_tryI$fits, tryresid)
+residsb5 <- lapply(b5_tryI$fits, tryresid)
+residsl4 <- lapply(l4_tryI$fits, tryresid)
+residsb4 <- lapply(b4_tryI$fits, tryresid)
+
+par(mfrow=c(2,2))
+par(oma=c(4,4,0.5,4),mar=c(0,0.25,0,0))
+
+for(x in list(residsl5, residsb5, residsl4, residsb4)){
+  if(identical(x, residsl5) == TRUE){
+  for(k in 1:4){
+  if(k==1){
+    plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-50,50), 
+         xlab="", ylab="", xaxt = "n", yaxt = "n")
+    axis(side=2, at=seq(-50, 50, by=25)) 
+  }
+    lines(x=cyclength, y=x[[k]], col = k)
+    }
+  }
+  else if(identical(x, residsb5) == TRUE){
+    for(k in 1:4){
+      if(k==1){
+        plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-50,50), 
+             xlab="", ylab="", xaxt = "n", yaxt = "n")
+      }
+      lines(x=cyclength, y=x[[k]], col = k)
+    }
+  }
+  else if(identical(x, residsl4) == TRUE){
+    for(k in 1:4){
+      if(k==1){
+        plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-50,50), 
+             xlab="", ylab="", yaxt = "n")
+        axis(side=2, at=seq(-50, 50, by=25)) 
+      }
+      lines(x=cyclength, y=x[[k]], col = k)
+    }
+  } 
+  else if(identical(x, residsb4) == TRUE){
+    for(k in 1:4){
+      if(k==1){
+        plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-50,50), 
+             xlab="", ylab="", yaxt = "n")
+      }
+      lines(x=cyclength, y=x[[k]], col = k)
+    }
+  }
+}
+mtext(text="Cycles", side=1, line=2, outer=TRUE)
+mtext(text= "Residuals", side=2, line=2, outer=TRUE)
+}
+subplot_resid_each(try$J)
+
 
