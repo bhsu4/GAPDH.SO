@@ -549,17 +549,17 @@ mtext(text= "Residuals", side=2, line=2, outer=TRUE)
 #miRcomp of each rep as own curve residual
 subplot_resid_each <- function(tester){
   
-b5_tryI <- sub_genparams(b5, tester)
-b4_tryI <- sub_genparams(b4, tester)
-l5_tryI <- sub_genparams(l5, tester)
-l4_tryI <- sub_genparams(l4, tester)
+b5_try <- sub_genparams(b5, tester)
+b4_try <- sub_genparams(b4, tester)
+l5_try <- sub_genparams(l5, tester)
+l4_try <- sub_genparams(l4, tester)
 cyclength = tester[,1]
 
 tryresid <- function(x) {tryCatch({resid(x)}, error = function(e) {rep(NA, max(cyclength))})}
-residsl5 <- lapply(l5_tryI$fits, tryresid)
-residsb5 <- lapply(b5_tryI$fits, tryresid)
-residsl4 <- lapply(l4_tryI$fits, tryresid)
-residsb4 <- lapply(b4_tryI$fits, tryresid)
+residsl5 <- lapply(l5_try$fits, tryresid)
+residsb5 <- lapply(b5_try$fits, tryresid)
+residsl4 <- lapply(l4_try$fits, tryresid)
+residsb4 <- lapply(b4_try$fits, tryresid)
 
 par(mfrow=c(2,2))
 par(oma=c(4,4,0.5,4),mar=c(0,0.25,0,0))
@@ -609,4 +609,20 @@ mtext(text= "Residuals", side=2, line=2, outer=TRUE)
 }
 subplot_resid_each(try$J)
 
+#different signal fits
+library(dynlm) ; library(car)
 
+#not nice dataset
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-let-7c#_002405.Rda")
+try <- unlist.genparams(tst)
+#plotting fluo curves + finding parameter est in matrix
+source("GAPDH.SO/plot_sig.R")
+plot_sig(l4, try, plot=TRUE) #plots shown
+plot_sig(b5, try) #no plots shown
+
+#nice dataset
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
+try.good <- unlist.genparams(tst)
+source("GAPDH.SO/plot_sig.R")
+plot_sig(l4, try.good, plot=TRUE) #plots shown
+plot_sig(b5, try) #no plots shown
