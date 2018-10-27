@@ -1,16 +1,31 @@
 gen_results <- function(subs, params){
   ##define lengths
   sublength = length(subs)
-  repnames <- unique(unlist(lapply(subsets, names)))[!grepl("Cycle", unique(unlist(lapply(subsets, names))))]
+  repnames <- unique(unlist(lapply(subs, names)))[!grepl("Cycle", unique(unlist(lapply(subs, names))))]
   replength = length(repnames)
+  cyclength <- unlist(lapply(subs, nrow))
+  
   ##finding resids 
-  modresids <- lapply(params, function(x) lapply(x$fits, resid))
+  #resids with NA get filtered out
+  residsNA <- function(x){
+    tryCatch({ resid(x) }, error = function(e){NA})
+  }
+  modresids <- lapply(params, function(x) lapply(x$fits, residsNA)) #for non-models, only one NA
+  #fix one NA into length of cyclength
+  for(i in 1:10){
+    for(j in 1:4){
+      if(all(is.na(modresids[[i]][[j]])) == TRUE){
+        modresids[[i]][[j]] <- rep(NA, cyclength[[i]])
+      }
+      else{}
+    }
+  }
   ##unlisting resids
   modresids.unl <- unlist(modresids, recursive = FALSE)
-  #lengths of the resids, cycle lengths
-  modresids.length <- lapply(modresids.unl, length)
   #finding rss total
-  modrss <- lapply(modresids, function(x) lapply(x, function(x) sum(x[which(!is.na(x))]^2)))
+  modrss <- lapply(modresids, function(x) lapply(x, function(x) sum(x[which(!is.na(x))]^2))) #0 = non-models
+  #replace 0 = nonmodels into NAs
+  for(i in 1:10){ modrss[[i]][which(modrss[[i]] == 0 )] <- NA }
   
   ##autocorrelation and dw for amplification and residual values
   reg.amp <- vector('list', sublength) ; reg.res <- vector('list', sublength) #dynlm formula results
@@ -37,14 +52,18 @@ gen_results <- function(subs, params){
   dw.res <- lapply(dw.res, function(x) lapply(x, function(x) x[1:3]))
   dw.resmat <- matrix(unlist(dw.res), ncol = 3, byrow=TRUE)
   #one dw
-  dw.res <- cbind(dw.ampmat, dw.resmat)
+  dwres <- cbind(dw.ampmat, dw.resmat)
   
   ##CT values: sigmoidal and lstar  
   if(isTRUE(params[[1]]$fits[[1]]$MODEL$name %in% c("l5", "l4", "b5", "b4")) == TRUE){
     #finding CT value
-    mod1 <- lapply(subsets, function(x) modlist(x, model = l5))
+    mod1 <- lapply(subs, function(x) modlist(x, model = l5)) #set to l5 first, will change later********
     res1 <- lapply(mod1, function(x) getPar(x, type = "curve", cp = "cpD2", eff = "sliwin")) 
     res1CT <- lapply(res1, function(x) x[1,]) #first row is CT
+    #filter CT values
+    for(i in 1:10){
+      res1CT[[i]][which(res1CT[[i]] < 3 | res1CT[[i]] > (cyclength[[i]]-2))] <- NA
+    }
     #specific CT +/- 2 cycles
     rssgrey <-list()
     for(i in 1:sublength){
@@ -54,10 +73,12 @@ gen_results <- function(subs, params){
         #klag-adjusted lower cycle
         lowercyc = ceiling(unlist(res1CT)[[indij]]-2) #-2cycles }
         #list of lists of rss grey region
-        rssgrey[[indij]] <- sum(modresids.unl[[indij]][lowercyc:uppercyc]^2) 
+        rssgrey[[indij]] <- tryCatch({ sum(modresids.unl[[indij]][lowercyc:uppercyc]^2) },
+                                     error = function(e) { NA })
       }
     }
     #rss.mat for sigmoidal
+    
     rss.mat <- matrix(c(matrix(unlist(modrss), ncol=1), 
                         matrix(unlist(rssgrey), ncol=1), 
                         matrix(unlist(res1CT), ncol=1)), ncol=3)
@@ -65,24 +86,26 @@ gen_results <- function(subs, params){
   #LSTAR model
   else if(is.null(params[[1]]$fits[[1]]$MODEL$name) == TRUE){
     ###CT with Threshold STAR
-    cycCT.thover <- vector("list", sublength)
+    cycCT.unl <- list() ; cycCT.thover <- vector('list', sublength)
     #lstarcoef is list of lists of all coefficients 
     #cycCT.thover is list of lists of all cycles' LSTAR fitted > LSTAR threshold
     #cycCT.unl temporary unlisted CT.thover, because list of lists didn't work with which statement
     lstarres.unl = unlist(lstarres.fits, recursive = FALSE)
     lstarcoef <- lapply(lstarres.unl, function(x) lapply(x, function(y) y$model.specific$coefficients))
     lstarcoef.th <- lapply(lstarcoef, function(x) lapply(x, function(y) y["th"]))
-    
-    #navalues <- lapply(lstarcoef.th, is.na)
+    #unlisting it so  no error
     for(i in 1:sublength){
       for(j in 1:(replength/sublength)){
-        if(sum(is.na(lstarcoef[[i]][[j]])) > 0){cycCT.unl[[i]][[j]] <- NA}
+        indij = 4*(i-1) + j
+        if(sum(is.na(lstarcoef[[i]][[j]])) > 0){cycCT.unl[[indij]] <- NA}
         else{
           #cycles greater than threshold in lagged format
-          cycCT.thover[[i]][[j]] <- which(lstarres.unl[[i]][[j]]$fitted.values > lstarcoef.th[[i]][[j]])
+          cycCT.unl[[indij]] <- which(lstarres.unl[[i]][[j]]$fitted.values > lstarcoef.th[[i]][[j]])
         }
       }
-    }
+      ind2 = 4*i ; ind1 = ind2-(4-1)
+      cycCT.thover[[i]] <- cycCT.unl[ind1:ind2] #back to list of lists
+    }   
     overth.diff <- function(x){ #diff takes lagged difference, rle shows lengths of lagged diff
       #ex. x = 4,5,6,7,10,13,25,26,27,28,29,30
       #lengths are 3,2,1,5 these are how many of those differences (max this)
@@ -155,23 +178,24 @@ gen_results <- function(subs, params){
         rsslstarr[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)
         #rsslstarr provies RSS for NA values, we undo this here (rewrite above, need both)
         if(sum(is.na(unlistcycCTthr[[indij]])) > 0){ 
-          rsslstarr[[i]][[j]] <- NA 
-          print(paste(k, "-", indij, "no CTth"))}
+          rsslstarr[[i]][[j]] <- NA }
         else{}
       }
     }
     #unlisted 1:(replength) of rss grey region
     unlist.rsslstarr= unlist(rsslstarr, recursive = FALSE)
     #rss.mat matrix for LSTAR
-    rss.mat <- matrix(c(matrix(unlist(modrss), ncol=1), unlist.rsslstarr, unlistcycCTthr), ncol=3)
+    rss.mat <- matrix(c(matrix(unlist(modrss), ncol=1), 
+                        matrix(unlist.rsslstarr, ncol=1), 
+                        matrix(unlistcycCTthr, ncol=1)), ncol=3)
   } #else if lstar
   else{ print("no model statistics") }
   
   ##combining all into matrix
   empmat <- matrix(data=NA, nrow=replength, ncol=10)
-  empmat[,1] <- unique(unlist(lapply(subsets, colnames)))[-grep("Cycle", unique(unlist(lapply(subsets, colnames))))]
+  empmat[,1] <- unique(unlist(lapply(subs, colnames)))[-grep("Cycle", unique(unlist(lapply(subs, colnames))))]
   empmat[,2:4] <- matrix(rss.mat, ncol=3)
-  empmat[,5:10] <- dw.res
+  empmat[,5:10] <- dwres
   #dataframe output
   resstat <- data.frame(empmat)
   colnames(resstat) <- c("Replicate", "RSS", "RSSlocal", "CT", 
@@ -180,8 +204,14 @@ gen_results <- function(subs, params){
   return(resstat)
 }
 
+
+
+
+
+
+#GAPDH.SO TESTING
 #outside params generated
-modparams <- lapply(subsets, function(x) sub_genparams(listdf=x, est=sig))
+modparams <- lapply(subsets, function(x) sub_genparams(listdf=x, est=l5))
 lstarres <- vector("list", 8) #empty list of subs: ABCD,..etc
 cyclength <- unlist(lapply(subsets, nrow))
 for(i in 1:8){ #running LSTAR model
@@ -197,6 +227,34 @@ for(i in 1:8){ #running LSTAR model
 }
 lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
 
-#GAPDH.SO
+#GAPDH.SO results
 gap.sig <- gen_results(subsets, modparams)
 gap.lstar <- gen_results(subsets, lstarres.fits)
+
+#miRcomp TESTING
+#not nice dataset
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-let-7c#_002405.Rda")
+try <- unlist.genparams(tst)
+#nice dataset
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
+try.good <- unlist.genparams(tst)
+#outside params generated
+modparams <- lapply(try, function(x) sub_genparams(listdf=x, est=sig))
+lstarres <- vector("list", 10) #empty list of subs: ABCD,..etc
+cyclength <- unlist(lapply(try, nrow))
+for(i in 1:10){ #running LSTAR model
+  for(j in 2:5){
+    #results for LSTAR model 
+    lstarres[[i]][[j-1]] <- tryCatch({
+      tsDyn::lstar(try[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
+      error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
+                             residuals=rep(NA, (cyclength[[i]]-(klag*mdim))),
+                             model.specific=list(coefficients = rep(NA, (4+2*mdim)))))
+    #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
+  }
+}
+lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
+
+#GAPDH.SO results
+try.sig <- gen_results(try, modparams)
+try.lstar <- gen_results(try, lstarres.fits)
