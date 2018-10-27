@@ -12,8 +12,8 @@ gen_results <- function(subs, params){
   }
   modresids <- lapply(params, function(x) lapply(x$fits, residsNA)) #for non-models, only one NA
   #fix one NA into length of cyclength
-  for(i in 1:10){
-    for(j in 1:4){
+  for(i in 1:sublength){
+    for(j in 1:(replength/sublength)){
       if(all(is.na(modresids[[i]][[j]])) == TRUE){
         modresids[[i]][[j]] <- rep(NA, cyclength[[i]])
       }
@@ -25,7 +25,7 @@ gen_results <- function(subs, params){
   #finding rss total
   modrss <- lapply(modresids, function(x) lapply(x, function(x) sum(x[which(!is.na(x))]^2))) #0 = non-models
   #replace 0 = nonmodels into NAs
-  for(i in 1:10){ modrss[[i]][which(modrss[[i]] == 0 )] <- NA }
+  for(i in 1:sublength){ modrss[[i]][which(modrss[[i]] == 0 )] <- NA }
   
   ##autocorrelation and dw for amplification and residual values
   reg.amp <- vector('list', sublength) ; reg.res <- vector('list', sublength) #dynlm formula results
@@ -61,7 +61,7 @@ gen_results <- function(subs, params){
     res1 <- lapply(mod1, function(x) getPar(x, type = "curve", cp = "cpD2", eff = "sliwin")) 
     res1CT <- lapply(res1, function(x) x[1,]) #first row is CT
     #filter CT values
-    for(i in 1:10){
+    for(i in 1:sublength){
       res1CT[[i]][which(res1CT[[i]] < 3 | res1CT[[i]] > (cyclength[[i]]-2))] <- NA
     }
     #specific CT +/- 2 cycles
@@ -78,7 +78,6 @@ gen_results <- function(subs, params){
       }
     }
     #rss.mat for sigmoidal
-    
     rss.mat <- matrix(c(matrix(unlist(modrss), ncol=1), 
                         matrix(unlist(rssgrey), ncol=1), 
                         matrix(unlist(res1CT), ncol=1)), ncol=3)
@@ -96,14 +95,14 @@ gen_results <- function(subs, params){
     #unlisting it so  no error
     for(i in 1:sublength){
       for(j in 1:(replength/sublength)){
-        indij = 4*(i-1) + j
+        indij = (replength/sublength)*(i-1) + j
         if(sum(is.na(lstarcoef[[i]][[j]])) > 0){cycCT.unl[[indij]] <- NA}
         else{
           #cycles greater than threshold in lagged format
           cycCT.unl[[indij]] <- which(lstarres.unl[[i]][[j]]$fitted.values > lstarcoef.th[[i]][[j]])
         }
       }
-      ind2 = 4*i ; ind1 = ind2-(4-1)
+      ind2 = (replength/sublength)*i ; ind1 = ind2-((replength/sublength)-1)
       cycCT.thover[[i]] <- cycCT.unl[ind1:ind2] #back to list of lists
     }   
     overth.diff <- function(x){ #diff takes lagged difference, rle shows lengths of lagged diff
