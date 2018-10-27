@@ -83,4 +83,109 @@ dw.resmat <- matrix(unlist(dw.amp), ncol = 3, byrow=TRUE)
 
 
 ###CT value extraction is different 
-modparams$
+modparams[[1]]$fits[[1]]$MODEL$name
+
+#finding CT value
+mod1 <- lapply(subsets, function(x) modlist(x, model = l5))
+res1 <- lapply(mod1, function(x) getPar(x, type = "curve", cp = "cpD2", eff = "sliwin")) 
+res1CT <- lapply(res1, function(x) x[1,]) #first row is CT
+#specific CT +/- 2 cycles
+rssgrey <-list()
+for(i in 1:8){
+  for(j in 1:12){
+    indij = (12*(i-1))+j  
+    uppercyc = floor(unlist(res1CT)[[indij]]+2)  #+2 cycles
+    #klag-adjusted lower cycle
+    lowercyc = ceiling(unlist(res1CT)[[indij]]-2) #-2cycles }
+    #list of lists of rss grey region
+    rssgrey[[indij]] <- sum(modresids.unl[[indij]][lowercyc:uppercyc]^2) 
+  }
+}
+#finding CT value for LSTAR
+lstarres.fits[[1]]$fits[[1]]$MODEL$name #NULL
+
+###ADDED THRESHOLD CT VALUE: Beginning of RSSthres, RSS Red
+###CT with Threshold STAR
+lstarcoef <- vector("list", 8) #empty list of subs: ABCD,..etc
+cycCT.thover <- vector("list", 8)
+#lstarcoef is list of lists of all coefficients 
+#cycCT.thover is list of lists of all cycles' LSTAR fitted > LSTAR threshold
+#cycCT.unl temporary unlisted CT.thover, because list of lists didn't work with which statement
+lstarres.unl = unlist(lstarres.fits, recursive = FALSE)
+
+lstarcoef <- lapply(lstarres.unl, function(x) lapply(x, function(y) y$model.specific$coefficients))
+lstarcoef.th <- lapply(lstarcoef, function(x) lapply(x, function(y) y["th"]))
+
+sketch <- lapply(lstarcoef.th, is.na)
+any(sketch == TRUE)
+
+which(lstarres.unl)
+
+lapply(lstarres.unl, function(x) lapply(x, function(y) y$fitted.values))
+
+#which(y$fitted.values > )
+
+for(i in 1:8){
+  for(j in 1:12){
+    if(sum(is.na(lstarcoef[[i]][[j]])) > 0){cycCT.unl[[i]][[j]] <- NA}
+    else{
+      #cycles greater than threshold in lagged format
+      cycCT.thover[[i]][[j]] <- which(lstarres.unl[[i]][[j]]$fitted.values > lstarcoef.th[[i]][[j]])
+    }
+  }
+}
+
+overth.diff <- function(x){ #diff takes lagged difference, rle shows lengths of lagged diff
+  #ex. x = 4,5,6,7,10,13,25,26,27,28,29,30
+  #lengths are 3,2,1,5 these are how many of those differences (max this)
+  #values are 1,3,12,1 these are diffrences (this needs to be = 1)
+  if(sum(is.na(x)) == 0){ rle(diff(x)) }
+  else{ list(lengths=NA) }
+}      
+overth.diffcyc <- function(x){ #fitting conditions above
+  #max lengths and choose values of 1
+  #logic here is that: in cases where more fluctuations, more noise, multiple times when
+  #cycles cross threshold. take the cycle that has most cycles after threshold that is 
+  #higher than the threshold continuously
+  if(sum(is.na(x)) == 0){ which(x$lengths == max(x$lengths) & x$values == 1) }
+  else{ NA }
+}
+#difftimes are rle (run length encoding) lagged diff
+difftimes <- lapply(cycCT.thover, function(x) lapply(x, overth.diff))
+#cycle index for cycle in list of those > threshold
+index.length <- lapply(difftimes, function(x) lapply(x, overth.diffcyc))
+index.unl <- unlist(index.length, recursive = FALSE)
+index.unl <- lapply(index.unl, max) #if two same length of lagged diff, choose latter cycles
+#final CT list
+cycCT.th <- vector("list", sublength)
+#find the intermediate CT value (intermediate means 0.5) surpassing threshold
+for(i in 1:sublength){
+  for(j in 1:(replength/sublength)){
+    ind = j+(replength/sublength)*(i-1)
+    if(sum(is.na(index.unl[[ind]])) > 0){ #any NAs get NA
+      cycCT.th[[i]][[j]] <- NA
+    }
+    else if(index.unl[[ind]] > 1){ #more than one string of consec > threshold
+      #ex. 1,2,3,4,5,6,7,8,9,10,.....,24 (20th term), 28,29,30,....
+      #difftimes lengths: 11, 1, 5, 1, 1, 1, 11
+      #          values:  1, 3, 1, 3, 1, 4, 1
+      #index.unl = 7, take sum of 1:6 of the lengths = 20, so 21st is our chosen pt
+      tmd <- sum(difftimes[[i]][[j]]$lengths[1:(index.unl[[ind]]-1)]) #sum of before
+      cycCT.th[[i]][[j]] <- (cycCT.thover[[i]][[j]][[tmd+1]] + (cycCT.thover[[i]][[j]][[tmd+1]]-1))/2 + (mdim*klag) #actual pt after add
+    }
+    else{ 
+      #at index = 1, just take that first point, and point-1 , find average
+      cycCT.th[[i]][[j]] <- (cycCT.thover[[i]][[j]][[1]] + (cycCT.thover[[i]][[j]][[1]]-1))/2 + (mdim*klag) #actual pt after addition of mdim*klag
+    }
+  }
+} 
+
+
+
+
+
+
+
+
+
+
