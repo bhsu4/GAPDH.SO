@@ -44,3 +44,18 @@ getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO
 tstlstarmat <- plot_lstar(miRcompData2, getfiles, klag=2, mdim=1, breakdb = testdb, plot=FALSE) #noplot
 tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=1, breakdb = testdb, plot=TRUE) #plot
 tstlstarmat3 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=2, breakdb = testdb, plot=TRUE) #plot
+
+#specific noisy data set testing
+#not nice dataset
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/noisy")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/noisy", 
+                pattern =  "^targ_")
+library(foreach) ; library(Hmisc) ; library(dplyr) ; library(strucchange) ; library(gtools)
+testdb <- brkplot(miRcompData2, getfiles, klag=1, plot=FALSE)
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/noisy/targ_hsa-let-7c#_002405.Rda")
+try <- unlist.genparams(tst)
+detach("package:dplyr") ; library(dynlm) ; library(car)
+tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=1, breakdb = testdb, plot=TRUE) #plot
+
+
+
