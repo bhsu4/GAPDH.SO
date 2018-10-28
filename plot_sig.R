@@ -104,7 +104,7 @@ if(plot){
                                           c=par[[i]]$params$c[k], d=par[[i]]$params$d[k], 
                                           e=par[[i]]$params$e[k]), cex=0.8, pch=16)) #CT point
  #boundaries for vertical lines
-  if( (is.na(res1[[i]][,k][1]) == "TRUE") || (res1[[i]][,k][1] <= 2)){
+  if( (is.na(res1[[i]][,k][1]) == "TRUE") || (res1[[i]][,k][1] <= 2) || (res1[[i]][,k][1] > (max(listdf[[i]]$Cycle) - 2))){
     print(paste0(LETTERS[i], k, " ", "no ct"))
   }
   else{ 
@@ -161,7 +161,7 @@ if(plot){
                                         e=par[[i]]$params$e[k], f=par[[i]]$params$f[k]), 
           cex=0.8, pch=16)) #CT point
     #boundaries for vertical lines
-    if( (is.na(res1[[i]][,k][1]) == "TRUE") || (res1[[i]][,k][1] <= 2)){
+    if( (is.na(res1[[i]][,k][1]) == "TRUE") || (res1[[i]][,k][1] <= 2) || (res1[[i]][,k][1] > (max(listdf[[i]]$Cycle) - 2))){
       print(paste0(LETTERS[i], k, " " , "no ct"))
     }
     else{
@@ -189,7 +189,7 @@ if(plot){
                                           c=par[[i]]$params$c[k], d=par[[i]]$params$d[k], 
                                           e=par[[i]]$params$e[k]), cex=0.8, pch=16)) #CT point
     #boundaries for vertical lines
-  if(is.na(res1[[i]][,k][1]) == "FALSE"){
+  if(is.na(res1[[i]][,k][1]) == "FALSE" || (res1[[i]][,k][1] <= 2) || (res1[[i]][,k][1] > (max(listdf[[i]]$Cycle) - 2))){
     #filling in the +/- squares for CT value
     polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, res1[[i]][,k][1]+2, 
                   res1[[i]][,k][1]-2, res1[[i]][,k][1]-2), 
@@ -219,7 +219,7 @@ if(plot){
                                         e=par[[i]]$params$e[k], f=par[[i]]$params$f[k]), 
            cex=0.8, pch=16)) #CT point
     #boundaries for vertical lines
-  if(is.na(res1[[i]][,k][1]) == "FALSE"){
+  if(is.na(res1[[i]][,k][1]) == "FALSE" || (res1[[i]][,k][1] <= 2) || (res1[[i]][,k][1] > (max(listdf[[i]]$Cycle) - 2))){
     polygon(x = c(res1[[i]][,k][1]-2, res1[[i]][,k][1]+2, res1[[i]][,k][1]+2, 
                   res1[[i]][,k][1]-2, res1[[i]][,k][1]-2), 
             y = c(min(par("usr")), min(par("usr")), 
