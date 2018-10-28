@@ -612,17 +612,41 @@ subplot_resid_each(try$J)
 #different signal fits
 library(dynlm) ; library(car)
 
-#not nice dataset
-load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-let-7c#_002405.Rda")
-try <- unlist.genparams(tst)
-#plotting fluo curves + finding parameter est in matrix
-source("GAPDH.SO/plot_sig.R")
-plot_sig(l4, try, plot=TRUE) #plots shown
-plot_sig(b5, try) #no plots shown
+
+##good, bad, non-signals, unidentified signals (failed exp)
 
 #nice dataset
 load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
 try.good <- unlist.genparams(tst)
 source("GAPDH.SO/plot_sig.R")
+plot_sig(l5, try.good, plot=TRUE) #plots shown
+
+#not nice dataset
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-let-7c#_002405.Rda")
+try <- unlist.genparams(tst)
+
+#run this to see all curves
+plot_sig(l5, try, plot=TRUE) #plots shown
+plot_sig(l5, try.good, plot=TRUE) #plots shown
 plot_sig(l4, try.good, plot=TRUE) #plots shown
-plot_sig(b5, try) #no plots shown
+
+##nice data set
+#good fit (L5) J4, H4!
+#good fit (L4) D1
+#poor fit (L4) I4!, I3, I2, C2!
+
+##not nice data set!
+#failed (L5) exp I2!, J2, C3!
+#nonsignals (L5) D2, D3, D4, C4!
+
+par(oma=c(2,2,0.5,0.5),mar=c(1.25,2,0.75,0.75),mfrow=c(4,2),pch=16)
+plot_sig(l5, try.good, macro=4, z=8, plot=TRUE) #goodfit nicedata l5
+plot_sig(l4, try.good, macro=4, z=9, plot=TRUE) #poorfit nicedata l4
+plot_sig(l5, try, macro=4, z=3, plot=TRUE) #nonsignal notnicedata l5
+plot_sig(l5, try, macro=3, z=3, plot=TRUE) #failed notnicedata l5
+
+#turn line color same
+#turn off grey rectangle polgyon for >46 cycles 
+
+
+
