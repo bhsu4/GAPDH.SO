@@ -254,6 +254,27 @@ for(i in 1:10){ #running LSTAR model
 }
 lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
 
-#GAPDH.SO results
+#miRcomp results 
 try.sig <- gen_results(try, modparams)
 try.lstar <- gen_results(try, lstarres.fits)
+
+#nice
+modparams <- lapply(try.good, function(x) sub_genparams(listdf=x, est=sig))
+lstarres <- vector("list", 10) #empty list of subs: ABCD,..etc
+cyclength <- unlist(lapply(try.good, nrow))
+for(i in 1:10){ #running LSTAR model
+  for(j in 2:5){
+    #results for LSTAR model 
+    lstarres[[i]][[j-1]] <- tryCatch({
+      tsDyn::lstar(try.good[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
+      error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
+                             residuals=rep(NA, (cyclength[[i]]-(klag*mdim))),
+                             model.specific=list(coefficients = rep(NA, (4+2*mdim)))))
+    #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
+  }
+}
+lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
+
+#miRcomp results 
+trygood.sig <- gen_results(try.good, modparams)
+trygood.lstar <- gen_results(try.good, lstarres.fits)
