@@ -318,12 +318,13 @@ if(plot){
     if(est$name == "l4"){ #if NAs, model cannot run
       try(plot(x=xs, y=l4_model(xs, b=par$params$b[w], c=par$params$c[w],
                                     d=par$params$d[w], e=par$params$e[w]), type="l",  
-           xlab="Cycle", ylab="Fluorescence", 
-           ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
-                                        names(unlist(listdf)))])])), col = w, xaxt = "n"))
+           xlab="Cycle", ylab="Fluorescence", ylim = c(range(unlist(listdf[,w+1]))),
+          # ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
+          #                              names(unlist(listdf)))])])), 
+          col = 1, xaxt = "n")) #col=w
       points(x=xs, y=listdf[,w+1], cex=0.45)
     if(is.na(par$params$b[[w]]) == "FALSE"){ #legend if non-NA's
-      legend("topleft", c(names(listdf)[w+1]), col=w, lty=1, cex=0.65)
+      legend("topleft", c(names(listdf)[w+1]), col=1, lty=1, cex=0.65)
     }
       else{} #no legend if NA b/c only points show
   #adding box around CT values (+/- 2 cycles)
@@ -331,7 +332,7 @@ if(plot){
                                        c=par$params$c[w], d=par$params$d[w], 
                                        e=par$params$e[w]), cex=0.8, pch=16)) #CT point
   #boundaries for vertical lines
-    if( (is.na(res1[,w][[1]]) == "TRUE") || (res1[,w][[1]] <=2)){
+    if( (is.na(res1[,w][[1]]) == "TRUE") || (res1[,w][[1]] <=2) || (res1[,w][[1]] > (max(listdf$Cycle) - 2))){
       print(paste0(LETTERS[z], w, " " , "no ct")) 
     } #can't draw box for those with <=2 CT or NA
     else{
@@ -370,11 +371,13 @@ if(plot){
       try(plot(x=xs, y=b4_model(xs, b=par$params$b[w], c=par$params$c[w],
                                     d=par$params$d[w], e=par$params$e[w]), type="l",  
            xlab="Cycle", ylab="Fluorescence", 
-           ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
-                                        names(unlist(listdf)))])])), col = w, xaxt = "n"))
+           #ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
+           #                             names(unlist(listdf)))])])), 
+           ylim=c(range(unlist(listdf[,w+1]))),
+           col = 1, xaxt = "n")) #col=w
       points(x=xs, y=listdf[,w+1], cex=0.45)
     if(is.na(par$params$b[[w]]) == "FALSE"){ #legend if non-NA's
-      legend("topleft", c(names(listdf)[w+1]), col=w, lty=1, cex=0.65)
+      legend("topleft", c(names(listdf)[w+1]), col=1, lty=1, cex=0.65)
       }
     else{}
   #adding box around CT values (+/- 2 cycles)
@@ -397,11 +400,13 @@ if(plot){
                                     d=par$params$d[w], e=par$params$e[w],
                                     f=par$params$f[w]), type="l",  
            xlab="Cycle", ylab="Fluorescence", 
-           ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
-                                        names(unlist(listdf)))])])), col = w, xaxt = "n"))
+           #ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
+           #                             names(unlist(listdf)))])])), 
+           ylim=c(range(unlist(listdf[,w+1]))),
+           col = 1, xaxt = "n")) #col=w
       points(x=xs, y=listdf[,w+1], cex=0.45)
   if(is.na(par$params$b[[w]]) == "FALSE"){ #legend if non-NA's
-      legend("topleft", c(names(listdf)[w+1]), col=w, lty=1, cex=0.65)
+      legend("topleft", c(names(listdf)[w+1]), col=1, lty=1, cex=0.65)
   }
   else{} #no legend for NAs since no curve
       
@@ -410,7 +415,7 @@ if(plot){
                                        c=par$params$c[w], d=par$params$d[w], 
                                        e=par$params$e[w], f=par$params$f[w]), cex=0.8, pch=16)) 
   #boundaries for vertical lines
-    if( (is.na(res1[,w][[1]]) == "TRUE") || (res1[,w][[1]] <= 2)){
+    if( (is.na(res1[,w][[1]]) == "TRUE") || (res1[,w][[1]] <= 2) || (res1[,w][[1]] > (max(listdf$Cycle) - 2))){
       print(paste0(LETTERS[z], w, " " , "no ct"))
     }
     else{
@@ -426,12 +431,13 @@ if(plot){
       try(plot(x=xs, y=b5_model(xs, b=par$params$b[w], c=par$params$c[w],
                                     d=par$params$d[w], e=par$params$e[w],
                                     f=par$params$f[w]), type="l",  
-           xlab="Cycle", ylab="Fluorescence", 
-           ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
-                                        names(unlist(listdf)))])])), col = w, xaxt = "n"))
+           xlab="Cycle", ylab="Fluorescence", ylim=c(range(unlist(listdf[,w+1]))),
+           #ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
+           #                             names(unlist(listdf)))])])), 
+           col = 1, xaxt = "n")) #col=w
       points(x=xs, y=listdf[,w+1], cex=0.45)
   if(is.na(par$params$b[[w]]) == "FALSE"){ #legend if non-NA's
-      legend("topleft", c(names(listdf)[w+1]), col=w, lty=1, cex=0.65)
+      legend("topleft", c(names(listdf)[w+1]), col=1, lty=1, cex=0.65) #col=w
   }
   else{}
       
@@ -592,7 +598,7 @@ for(j in 1:(length(listdf)-1)){
     try(plot(x=xs, y=l5_model(xs, b=par$params$b[k], c=par$params$c[k],
                                   d=par$params$d[k], e=par$params$e[k], f=par$params$f[k]), 
              type="l", xlab="Cycle", ylab="Fluorescence", 
-             ylim=c(range(unlist(listdf[,k+1]))), col = k, xaxt = "n"))
+             ylim=c(range(unlist(listdf[,k+1]))), col = k, xaxt = "n")) #col=k
         points(x=xs, y=listdf[,k+1], cex=0.45) #actual points
   if(is.na(par$params$b[k]) == "FALSE"){
     legend("topleft", c(names(listdf)[k+1]), col=k, lty=1, cex=0.65) #legend
@@ -604,7 +610,7 @@ for(j in 1:(length(listdf)-1)){
                                          e=par$params$e[k], f=par$params$f[k]), 
         cex=0.8, pch=16)) #CT point
     #no CT value for near end CTs or NAs
-  if( (is.na(res1[,k][1]) == "TRUE") || (res1[,k][1] <= 2)){
+  if( (is.na(res1[,k][1]) == "TRUE")  || (res1[,k][1] <= 2) || (res1[,k][1] > (max(listdf$Cycle) - 2))){
        print(paste0(LETTERS[i], k, " ", "no ct"))
       }
   else{ 
@@ -621,10 +627,10 @@ for(j in 1:(length(listdf)-1)){
       try(plot(x=xs, y=b4_model(xs, b=par$params$b[k], c=par$params$c[k],
                                     d=par$params$d[k], e=par$params$e[k]), 
           type="l", xlab="Cycle", ylab="Fluorescence", 
-          ylim=c(range(unlist(listdf[,k+1]))), col = k, xaxt = "n"))
+          ylim=c(range(unlist(listdf[,k+1]))), col = k, xaxt = "n")) #col=k
       points(x=xs, y=listdf[,k+1], cex=0.45) #actual points
   if(is.na(par$params$b[k]) == "FALSE"){
-      legend("topleft", c(names(listdf)[k+1]), col=k, lty=1, cex=0.65) #legend
+      legend("topleft", c(names(listdf)[k+1]), col=k, lty=1, cex=0.65) #legend #col=k
     } #adds legend for line of model
   else{} #only add legend if able to run model
   #adding box around CT values (+/- 2 cycles)
@@ -649,11 +655,11 @@ for(j in 1:(length(listdf)-1)){
     try(plot(x=xs, y=b5_model(xs, b=par$params$b[k], c=par$params$c[k],
                                   d=par$params$d[k], e=par$params$e[k], f=par$params$f[k]), 
         type="l", xlab="Cycle", ylab="Fluorescence", 
-        ylim=c(range(unlist(listdf[,k+1]))), col = k, xaxt = "n"))
+        ylim=c(range(unlist(listdf[,k+1]))), col = k, xaxt = "n")) #col=k
         points(x=xs, y=listdf[,k+1], cex=0.45) #actual points
           
   if(is.na(par$params$b[k]) == "FALSE"){
-    legend("topleft", c(names(listdf)[k+1]), col=k, lty=1, cex=0.65) #legend
+    legend("topleft", c(names(listdf)[k+1]), col=k, lty=1, cex=0.65) #legend #col=k
       } #adds legend for line of model
   else{} #only add legend if able to run model
           
@@ -663,7 +669,7 @@ for(j in 1:(length(listdf)-1)){
                                          e=par$params$e[k], f=par$params$f[k]), 
         cex=0.8, pch=16)) #CT point
     #no CT value for near end CTs or NAs
-  if( (is.na(res1[,k][1]) == "TRUE") || (res1[,k][1] <= 2)){
+  if( (is.na(res1[,k][1]) == "FALSE")){
     #big box around +/- 2 cycles
     polygon(x = c(res1[,k][1]-2, res1[,k][1]+2, res1[,k][1]+2, 
                   res1[,k][1]-2, res1[,k][1]-2), 
