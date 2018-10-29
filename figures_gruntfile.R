@@ -643,7 +643,7 @@ par(oma=c(2,2,0.5,0.5),mar=c(1.25,2,0.75,0.75),mfrow=c(4,2),pch=16)
 plot_sig(l5, try.good, macro=4, z=8, plot=TRUE) #goodfit nicedata l5
 plot_sig(l4, try.good, macro=4, z=9, plot=TRUE) #poorfit nicedata l4
 plot_sig(l5, try, macro=4, z=3, plot=TRUE) #nonsignal notnicedata l5
-plot_sig(l5, try, macro=3, z=3, plot=TRUE) #failed notnicedata l5
+plot_sig(l5, try, macro=2, z=9, plot=TRUE) #failed notnicedata l5
 
 #turn line color same
 #turn off grey rectangle polgyon for >46 cycles 
