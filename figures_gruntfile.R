@@ -681,6 +681,197 @@ plot_sig(l4, try.good, macro=4, z=9, plot=TRUE) #poorfit nicedata l4
 plot_sig(l5, try, macro=4, z=3, plot=TRUE) #nonsignal notnicedata l5
 plot_sig(l5, try, macro=2, z=9, plot=TRUE) #failed notnicedata l5
 
+######changing plot_sig to exclude legend, and xaxis label
+
+plot_sigmacro <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
+  
+  #start of microscoping: specific w term evaluation
+  
+  #plotting amplification curve
+  if(macro > 0){
+    w = macro
+    #re-state specified z-list
+    listdf <- listdf[[z]]
+    #getting parameter estimates
+    par <- sub_genparams(est, listdf)
+    #finding the residuals
+    try_resid <- function(x) tryCatch({resid(x)},
+                                      error = function(e) rep(NA, max(listdf$Cycle)))
+    resids <- lapply(par$fits, try_resid)
+    #finding the RSS
+    rss <- sum(resids[[w]]^2)
+    #finding the DW-stat
+    reg.amp <- dynlm(listdf[,w+1] ~ listdf$Cycle)
+    reg.res <- try(dynlm(resids[[w]] ~ listdf$Cycle), silent = TRUE)
+    #DW-statistics for amp and resid
+    dw.amp <- durbinWatsonTest(reg.amp) 
+    dw.res <- tryCatch({
+      durbinWatsonTest(reg.res)
+    }, error = function(e) {
+      return(list(r=NA, dw=NA, p=NA))
+    })  #cannot run with NA's
+    #finding the CT value
+    ml1 <- modlist(listdf, model = est)
+    res1 <- getPar(ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    #combining all into df
+    values <- data.frame(apply(par$params[w,], c(1,2), as.numeric))
+    values[,(length(values)+1):(length(values)+9)] <- c(dw.amp$r, dw.amp$dw, dw.amp$p,
+                                                        dw.res$r, dw.res$dw, dw.res$p,
+                                                        rss, res1[,w][1], res1[,w][2])
+    names(values) <- c(names(par$params), paste0(names(dw.amp)[1:3], "-amp"),
+                       paste0(names(dw.res)[1:3], "-res"), c("rss", "ct", "eff"))
+    rownames(values) <- c() #getting rid of arbitrary row names  
+    if(plot){
+      xs = listdf$Cycle
+      if(est$name == "l4"){ #if NAs, model cannot run
+        try(plot(x=xs, y=l4_model(xs, b=par$params$b[w], c=par$params$c[w],
+                                  d=par$params$d[w], e=par$params$e[w]), type="l",  
+                 xlab="Cycle", ylab="Fluorescence", ylim = c(range(unlist(listdf[,w+1]))),
+                 # ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
+                 #                              names(unlist(listdf)))])])), 
+                 col = 1, xaxt = "n")) #col=w
+        points(x=xs, y=listdf[,w+1], cex=0.45)
+        #adding box around CT values (+/- 2 cycles)
+        try(points(x=res1[,w][1], y=l4_model(res1[,w][1], b=par$params$b[w], 
+                                             c=par$params$c[w], d=par$params$d[w], 
+                                             e=par$params$e[w]), cex=0.8, pch=16)) #CT point
+        #boundaries for vertical lines
+        if( (is.na(res1[,w][[1]]) == "TRUE") || (res1[,w][[1]] <=2) || (res1[,w][[1]] > (max(listdf$Cycle) - 2))){
+          print(paste0(LETTERS[z], w, " " , "no ct")) 
+        } #can't draw box for those with <=2 CT or NA
+        else{
+          #filling in the +/- squares for CT value
+          polygon(x = c(res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2, res1[,w][1]-2), 
+                  y = c(min(par("usr")), min(par("usr")), 
+                        max(par("usr")), max(par("usr")), min(par("usr"))),
+                  col= rgb(0,0,0,alpha=0.15)) #density=10, angle=-45, col = "grey", lty=2)
+        }
+      }
+      if(est$name == "b4"){
+        try(plot(x=xs, y=b4_model(xs, b=par$params$b[w], c=par$params$c[w],
+                                  d=par$params$d[w], e=par$params$e[w]), type="l",  
+                 xlab="Cycle", ylab="Fluorescence", 
+                 #ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
+                 #                             names(unlist(listdf)))])])), 
+                 ylim=c(range(unlist(listdf[,w+1]))),
+                 col = 1, xaxt = "n")) #col=w
+        points(x=xs, y=listdf[,w+1], cex=0.45)
+        #adding box around CT values (+/- 2 cycles)
+        try(points(x=res1[,w][1], y=b4_model(res1[,w][1], b=par$params$b[w], 
+                                             c=par$params$c[w], d=par$params$d[w], 
+                                             e=par$params$e[w]), cex=0.8, pch=16)) #CT point
+        #filling in the +/- squares for CT value
+        if(is.na(res1[,w][[1]]) == "FALSE"){
+          polygon(x = c(res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2, res1[,w][1]-2), 
+                  y = c(min(par("usr")), min(par("usr")), 
+                        max(par("usr")), max(par("usr")), min(par("usr"))),
+                  col= rgb(0,0,0,alpha=0.15))
+        }
+        else{
+          print(paste0(LETTERS[z], w, " ", "no ct"))
+        }
+      }
+      if(est$name == "l5"){
+        try(plot(x=xs, y=l5_model(xs, b=par$params$b[w], c=par$params$c[w],
+                                  d=par$params$d[w], e=par$params$e[w],
+                                  f=par$params$f[w]), type="l",  
+                 xlab="Cycle", ylab="Fluorescence", 
+                 #ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
+                 #                             names(unlist(listdf)))])])), 
+                 ylim=c(range(unlist(listdf[,w+1]))),
+                 col = 1, xaxt = "n")) #col=w
+        points(x=xs, y=listdf[,w+1], cex=0.45)
+        #adding box around CT values (+/- 2 cycles)
+        try(points(x=res1[,w][1], y=l5_model(res1[,w][1], b=par$params$b[w], #CT point
+                                             c=par$params$c[w], d=par$params$d[w], 
+                                             e=par$params$e[w], f=par$params$f[w]), cex=0.8, pch=16)) 
+        #boundaries for vertical lines
+        if( (is.na(res1[,w][[1]]) == "TRUE") || (res1[,w][[1]] <= 2) || (res1[,w][[1]] > (max(listdf$Cycle) - 2))){
+          print(paste0(LETTERS[z], w, " " , "no ct"))
+        }
+        else{
+          
+          #filling in the +/- squares for CT value
+          polygon(x = c(res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2, res1[,w][1]-2), 
+                  y = c(min(par("usr")), min(par("usr")), 
+                        max(par("usr")), max(par("usr")), min(par("usr"))),
+                  col= rgb(0,0,0,alpha=0.15))
+        }
+      }
+      if(est$name == "b5"){ 
+        try(plot(x=xs, y=b5_model(xs, b=par$params$b[w], c=par$params$c[w],
+                                  d=par$params$d[w], e=par$params$e[w],
+                                  f=par$params$f[w]), type="l",  
+                 xlab="Cycle", ylab="Fluorescence", ylim=c(range(unlist(listdf[,w+1]))),
+                 #ylim=c(range(unlist(listdf)[(names(unlist(listdf))[!grepl("Cycle", 
+                 #                             names(unlist(listdf)))])])), 
+                 col = 1, xaxt = "n")) #col=w
+        points(x=xs, y=listdf[,w+1], cex=0.45)
+        
+        #adding box around CT values (+/- 2 cycles)
+        try(points(x=res1[,w][1], y=b5_model(res1[,w][1], b=par$params$b[w], #CT point
+                                             c=par$params$c[w], d=par$params$d[w], 
+                                             e=par$params$e[w], f=par$params$f[w]), cex=0.8, pch=16)) 
+        #boundaries for vertical lines
+        if(is.na(res1[,w][[1]]) == "FALSE"){
+          #filling in the +/- squares for CT value
+          polygon(x = c(res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2, res1[,w][1]-2), 
+                  y = c(min(par("usr")), min(par("usr")), 
+                        max(par("usr")), max(par("usr")), min(par("usr"))),
+                  col= rgb(0,0,0,alpha=0.15))
+        }
+        else{
+          print(paste0(LETTERS[z], w, " " , "no ct"))
+        }
+      }
+      #plotting residuals
+      if(unique(is.na(resids[[w]])) == "FALSE"){
+        plot(y = resids[[w]][1:length(listdf$Cycle)], 
+             x = par$fits[[w]]$DATA$Cycles[1:length(listdf$Cycle)], 
+             ylim = range(unlist(resids)[which(!is.na(unlist(resids)))]), 
+             xlab = "Cycle", xaxt = "n", yaxt = "n", ylab="Fluorescence Residual")
+        abline(h=0) ; points(x=res1[,w][1], y=0, cex=0.8, pch=17)
+        #yaxis on right
+        axis(4,at=seq(-40,20,10)) # add a new x-axis
+        
+      }
+      else{
+        plot(1, type="n", xlab="n", ylab="", xlim=c(0, sum(is.na(resids[[w]]))), ylim=c(0,1))
+      }
+      #boundaires for horizontal lines
+      if( (res1[,w][[1]] <= 2) || (is.na(res1[,w][[1]])) == "TRUE" ||
+          (res1[,w][[1]] > 38 & max(listdf$Cycle) == 40) ||
+          (res1[,w][[1]] > 44 & max(listdf$Cycle) == 46) ){ 
+        #recall: listdf is with primary list called already
+        print("check")
+      }
+      else{
+        polygon(x = c(res1[,w][1]-2, res1[,w][1]+2, res1[,w][1]+2, res1[,w][1]-2, res1[,w][1]-2), 
+                y = c(min(par("usr")), min(par("usr")), 
+                      max(par("usr")), max(par("usr")), min(par("usr"))), col= rgb(0,0,0,alpha=0.15))
+      }
+      
+      #axis(1,at=seq(0,40,10)) # add a new x-axis
+      #mtext(text="Residual", side=2, line=2, outer=T)
+      #mtext(text="Cycle", side=1, line=2, outer=T)
+      
+    } #plot bracket
+    return(values)
+  } #macro bracket
+}
+
+par(oma=c(2,5,0,3), mar=c(0,0,1,2), mfrow=c(4,2),pch=16)
+plot_sigmacro(l5, try.good, macro=4, z=8, plot=TRUE) #goodfit nicedata l5
+plot_sigmacro(l4, try.good, macro=4, z=9, plot=TRUE) #poorfit nicedata l4
+plot_sigmacro(l5, try, macro=4, z=3, plot=TRUE) #nonsignal notnicedata l5
+plot_sigmacro(l5, try, macro=2, z=9, plot=TRUE) #failed notnicedata l5
+mtext(text="Cycle", side=1, line=1, outer=T)
+mtext(text="Fluorescence", side=2, line=3, outer=T)
+mtext(text="Residual", side=4, line=1, outer=T)
+
+
+
+
 #turn line color same
 #turn off grey rectangle polgyon for >46 cycles 
 
