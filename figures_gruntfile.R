@@ -561,16 +561,23 @@ residsb5 <- lapply(b5_try$fits, tryresid)
 residsl4 <- lapply(l4_try$fits, tryresid)
 residsb4 <- lapply(b4_try$fits, tryresid)
 
+#range5 <- round_any(range(residsl5, residsb5, na.rm=TRUE), 100, f=ceiling)
+#range4 <- round_any(range(residsl4, residsb4, na.rm=TRUE), 100, f=ceiling)
+#if(any(abs(range(residsl5, residsb5, na.rm=TRUE)) < 100)==TRUE || any(abs(range(residsl4, residsb4, na.rm=TRUE)) < 100)==TRUE ){
+#  range5 <- round_any(range(residsl5, residsb5, na.rm=TRUE), 25, f=ceiling)
+#  range4 <- round_any(range(residsl4, residsb4, na.rm=TRUE), 25, f=ceiling)
+#}
+
 par(mfrow=c(2,2))
-par(oma=c(4,4,0.5,4),mar=c(0,0.25,0,0))
+par(oma=c(4,4,0.5,4),mar=c(0.25,0.25,0,0))
 
 for(x in list(residsl5, residsb5, residsl4, residsb4)){
   if(identical(x, residsl5) == TRUE){
   for(k in 1:4){
   if(k==1){
-    plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-50,50), 
+    plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-150,150), 
          xlab="", ylab="", xaxt = "n", yaxt = "n")
-    axis(side=2, at=seq(-50, 50, by=25)) 
+    axis(side=2, at=seq(-100,100, by=50)) 
   }
     lines(x=cyclength, y=x[[k]], col = k)
     }
@@ -578,7 +585,7 @@ for(x in list(residsl5, residsb5, residsl4, residsb4)){
   else if(identical(x, residsb5) == TRUE){
     for(k in 1:4){
       if(k==1){
-        plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-50,50), 
+        plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-150,150), 
              xlab="", ylab="", xaxt = "n", yaxt = "n")
       }
       lines(x=cyclength, y=x[[k]], col = k)
@@ -587,9 +594,9 @@ for(x in list(residsl5, residsb5, residsl4, residsb4)){
   else if(identical(x, residsl4) == TRUE){
     for(k in 1:4){
       if(k==1){
-        plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-50,50), 
+        plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-150,150), 
              xlab="", ylab="", yaxt = "n")
-        axis(side=2, at=seq(-50, 50, by=25)) 
+        axis(side=2, at=seq(-100,100, by=50)) 
       }
       lines(x=cyclength, y=x[[k]], col = k)
     }
@@ -597,7 +604,7 @@ for(x in list(residsl5, residsb5, residsl4, residsb4)){
   else if(identical(x, residsb4) == TRUE){
     for(k in 1:4){
       if(k==1){
-        plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-50,50), 
+        plot(x=cyclength, y=x[[1]], col = k, type = "l", ylim = c(-150,150), 
              xlab="", ylab="", yaxt = "n")
       }
       lines(x=cyclength, y=x[[k]], col = k)
@@ -608,6 +615,35 @@ mtext(text="Cycles", side=1, line=2, outer=TRUE)
 mtext(text= "Residuals", side=2, line=2, outer=TRUE)
 }
 subplot_resid_each(try$J)
+
+
+unlist.genparams <- function(test){
+  tst.list <- list() ; listdf.tst <- list() ; repnames <- list()
+  for(i in 1:length(test)){
+    for(j in 1:length(test[[i]])){ #length = rep of secondary list
+      mincyc <- min(unlist(lapply(test[[i]], function(k) max(k$Cycle)))) #min cyc (if diff)
+      tst.list[[i]] <- sapply(test[[i]], function(x) x$Rn[1:mincyc]) #list of diff sampleIDs, but df secondary
+      listdf.tst[[i]] <- as.data.frame(cbind(seq(1:mincyc), tst.list[[i]])) 
+      repnames <- lapply(LETTERS[1:length(test)], paste0, 1:length(test[[i]])) #df colnames
+      names(listdf.tst[[i]]) <- c("Cycle", repnames[[i]][1:length(test[[i]])])
+    }
+  }
+  names(listdf.tst) <- LETTERS[1:length(test)]
+  return(listdf.tst)
+}
+
+#using highest Rn instead of dRn to see if pattern same
+miRcompData2.1 <- miRcompData2[order(miRcompData2$Rn, decreasing = TRUE),] #KW5_2
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets")
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-576-3p_002351.Rda")
+try.big <- unlist.genparams(tst) #list of lists organized here
+subplot_resid_each(try.big$E)
+
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-500_002428.Rda")
+try.big2 <- unlist.genparams(tst) #KW8
+subplot_resid_each(try.big2$H)
+
+
 
 #different signal fits
 library(dynlm) ; library(car)
