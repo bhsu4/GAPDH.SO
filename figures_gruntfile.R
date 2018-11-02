@@ -870,10 +870,35 @@ mtext(text="Fluorescence", side=2, line=3, outer=T)
 mtext(text="Residual", side=4, line=1, outer=T)
 
 
+###Autocorrelation boxplots
+#nicedataset
+source("GAPDH.SO/gen_results.R")
+modparams <- lapply(try.good, function(x) sub_genparams(listdf=x, est=l5))
+try.sig <- gen_results(try, modparams)
+lstarres <- vector("list", 10) #empty list of subs: ABCD,..etc
+cyclength <- unlist(lapply(try.good, nrow))
+for(i in 1:10){ #running LSTAR model
+  for(j in 2:5){
+    #results for LSTAR model 
+    lstarres[[i]][[j-1]] <- tryCatch({
+      tsDyn::lstar(try.good[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
+      error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
+                             residuals=rep(NA, (cyclength[[i]]-(klag*mdim))),
+                             model.specific=list(coefficients = rep(NA, (4+2*mdim)))))
+    #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
+  }
+}
+lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
+try.lstar <- gen_results(try.good, lstarres.fits)
+
+res.tog <- data.frame(1:40, try.sig$res.r, try.lstar$res.r)
+colnames(res.tog) <- c("Cycle", "Sig", "Lstar")
+mdata <- melt(res.tog, id=c("Cycle"))
+mdata[,"value"] <- round(as.numeric(mdata[,"value"]),2)
 
 
-#turn line color same
-#turn off grey rectangle polgyon for >46 cycles 
+boxplot(res.tog)
 
-
+require(ggplot2)
+ggplot(data = mdata, aes(x=Cycle, y=value)) + geom_boxplot(aes(fill=variable))
 
