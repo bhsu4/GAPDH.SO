@@ -2,9 +2,9 @@ setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/")
 df <- read.csv(file="GAPDH.SO.csv", header = TRUE, sep = ",")
 Cycle = c(1:40)
 library(data.table)
+setnames(df, "F6.1", "F7") #changing one column name
 subsets <- lapply(LETTERS[1:8], function(k) cbind(Cycle,df[,colnames(df) %like% k]))
 #colnames(subsets$F) <- c("Cycle", paste0("F", 1:12))
-setnames(df, "F6.1", "F7") #changing one column name
 names(subsets) <- LETTERS[1:8]
 #list2env(subsets, envir=.GlobalEnv)
 subsets$C <- subsets$C[,-c(1)]
