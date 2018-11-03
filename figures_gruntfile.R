@@ -896,9 +896,44 @@ colnames(res.tog) <- c("Cycle", "Sig", "Lstar")
 mdata <- melt(res.tog, id=c("Cycle"))
 mdata[,"value"] <- round(as.numeric(mdata[,"value"]),2)
 
-
-boxplot(res.tog)
-
 require(ggplot2)
 ggplot(data = mdata, aes(x=Cycle, y=value)) + geom_boxplot(aes(fill=variable))
 
+###AIC plt GAPDH.SO supplemental
+
+for(i in 1:8){
+  for(j in 1:13){
+    ts_subsets[[i]][,j] <- ts(subsets[[i]][,j])
+  }
+}
+#names(ts_subsets$F)[8] <- "F7" #replace F.6.1
+
+source("GAPDH.SO/lag_gen.R")
+library(dynlm)
+library(Hmisc)
+ts_subsets <- ts(subsets)
+fftest <- lapply(LETTERS[1:8], paste0, 1:12) #list of subset names
+fftry <- lapply(fftest, function(x) lapply(x, get_lag_formulae, n=15)) #dynlm formula in list
+ff_fitstest <- list()
+for(j in 1:8) ff_fitstest[[j]] <- lapply(fftry[[j]], function(x) lapply(x, 
+                                                          function(f) dynlm(formula = as.formula(f), 
+                                                              data=ts_subsets[[j]]))) #output results of dynlm
+ff_fitstestaic <- list()
+for(j in 1:8) ff_fitstestaic[[j]] <- sapply(ff_fitstest[[j]], 
+                                            function(x) sapply(x,AIC)) #output results of dynlm
+
+for(j in 1:8){
+  for(i in 1:12){
+    if(i==1 & j==1){
+      plot(x=1:15, y=ff_fitstestaic[[j]][,i], type = "p", ylim = c(range(ff_fitstestaic)), 
+           ylab = "AIC", xlab = "Lag Term")
+      #axis(4)
+      #mtext('AIC',4,line=2)
+      #mtext('Lag Term', 1, line=2)
+    }
+    points(x=1:15, y=ff_fitstestaic[[j]][,i], col = j)
+  } #plotting all replication sets' AIC
+}
+for(j in 1:8){
+  lines(spline(x = 1:15, y=rowMeans(ff_fitstestaic[[j]])), pch = 19, cex = 3, col = j)
+} #smoothing line
