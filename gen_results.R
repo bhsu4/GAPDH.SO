@@ -1,4 +1,4 @@
-gen_results <- function(subs, params){
+gen_results <- function(subs, params, sig=l5){
   ##define lengths
   sublength = length(subs)
   repnames <- unique(unlist(lapply(subs, names)))[!grepl("Cycle", unique(unlist(lapply(subs, names))))]
@@ -57,7 +57,7 @@ gen_results <- function(subs, params){
   ##CT values: sigmoidal and lstar  
   if(isTRUE(params[[1]]$fits[[1]]$MODEL$name %in% c("l5", "l4", "b5", "b4")) == TRUE){
     #finding CT value
-    mod1 <- lapply(subs, function(x) modlist(x, model = l5)) #set to l5 first, will change later********
+    mod1 <- lapply(subs, function(x) modlist(x, model = sig)) #set to l5 first, will change later********
     res1 <- lapply(mod1, function(x) getPar(x, type = "curve", cp = "cpD2", eff = "sliwin")) 
     res1CT <- lapply(res1, function(x) x[1,]) #first row is CT
     #filter CT values
@@ -238,7 +238,7 @@ try <- unlist.genparams(tst)
 load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
 try.good <- unlist.genparams(tst)
 #outside params generated
-modparams <- lapply(try, function(x) sub_genparams(listdf=x, est=sig))
+modparams <- lapply(try, function(x) sub_genparams(listdf=x, est=l5))
 lstarres <- vector("list", 10) #empty list of subs: ABCD,..etc
 cyclength <- unlist(lapply(try, nrow))
 for(i in 1:10){ #running LSTAR model
