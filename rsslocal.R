@@ -148,8 +148,8 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
     #add NA to those that are outside lower bound first
     mod2unl[which(mod2unl < (0.5+klag*mdim+2))] <- NA
     #rss for red box
-    rsslstarr <- vector('list', sublength) 
-    for(i in 1:(sublength)){
+    rsslstarr <- lapply(vector('list', sublength), function(x) rep(0,(replength/sublength)))
+    for(i in 1:sublength){
       for(j in 1:(replength/sublength)){
         #combined indicator with i and j
         indij = ((replength/sublength)*(i-1))+j  
@@ -159,23 +159,22 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
           rsslstarr[[i]][[j]] <- NA
         }
         #filter out low values, change to NA unlistcycCTthr
-        else if(sum(isTRUE(mod2unl[[indij]] > (cyclength[[i]]-(klag*mdim+1)))) > 0){ #strict upper bound
+        else if(isTRUE(mod2unl[[indij]] > (cyclength[[i]]-(klag*mdim+1))) ==TRUE){ #strict upper bound
           uppercyc = cyclength[[i]]-(klag*mdim)
-          lowercyc = ceiling(as.numeric(as.character(mod2unl[[indij]]))-(klag*mdim)-2)}
+          lowercyc = ceiling(as.numeric(as.character(mod2unl[[indij]]))-(klag*mdim)-2)
+          #list of lists of rss red region
+          rsslstarr[[i]][[j]] <- sum(params[[i]]$fits[[j]]$residuals[lowercyc:uppercyc]^2)}
         else{    #(sum(is.na(unlistcycCTthr[[indij]])) == 0){ 
           uppercyc = floor(as.numeric(as.character(mod2unl[[indij]]))-(klag*mdim)+2)  #+2 cycles
           #klag-adjusted lower cycle
-          lowercyc = ceiling(as.numeric(as.character(mod2unl[[indij]]))-(klag*mdim)-2)} #-2cycles 
-        #list of lists of rss red region
-        rsslstarr[[i]][[j]] <- sum(params[[i]]$fits[[j]]$residuals[lowercyc:uppercyc]^2)
-        #rsslstarr provies RSS for NA values, we undo this here (rewrite above, need both)
-        if(sum(is.na(mod2unl[[indij]])) > 0){ 
-          rsslstarr[[i]][[j]] <- NA }
-        else{}
+          lowercyc = ceiling(as.numeric(as.character(mod2unl[[indij]]))-(klag*mdim)-2)
+          #list of lists of rss red region
+          rsslstarr[[i]][[j]] <- sum(params[[i]]$fits[[j]]$residuals[lowercyc:uppercyc]^2)} #-2cycles 
       }
     }
     return(unlist(rsslstarr))
   }
+  
   #rss local for sig.sig
   rsslocal.sig <- sigrsslocal(sigCT, modresids.sigunl)
   rsslocal.sig.lstar <- sigrsslocal(lstarCT, modresids.sigunl)
@@ -184,7 +183,7 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
   #unlisted 1:(replength) of rss grey region
   rsslocal.lstar <- findlstarres(lstarCT, lstarres.fits)
   rsslocal.lstar.sig <- findlstarres(sigCT, lstarres.fits)
-  rsslocal.lstar.branch <- findlstarres(branchCT, lstarres.fits)
+  rsslocal.lstar.branch <- findlstarres(branchCT, lstarres.fits) #############
   rsslocal.lstar.all <- matrix(c(rsslocal.lstar, rsslocal.lstar.sig, rsslocal.lstar.branch), ncol=3)
   ##resids for branching
   rsslocal.branch <- sigrsslocal(branchCT, modresids.branchunl)
@@ -200,6 +199,9 @@ F = t(do.call(cbind, lapply(subsets,function(x) x[-1])))
 meplz <- allresids(subsets, modparams, lstarres.fits, Fer = F)
 
 #try bad data set mircomp
-F = t(do.call(cbind, lapply(subsets,function(x) x[-1])))
+F = t(do.call(cbind, lapply(try, function(x) x[-1][1:40,])))
 meplz2 <- allresids(try, modparams, lstarres.fits, Fer = F)
+
+
+
 
