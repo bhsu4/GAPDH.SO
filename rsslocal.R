@@ -1,3 +1,72 @@
+branchfunc <- function(Fer, plot=FALSE){
+  a1 <- dim(F)
+  r <- a1[1]
+  n <- a1[2]
+  tau1 <- 1.02
+  tau2 <- 1.02
+  ctau1 <- matrix(0, r, 1)
+  ctau2 <- matrix(0, r, 1)
+  for (i in 1:r) {
+    ctau1[i] <- min(which(F[i, 2:n]/F[i, 1:(n - 1)] >= 
+                            tau1))
+    if (any(F[i, (ctau1[i] + 1):n]/F[i, ctau1[i]:(n - 
+                                                  1)] <= tau2)) {
+      ctau2[i] <- min(which(F[i, (ctau1[i] + 1):n]/F[i, 
+                                                     ctau1[i]:(n - 1)] <= tau2)) + ctau1[i]
+    }
+    else {
+      ctau2[i] = n
+    }
+  }
+  #}
+  yn <- matrix(0, r, 1)
+  yn_1 <- matrix(0, r, 1)
+  p_tilde <- matrix(0, r, 1)
+  mu_b <- matrix(0, r, 1)
+  var_mu_b <- matrix(0, r, 1)
+  for (i in 1:r) {
+    yn[i] <- sum(F[i, ctau1[i]:ctau2[i]])
+    yn_1[i] <- sum(F[i, ctau1[i]:(ctau2[i] - 1)])
+    p_tilde[i] <- (yn[i] - F[i, ctau1[i]] - yn_1[i])/yn_1[i]
+    mu_b[i] <- p_tilde[i]/((1 + p_tilde[i])^n) * yn[i] * (1 - (1 + p_tilde[i])^(ctau1[i] - n))^(-1)
+  }
+  
+  n_an <- matrix(0, r, n) ; cdivas <- matrix(0, r, 1) ; appF <- matrix(0, r, n)
+  n_an[,1] <- mu_b
+  for(i in 1:r){
+    for(j in 2:n){
+      n_an[i,j] <- n_an[i, j-1] + rbinom(1, round(n_an[i, j-1]), p_tilde[i])
+    }
+    cdivas[i,] = (n_an[i, round((ctau1[i,]+ctau2[i,])/2)]/F[i,round((ctau1[i,]+ctau2[i,])/2)])/(9.1*10^11)
+    constant = cdivas * (9.1*10^11)
+    appF[i,] = n_an[i,]/constant[i,]
+  }
+  
+  backconst <- matrix(0, r, n) ; res_aq <- matrix(0, r, n)
+  for(i in 1:r){
+    backconst[i,] = cumsum(F[i,])/F[i,]
+    res_aq[i,] <- cumsum(appF[i,])/backconst[i,]
+  }
+  if(plot){  
+    for(i in 1:r){
+      plot(x=1:40, y=res_aq[i,], col=2)
+      points(x=1:40, y=F[i,])
+    }
+  }
+  resid.res <- vector('list', 8)
+  for(i in 1:8){
+    for(j in 1:12){
+      indij = 12*(i-1)+j
+      resid.res[[i]][[j]] <- res_aq[indij,] - F[indij,]
+    }
+  }
+  branchCT <- list()
+  for(i in 1:r){
+    branchCT[i] <- quantile(ctau1[i,]:ctau2[i,])[2] #1st quartile
+  }
+  return(list(CT = branchCT, dat = res_aq, residuals = resid.res))
+}
+
 allresids <- function(subs, params.sig, params.lstar, sig=l5){
   ##extracting results from matrix
   res.sig <- gen_results(subs, params.sig)
@@ -117,52 +186,3 @@ allresids <- function(subs, params.sig, params.lstar, sig=l5){
 
 meplz <- allresids(subsets, modparams, lstarres.fits)
 
-
-
-#finding CT values
-gap.sig <- gen_results(subsets, modparams)
-gap.lstar <- gen_results(subsets, lstarres.fits)
-sigCT <- gap.sig$CT
-lstarCT <- gap.lstar$CT
-
-#binomial branching CT
-F = t(do.call(cbind, lapply(subsets,function(x) x[-1])))
-branchCTunl <- branchfunc(F)
-branchCTunl.mat <- matrix(branchCTunl$CT, nrow=8, ncol=12, byrow=TRUE)
-branchCT <- list()
-for(i in 1:8){
-  branchCT[[i]] <- unlist(branchCTunl.mat[i,])
-}
-
-##finding resids 
-#resids with NA get filtered out
-residsNA <- function(x){
-  tryCatch({ resid(x) }, error = function(e){NA})
-}
-#sigmoidal
-modparams.sig <- lapply(subsets, function(x) sub_genparams(listdf=x, est=l5))
-modresids.sig <- lapply(modparams.sig, function(x) lapply(x$fits, residsNA)) #for non-models, only one NA
-#lstar
-modresids.lstar <- lapply(lstarres.fits, function(x) lapply(x$fits, residsNA)) #for non-models, only one NA
-#branching
-modresids.branch <- branchCTunl$residuals
-
-#unlisting residuals
-oneNA <- function(modresids){
-  for(i in 1:sublength){
-    for(j in 1:(replength/sublength)){
-      if(all(is.na(modresids[[i]][[j]])) == TRUE){
-        modresids[[i]][[j]] <- rep(NA, cyclength[[i]])
-      }
-      else{}
-    }
-  }
-  return(modresids)
-}
-modresids.sigunl <- oneNA(modresids.sig) 
-modresids.lstarunl <- oneNA(modresids.lstar) 
-modresids.branchunl <- oneNA(modresids.branch)
-##unlisting resids
-modresids.sigunl <- unlist(modresids.sigunl, recursive = FALSE)
-modresids.lstarunl <- unlist(modresids.lstarunl, recursive = FALSE)
-modresids.branchunl <- unlist(modresids.branchunl, recursive = FALSE)
