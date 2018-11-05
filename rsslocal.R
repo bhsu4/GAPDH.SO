@@ -1,4 +1,10 @@
-branchfunc <- function(Fer, plot=FALSE){
+branchfunc <- function(subs, Fer, plot=FALSE){
+  #setting lengths
+  sublength = length(subs)
+  repnames <- unique(unlist(lapply(subs, names)))[!grepl("Cycle", unique(unlist(lapply(subs, names))))]
+  replength = length(repnames)
+  cyclength <- unlist(lapply(subs, nrow))
+  #start
   a1 <- dim(F)
   r <- a1[1]
   n <- a1[2]
@@ -53,10 +59,10 @@ branchfunc <- function(Fer, plot=FALSE){
       points(x=1:40, y=F[i,])
     }
   }
-  resid.res <- vector('list', 8)
-  for(i in 1:8){
-    for(j in 1:12){
-      indij = 12*(i-1)+j
+  resid.res <- vector('list', sublength)
+  for(i in 1:sublength){
+    for(j in 1:(replength/sublength)){
+      indij = (replength/sublength)*(i-1)+j
       resid.res[[i]][[j]] <- res_aq[indij,] - F[indij,]
     }
   }
@@ -67,14 +73,19 @@ branchfunc <- function(Fer, plot=FALSE){
   return(list(CT = branchCT, dat = res_aq, residuals = resid.res))
 }
 
-allresids <- function(subs, params.sig, params.lstar, sig=l5){
+allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
+  #lengths
+  sublength = length(subs)
+  repnames <- unique(unlist(lapply(subs, names)))[!grepl("Cycle", unique(unlist(lapply(subs, names))))]
+  replength = length(repnames)
+  cyclength <- unlist(lapply(subs, nrow))
   ##extracting results from matrix
   res.sig <- gen_results(subs, params.sig)
   res.lstar <- gen_results(subs, params.lstar)
   sigCT <- res.sig$CT
   lstarCT <- res.lstar$CT
   #branching on its own
-  branch.res <- branchfunc(F)
+  branch.res <- branchfunc(subs, Fer)
   branchCT <- branch.res$CT
   #branchCT.mat <- matrix(branch.res$CT, nrow=8, ncol=12, byrow=TRUE)
   #branchCT <- list()
@@ -92,7 +103,7 @@ allresids <- function(subs, params.sig, params.lstar, sig=l5){
   #lstar
   modresids.lstar <- lapply(params.lstar, function(x) lapply(x$fits, residsNA)) #for non-models, only one NA
   #branching
-  modresids.branch <- branchCTunl$residuals
+  modresids.branch <- branch.res$residuals
   #unlisting residuals
   oneNA <- function(modresids){
     for(i in 1:sublength){
@@ -184,5 +195,11 @@ allresids <- function(subs, params.sig, params.lstar, sig=l5){
   return(list(sig = rsslocal.sig.all, lstar = rsslocal.lstar.all, branch = rsslocal.branch.all))
 }
 
-meplz <- allresids(subsets, modparams, lstarres.fits)
+#GAPDH
+F = t(do.call(cbind, lapply(subsets,function(x) x[-1])))
+meplz <- allresids(subsets, modparams, lstarres.fits, Fer = F)
+
+#try bad data set mircomp
+F = t(do.call(cbind, lapply(subsets,function(x) x[-1])))
+meplz2 <- allresids(try, modparams, lstarres.fits, Fer = F)
 
