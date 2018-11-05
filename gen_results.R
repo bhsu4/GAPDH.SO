@@ -155,7 +155,7 @@ gen_results <- function(subs, params, sig=l5){
     #add NA to those that are outside lower bound first
     unlistcycCTthr[which(unlistcycCTthr < (0.5+klag*mdim+2))] <- NA
     #rss for red box
-    rsslstarr <- vector('list', sublength) 
+    rsslstarr <- lapply(vector('list', sublength), function(x) rep(0,(replength/sublength)))
     for(i in 1:(sublength)){
       for(j in 1:(replength/sublength)){
         #combined indicator with i and j
@@ -168,17 +168,16 @@ gen_results <- function(subs, params, sig=l5){
         #filter out low values, change to NA unlistcycCTthr
         else if(sum(isTRUE(unlistcycCTthr[[indij]] > (cyclength[[i]]-(klag*mdim+1)))) > 0){ #strict upper bound
           uppercyc = cyclength[[i]]-(klag*mdim)
-          lowercyc = ceiling(unlistcycCTthr[[indij]]-(klag*mdim)-2)}
+          lowercyc = ceiling(unlistcycCTthr[[indij]]-(klag*mdim)-2)
+          #list of lists of rss red region
+          rsslstarr[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)}
         else{    #(sum(is.na(unlistcycCTthr[[indij]])) == 0){ 
           uppercyc = floor(unlistcycCTthr[[indij]]-(klag*mdim)+2)  #+2 cycles
           #klag-adjusted lower cycle
-          lowercyc = ceiling(unlistcycCTthr[[indij]]-(klag*mdim)-2)} #-2cycles 
-        #list of lists of rss red region
-        rsslstarr[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)
-        #rsslstarr provies RSS for NA values, we undo this here (rewrite above, need both)
-        if(sum(is.na(unlistcycCTthr[[indij]])) > 0){ 
-          rsslstarr[[i]][[j]] <- NA }
-        else{}
+          lowercyc = ceiling(unlistcycCTthr[[indij]]-(klag*mdim)-2)
+          #list of lists of rss red region
+          rsslstarr[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)
+          } #-2cycles 
       }
     }
     #unlisted 1:(replength) of rss grey region
