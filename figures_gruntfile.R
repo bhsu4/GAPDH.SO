@@ -358,15 +358,15 @@ legend("right", as.vector(unique(l5dat$ind)[1:3]), fill=my_colors)
 #contour plot of scatterplot matrix
 library(ggplot2)
 ggplot(l5dat,  mapping = aes(dw.res, ct, col = ind, lty = ind)) +
-  geom_density2d(contour = TRUE, size=0.75, linemitre = 3, bins=5) + xlim(range(l5dat$dw.res)) + ylim(range(l5dat$ct)) +
+  geom_density2d(contour = TRUE, size=0.75, linemitre = 3, bins=5) + #xlim(c(0,0.1)) +
+  xlim(range(l5dat$dw.res)) + 
+  ylim(range(l5dat$ct)) +
   scale_color_brewer(palette="Reds") + theme_bw()
 #key point here!
 #smaller dw.res (more ac) with larger RSS. there's something bad about 
 #sig model that goes beyond the eq., increasing variance
 
 #miRcompData Branching Residuals
-try_b5 <- genparams(est=b5, listdf=try)
-
 plot_resid_axis <- function(params){
   cyclength = lapply(params$fits, function(x) max(x$DATA[,1]))
   
@@ -377,9 +377,9 @@ plot_resid_axis <- function(params){
         
         if(k == 1) plot(y=resids[[i]][1:cyclength[[i]]], 
                         x=params$fits[[i]]$DATA$Cycles[1:cyclength[[i]]], 
-                        ylim=c(-200,200), type="l", 
+                        ylim=c(-400,400), type="l", 
                         xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
-        axis(2,at=seq(-200,200,50)) # add a new x-axis
+        axis(2,at=seq(-400,400,100)) # add a new x-axis
         if(k > 1){
           ind2 <- cyclength[[i]]*k
           ind1 <- ind2-(cyclength[[i]]-1)
@@ -393,7 +393,7 @@ plot_resid_axis <- function(params){
         
         if(k == 1) plot(y=resids[[i]][1:cyclength[[i]]], 
                         x=params$fits[[i]]$DATA$Cycles[1:cyclength[[i]]], 
-                        ylim=c(-200,200), type="l", 
+                        ylim=c(-400,400), type="l", 
                         xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
         #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
         if(k > 1){
@@ -409,9 +409,9 @@ plot_resid_axis <- function(params){
         
         if(k == 1) plot(y=resids[[i]][1:cyclength[[i]]], 
                         x=params$fits[[i]]$DATA$Cycles[1:cyclength[[i]]], 
-                        ylim=c(-200,200), type="l", 
+                        ylim=c(-400,400), type="l", 
                         xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
-        axis(2,at=seq(-200,200,50)) # add a new x-axis
+        axis(2,at=seq(-400,400,100)) # add a new x-axis
         if(k > 1){
           ind2 <- cyclength[[i]]*k
           ind1 <- ind2-(cyclength[[i]]-1)
@@ -426,7 +426,7 @@ plot_resid_axis <- function(params){
         
         if(k == 1) plot(y=resids[[i]][1:cyclength[[i]]], 
                         x=params$fits[[i]]$DATA$Cycles[1:cyclength[[i]]], 
-                        ylim=c(-200,200), type="l", 
+                        ylim=c(-400,400), type="l", 
                         xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
         #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
         if(k > 1){
@@ -439,15 +439,44 @@ plot_resid_axis <- function(params){
     title(main= paste(names(params$fits[i]), sub=params$fits$A$MODEL$name, sep = ", "))
   }
 }
+
 b5resids <- lapply(try_b5$fits, resid)
 dev.off()
 m <- matrix(c(1,2,3,4,5,6,7,8,9,10),nrow = 2, ncol = 5, byrow = TRUE)
 layout(mat = m)
 par(oma=c(4,4,4,4),mar=c(0.5,0.75,1,0))
+#dRn try
+try_b5 <- genparams(est=b5, listdf=try)
+
+#Rn nice dataset
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
+try.good <- unlist.genparams(tst)
+try.good_b5 <- genparams(est=b5, listdf=try.big)
+plot_resid_axis(try.good_b5) #each rep vs. 1 uniform curve
+
 
 plot_b5(try, try_b5) #plot of the data fluo
 subplot_b5(try)
 plot_resid_axis(try_b5) #each rep vs. 1 uniform curve
+
+
+
+#using highest Rn instead of dRn to see if pattern same
+miRcompData2.1 <- miRcompData2[order(miRcompData2$Rn, decreasing = TRUE),] #KW5_2
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets")
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-576-3p_002351.Rda")
+try.big <- unlist.genparams(tst) #list of lists organized here
+try.big <- unlist.genparams.Rn(tst)
+try.big_b5 <- genparams(est=b5, listdf=try.big)
+plot_resid_axis(try.big_b5)
+
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-500_002428.Rda")
+try.big2 <- unlist.genparams(tst) #KW8
+try.big2 <- unlist.genparams.Rn(tst) #KW8
+try.big2_b5 <- genparams(est=b5, listdf=try.big2)
+plot_resid_axis(try.big2_b5)
+
+
 #for fits that have mediocre, good signal fits, we see the same branching trend
 #fits with noise don't have that pattern
 
@@ -617,7 +646,7 @@ mtext(text= "Residuals", side=2, line=2, outer=TRUE)
 subplot_resid_each(try$J)
 
 
-unlist.genparams <- function(test){
+unlist.genparams.Rn <- function(test){
   tst.list <- list() ; listdf.tst <- list() ; repnames <- list()
   for(i in 1:length(test)){
     for(j in 1:length(test[[i]])){ #length = rep of secondary list
@@ -891,7 +920,7 @@ for(i in 1:10){ #running LSTAR model
 lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
 try.lstar <- gen_results(try.good, lstarres.fits)
 
-res.tog <- data.frame(1:40, try.sig$res.r, try.lstar$res.r)
+res.tog <- data.frame(1:40, try.sig$amp.dw, try.lstar$amp.dw)
 colnames(res.tog) <- c("Cycle", "Sig", "Lstar")
 mdata <- melt(res.tog, id=c("Cycle"))
 mdata[,"value"] <- round(as.numeric(mdata[,"value"]),2)
