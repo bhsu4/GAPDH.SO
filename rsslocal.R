@@ -184,12 +184,12 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
   rsslocal.lstar <- findlstarres(lstarCT, lstarres.fits)
   rsslocal.lstar.sig <- findlstarres(sigCT, lstarres.fits)
   rsslocal.lstar.branch <- findlstarres(branchCT, lstarres.fits) #############
-  rsslocal.lstar.all <- matrix(c(rsslocal.lstar, rsslocal.lstar.sig, rsslocal.lstar.branch), ncol=3)
+  rsslocal.lstar.all <- matrix(c(rsslocal.lstar.sig, rsslocal.lstar, rsslocal.lstar.branch), ncol=3)
   ##resids for branching
   rsslocal.branch <- sigrsslocal(branchCT, modresids.branchunl)
   rsslocal.branch.sig <- sigrsslocal(sigCT, modresids.branchunl)
   rsslocal.branch.lstar <- sigrsslocal(lstarCT, modresids.branchunl)
-  rsslocal.branch.all <- matrix(c(rsslocal.branch, rsslocal.branch.sig, rsslocal.branch.lstar), ncol=3)
+  rsslocal.branch.all <- matrix(c(rsslocal.branch.sig, rsslocal.branch.lstar, rsslocal.branch), ncol=3)
   
   return(list(sig = rsslocal.sig.all, lstar = rsslocal.lstar.all, branch = rsslocal.branch.all))
 }
