@@ -29,8 +29,8 @@ source("GAPDH.SO/STAR_model.R")
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
                 pattern =  "^targ_")
-library(foreach) ; library(Hmisc) ; library(dplyr) ; library(strucchange)
-testdb <- brkplot(miRcompData2, getfiles, klag=2, plot=FALSE)
+library(foreach) ; library(Hmisc) ; library(dplyr) ; library(strucchange) ; library(gtools)
+testdb <- brkplot(miRcompData2, getfiles, klag=1, plot=FALSE)
 
 #AIC quality control for GAPDH.SO
 dev.off()
@@ -57,5 +57,9 @@ try <- unlist.genparams(tst)
 detach("package:dplyr") ; library(dynlm) ; library(car)
 tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=1, breakdb = testdb, plot=TRUE) #plot
 
+#plotting GAPDH.SO
+names(subsets$F)[[8]] <- 'F7'
+testdb2 <- brkplot(mdata, getfiles = NULL, subs_list=subsets, klag=1, kbreaks = 1, plot=FALSE)
+tstlstarmat2 <- plot_lstar(mdata, getfiles=NULL, subs_list = subsets, klag=1, mdim=1, breakdb = testdb2, plot=TRUE) #plot
 
 
