@@ -306,9 +306,21 @@ aiclag <- function(subs, klag){
   return(fitsresaic)
 }
 
-plot_lstar <- function(orgdata, getfiles, klag, mdim, breakdb, plot=FALSE){
+plot_lstar <- function(orgdata, getfiles, subs_list=NULL, klag, mdim, breakdb, plot=FALSE){
 ##getting the LSTAR model parameters and coefficients
   #targets
+  if(is.null(getfiles)){
+    files = 1
+    targnames <- 'dat_input' #all targets
+    sampnames <- mixedsort(unique(c(orgdata$SampleID))) #sorted samplenames
+    #repeat all sample names for the chosen targets in files
+    tmp <- rep(sampnames, length(files))
+    #creating result data.frame
+    targlength <- length(targnames) #length of all targets
+    replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
+    sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E  
+  }
+  else{
   files <- getfiles
   #defining important lengths
   targnames <- unique(files) #all targets
@@ -320,7 +332,7 @@ plot_lstar <- function(orgdata, getfiles, klag, mdim, breakdb, plot=FALSE){
   targlength <- length(targnames) #length of all targets
   replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
   sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E
-  
+  }
  ###Setting Up LSTAR Output Matrix  
   res <- data.frame(
     #target categories
@@ -347,8 +359,13 @@ plot_lstar <- function(orgdata, getfiles, klag, mdim, breakdb, plot=FALSE){
 
 for(k in 1:length(files)){
   #loading in data sets to get subs
-  load(file = files[[k]]) #loaded in as tst
-  subs <- unlist.genparams(tst) #tester from unlistgenparams = tst loaded in  
+  if(is.null(getfiles)){
+    subs <- subs_list
+  }
+  else{
+    load(file = files[[k]]) #loaded in as tst
+    subs <- unlist.genparams(tst) #tester from unlistgenparams = tst loaded in
+  }
   cyclength <- unlist(lapply(subs, nrow))
   #running lstar function w/ certain lag
   lstarres <- vector("list", sublength) #empty list of subs: ABCD,..etc
@@ -456,9 +473,9 @@ for(k in 1:length(files)){
   #cycCT.thover is list of lists of all cycles' LSTAR fitted > LSTAR threshold
   #cycCT.unl temporary unlisted CT.thover, because list of lists didn't work with which statement
   lstarres.unl = unlist(lstarres, recursive = FALSE)
-  for(i in 1:10){
-    for(j in 1:4){
-      indicator <- j+4*(i-1)
+  for(i in 1:sublength){
+    for(j in 1:(replength/sublength)){
+      indicator <- j+(replength/sublength)*(i-1)
       lstarcoef[[indicator]] <- lstarres.unl[[indicator]]$model.specific$coefficients #coeffs
       lstarcoef[[indicator]]["th"] <- abs(lstarcoef[[indicator]]["th"])
       if(sum(is.na(lstarcoef[[indicator]])) > 0){cycCT.unl[[indicator]] <- NA}
@@ -467,7 +484,7 @@ for(k in 1:length(files)){
         cycCT.unl[[indicator]] <- which(lstarres.unl[[indicator]]$fitted.values > lstarcoef[[indicator]]["th"])
       }
     }
-    ind2 = 4*i ; ind1 = ind2-(4-1)
+    ind2 = (replength/sublength)*i ; ind1 = ind2-((replength/sublength)-1)
     cycCT.thover[[i]] <- cycCT.unl[ind1:ind2] #back to list of lists
   }
   overth.diff <- function(x){ #diff takes lagged difference, rle shows lengths of lagged diff
@@ -527,7 +544,7 @@ for(k in 1:length(files)){
       legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
   ###PART 2: Breakpoints as Squares for NON-LSTAR Models
     #indij for indicator with i,j used
-     indij = 40*(k-1)+(4*(i-1))+j
+     indij = replength*(k-1)+((replength/sublength)*(i-1))+j
     #sum of the TRUE > 0 then we plot square break points
     if(sum(specbreak$TargetID %in% indij) > 0){ 
     #specific breakpoint cycle number
@@ -564,7 +581,7 @@ for(k in 1:length(files)){
       legend("topleft", c(colnames(subs[[i]])[[j+1]]), lty=1, cex=0.65) #legend
   ###PART 2: Breakpoints as Squares for LSTAR Models
     #indij for indicator with i,j used
-     indij = 40*(k-1)+(4*(i-1))+j
+     indij = (replength)*(k-1)+((replength/sublength)*(i-1))+j
     #sum of the TRUE > 0 then we plot square break points
     if(sum(specbreak$TargetID %in% indij) > 0){ 
     #specific breakpoint cycle number
