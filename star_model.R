@@ -1,8 +1,20 @@
-brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
+brkplot <- function(orgdata, getfiles, subs_list = NULL, klag, kbreaks = NULL, plot=FALSE){
 
 #currently uses log10 for Fluo. add nonlogged function
   
 #defining pathway and important lengths 
+if(is.null(getfiles)){
+  files = 1
+  targnames <- 'dat_input' #all targets
+  sampnames <- mixedsort(unique(c(orgdata$SampleID))) #sorted samplenames
+  #repeat all sample names for the chosen targets in files
+  tmp <- rep(sampnames, length(files))
+  #creating result data.frame
+  targlength <- length(targnames) #length of all targets
+  replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
+  sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E  
+}
+else{
   files <- getfiles #pathway file
   targnames <- unique(files) #all targets
   targnames <- gsub(".Rda", "", targnames) #remove .Rda to match later
@@ -13,13 +25,18 @@ brkplot <- function(orgdata, getfiles, klag, kbreaks = NULL, plot=FALSE){
   targlength <- length(targnames) #length of all targets
   replength <- length(unique(orgdata$SampleID)) #length of all of the subsets
   sublength <- length(unique(gsub("_\\d+", "", sampnames))) #length of each subset: A,B,..,E
-
+}
 #using package strucchange to get breakpoints for each curve (lag at 2 set)
   #foreach loads in each tester, and outputs strcchange, whole output for breakpt 
   breaksdb <- list() #return this as data.frame
   foreach(k=1:length(files)) %do% {   #load in each file
+    if(is.null(getfiles)){
+      subs <- subs_list
+    }
+    else{
     load(file = files[[k]]) #loaded in as tst
     subs <- unlist.genparams(tst) #tester from unlistgenparams = tst loaded in
+    }
     #subslog <- lapply(subs, function(x) x %>% 
     #                    mutate_each(funs(log10(.)), 2:((replength/sublength)+1))) #original log10 terms 
     subscb <- lapply(subs, function(x) x %>% 
@@ -570,13 +587,13 @@ for(k in 1:length(files)){
      rightbound <- lstarres[[i]][[j]]$fitted.values[diff2_dfCT[[i]][[j]]+0.5-(klag*mdim)]
      avgCTfittedvalue = (leftbound+rightbound)/2
     #estimated CT value
-     points(x=diff2_dfCT[[i]][[j]], y=avgCTfittedvalue, pch=17, cex=1)
+     #points(x=diff2_dfCT[[i]][[j]], y=avgCTfittedvalue, pch=17, cex=1)
     #grey box +/- 2 cycles about estimated CT 
-     polygon(x = c(diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]+2, diff2_dfCT[[i]][[j]]+2, 
-                   diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]-2), 
-             y = c(min(par("usr")), min(par("usr")), 
-                   max(par("usr")), max(par("usr")), min(par("usr"))),
-             col= rgb(0,0,0,alpha=0.15))
+     #polygon(x = c(diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]+2, diff2_dfCT[[i]][[j]]+2, 
+     #              diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]-2), 
+     #        y = c(min(par("usr")), min(par("usr")), 
+     #              max(par("usr")), max(par("usr")), min(par("usr"))),
+     #        col= rgb(0,0,0,alpha=0.15))
      ##B. LSTAR THRESHOLD METHOD: estimated CT value            
      leftbound <- lstarres[[i]][[j]]$fitted.values[cycCT.th[[i]][[j]]-0.5-(klag*mdim)]
      rightbound <- lstarres[[i]][[j]]$fitted.values[cycCT.th[[i]][[j]]+0.5-(klag*mdim)]
@@ -602,13 +619,13 @@ for(k in 1:length(files)){
           ylab="Residuals", xlab = "Cycle", type="p", cex.lab=0.75)
           abline(h=0)
     #estimated CT value
-     points(x=diff2_dfCT[[i]][[j]], y=0, pch=17, cex=1)
+     #points(x=diff2_dfCT[[i]][[j]], y=0, pch=17, cex=1)
     #grey box +/- 2 cycles about estimated CT 
-     polygon(x = c(diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]+2, diff2_dfCT[[i]][[j]]+2, 
-                   diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]-2), 
-             y = c(min(par("usr")), min(par("usr")), 
-                   max(par("usr")), max(par("usr")), min(par("usr"))),
-             col= rgb(0,0,0,alpha=0.15))
+     #polygon(x = c(diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]+2, diff2_dfCT[[i]][[j]]+2, 
+     #              diff2_dfCT[[i]][[j]]-2, diff2_dfCT[[i]][[j]]-2), 
+     #        y = c(min(par("usr")), min(par("usr")), 
+     #              max(par("usr")), max(par("usr")), min(par("usr"))),
+     #        col= rgb(0,0,0,alpha=0.15))
     ##B. LSTAR THRESHOLD METHOD: estimated CT value            
      #estimated CT value
      if(cycCT.th[[i]][[j]]>(0.5+klag*mdim)){ 
