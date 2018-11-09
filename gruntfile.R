@@ -6,6 +6,7 @@ setnames(df, "F6.1", "F7") #changing one column name
 subsets <- lapply(LETTERS[1:8], function(k) cbind(Cycle,df[,colnames(df) %like% k]))
 #colnames(subsets$F) <- c("Cycle", paste0("F", 1:12))
 names(subsets) <- LETTERS[1:8]
+names(subsets$F)[[8]] <- 'F7'
 #list2env(subsets, envir=.GlobalEnv)
 subsets$C <- subsets$C[,-c(1)]
 
