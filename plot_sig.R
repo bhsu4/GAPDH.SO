@@ -47,8 +47,10 @@ plot_sig <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
       #finding model DW
       for(j in 1:(length(listdf[[i]])-1)){ #NA resids cannot run
         model.dw[[i]][[j]] <- sum((resids[[i]][[j]]-Lag(resids[[i]][[j]], 1))^2, na.rm=TRUE)/sum(resids[[i]][[j]]^2)
-        model.boxlj[[i]][[j]] <- Box.test(resids[[i]][[j]], lag=1, type='Ljung-Box')
-        peacor[[i]][[j]] <- cor(resids[[i]][[j]][2:max(listdf[[i]]$Cycle)], resids[[i]][[j]][1:(max(listdf[[i]]$Cycle)-1)])
+        model.boxlj[[i]][[j]] <- tryCatch({Box.test(resids[[i]][[j]], lag=1, type='Ljung-Box')}, 
+                 error = function(e) {return(list(statistic = NA, p.value = NA))})        
+        peacor[[i]][[j]] <- cor(resids[[i]][[j]][2:max(listdf[[i]]$Cycle)], 
+                                resids[[i]][[j]][1:(max(listdf[[i]]$Cycle)-1)])
       }
     }
     
@@ -749,7 +751,9 @@ sig_est <- function(est, orgdata, getfiles){
       r.amp = rep(NA, targlength * replength), dw.amp = rep(NA, targlength * replength), p.amp = rep(NA, targlength * replength), 
       r.res = rep(NA, targlength * replength), dw.res = rep(NA, targlength * replength), p.res = rep(NA, targlength * replength), 
       #rss and getPar statistics
-      rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength)
+      rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength),
+      dw.comp = rep(NA, targlength * replength), boxlj.x2 = rep(NA, targlength * replength), 
+      boxlj.p = rep(NA,targlength * replength), pcor = rep(NA, targlength * replength)
     )
   }
   if(est$name == "l5" || est$name == "b5"){
@@ -764,7 +768,10 @@ sig_est <- function(est, orgdata, getfiles){
       r.amp = rep(NA, targlength * replength), dw.amp = rep(NA, targlength * replength), p.amp = rep(NA, targlength * replength), 
       r.res = rep(NA, targlength * replength), dw.res = rep(NA, targlength * replength), p.res = rep(NA, targlength * replength), 
       #rss and getPar statistics
-      rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength)
+      rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength),
+      dw.comp = rep(NA, targlength * replength), boxlj.x2 = rep(NA, targlength * replength), 
+      boxlj.p = rep(NA,targlength * replength), pcor = rep(NA, targlength * replength)
+      
     )
   }
   foreach(k=1:length(files)) %do% {    #(k in 1:length(files)){  #foreach (k = 1:length(files)) %do% {
@@ -773,13 +780,13 @@ sig_est <- function(est, orgdata, getfiles){
     ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
     if((grepl(tst[[1]][[1]]$TargetName[1], res[,"TargetName"][ind1]) == "TRUE") & 
        (gsub("[[:alpha:]]","", est$name) == "5") == "TRUE"){
-      res[ind1:ind2, 5:18] <- plot_sig(est, try)
+      res[ind1:ind2, 5:22] <- plot_sig(est, try)
       res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
                                                     function(x) unique(x$FeatureSet)))), replength)
     }
     if((grepl(tst[[1]][[1]]$TargetName[1], res[,"TargetName"][ind1]) == "TRUE") & 
        (gsub("[[:alpha:]]","", est$name) == "4") == "TRUE"){
-      res[ind1:ind2, 5:17] <- plot_sig(est, try)
+      res[ind1:ind2, 5:21] <- plot_sig(est, try)
       res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
                                                      function(x) unique(x$FeatureSet)))), replength) 
     }
