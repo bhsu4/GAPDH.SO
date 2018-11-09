@@ -1,84 +1,98 @@
 plot_sig <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
 
-if(macro == 0 & (is.null(z)) == "TRUE"){
-  par <- list() ; resids <- list() ; rss <- list()
-  reg.amp <- list() ; reg.res <- list() 
-  dw.amp <- list() ; dw.res <- replicate(10, list())  
-  ml1 <- list() ; res1 <- list() ; paramest <- list()
-for(i in 1:length(listdf)){
-  #each replicate fit
-  par[[i]] <- sub_genparams(est, listdf[[i]])
-  #finding the residuals
-#for(j in 1:4){             #double loop
-#  resids[[i]][[j]] <- tryCatch({
-#    resid(par[[i]]$fits[[j]])
-#  }, error = function(e){
-#      return(replicate(max(listdf[[i]]$Cycle), NA))
-#  }) 
-#}
-  try_resid <- function(x) tryCatch({resid(x)}, 
-                           error = function(e) rep(NA, max(listdf[[i]]$Cycle)))    
-  resids[[i]] <- lapply(par[[i]]$fits, try_resid)
-  
-  #finding the RSS
-  rss[[i]] <- lapply(resids[[i]], function(x) sum(x^2))
-  #finding the Durbin-Watson stat
-  reg.amp[[i]] <- lapply(listdf[[i]][ ,2:length(listdf[[i]])], 
-                         function(y) dynlm(y ~ listdf[[i]][["Cycle"]])) #all amp can run
-  reg.res[[i]] <- lapply(resids[[i]], function(y) try(dynlm(y ~ listdf[[i]][["Cycle"]]), 
-                                                      silent=TRUE))
-  #residuals contain NA
-  dw.amp[[i]] <- lapply(reg.amp[[i]], function(x) durbinWatsonTest(x))
-
-for(j in 1:(length(listdf[[i]])-1)){ #NA resids cannot run
-  dw.res[[i]][[j]] <- tryCatch({
-    durbinWatsonTest(reg.res[[i]][[j]])
-  }, error=function(e) {
-    return(list(r=NA, dw=NA, p=NA))
-  })
-} #replace errors with NA for r, dw, p
-  
-  #finding CT value
-  ml1[[i]] <- modlist(listdf[[i]], model = est)
-  res1[[i]] <- getPar(ml1[[i]], type = "curve", cp = "cpD2", eff = "sliwin")
-  #parameter estimates
-  paramest[[i]] <- apply(par[[i]]$params, c(1,2), as.numeric) #apply(x[k,], c(1,2), as.numeric)
-}
-for(i in 1:length(listdf)){
-  for(j in 1:(length(listdf[[i]])-1)){
-    if(i==1 & j ==1){
-      values <- data.frame(t(paramest[[i]][j,]))
-      me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, dw.res[[i]][[j]]$r, 
-              dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2])
-      #values[k, (length(values[k,])+1):(length(values[k,])+9)] <- cbind(values, me) 
-      values <- cbind(values, t(me))
+  if(macro == 0 & (is.null(z)) == "TRUE"){
+    par <- list() ; resids <- list() ; rss <- list()
+    reg.amp <- list() ; reg.res <- list() 
+    dw.amp <- list() ; dw.res <- replicate(10, list())  
+    ml1 <- list() ; res1 <- list() ; paramest <- list()
+    model.dw <- vector('list', 10) ; model.boxlj <- vector('list', 10) ; peacor <- vector('list', 10)
+    for(i in 1:length(listdf)){
+      #each replicate fit
+      par[[i]] <- sub_genparams(est, listdf[[i]])
+      #finding the residuals
+      #for(j in 1:4){             #double loop
+      #  resids[[i]][[j]] <- tryCatch({
+      #    resid(par[[i]]$fits[[j]])
+      #  }, error = function(e){
+      #      return(replicate(max(listdf[[i]]$Cycle), NA))
+      #  }) 
+      #}
+      try_resid <- function(x) tryCatch({resid(x)}, 
+                                        error = function(e) rep(NA, max(listdf[[i]]$Cycle)))    
+      resids[[i]] <- lapply(par[[i]]$fits, try_resid)
+      #finding the RSS
+      rss[[i]] <- lapply(resids[[i]], function(x) sum(x^2))
+      #finding the Durbin-Watson stat
+      reg.amp[[i]] <- lapply(listdf[[i]][ ,2:length(listdf[[i]])], 
+                             function(y) dynlm(y ~ listdf[[i]][["Cycle"]])) #all amp can run
+      reg.res[[i]] <- lapply(resids[[i]], function(y) try(dynlm(y ~ listdf[[i]][["Cycle"]]), 
+                                                          silent=TRUE))
+      #residuals contain NA
+      dw.amp[[i]] <- lapply(reg.amp[[i]], function(x) durbinWatsonTest(x))
+      
+      for(j in 1:(length(listdf[[i]])-1)){ #NA resids cannot run
+        dw.res[[i]][[j]] <- tryCatch({
+          durbinWatsonTest(reg.res[[i]][[j]])
+        }, error=function(e) {
+          return(list(r=NA, dw=NA, p=NA))
+        })
+      } #replace errors with NA for r, dw, p
+      
+      #finding CT value
+      ml1[[i]] <- modlist(listdf[[i]], model = est)
+      res1[[i]] <- getPar(ml1[[i]], type = "curve", cp = "cpD2", eff = "sliwin")
+      #parameter estimates
+      paramest[[i]] <- apply(par[[i]]$params, c(1,2), as.numeric) #apply(x[k,], c(1,2), as.numeric)
+      
+      #finding model DW
+      for(j in 1:(length(listdf[[i]])-1)){ #NA resids cannot run
+        model.dw[[i]][[j]] <- sum((resids[[i]][[j]]-Lag(resids[[i]][[j]], 1))^2, na.rm=TRUE)/sum(resids[[i]][[j]]^2)
+        model.boxlj[[i]][[j]] <- Box.test(resids[[i]][[j]], lag=1, type='Ljung-Box')
+        peacor[[i]][[j]] <- cor(resids[[i]][[j]][2:max(listdf[[i]]$Cycle)], resids[[i]][[j]][1:(max(listdf[[i]]$Cycle)-1)])
+      }
     }
-    if(i==1 & j >1){
-      values[j,] <- data.frame(t(paramest[[i]][j,])) #data.frame(apply(par.tst[[i]]$params[j,], c(1,2), as.numeric))
-      me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, dw.res[[i]][[j]]$r, 
-              dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2])
-      values[j, (ncol(paramest[[i]])+1):length(values)] <- t(me)
+    
+    for(i in 1:length(listdf)){
+      for(j in 1:(length(listdf[[i]])-1)){
+        if(i==1 & j ==1){
+          values <- data.frame(t(paramest[[i]][j,]))
+          me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, dw.res[[i]][[j]]$r, 
+                  dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2],
+                  model.dw[[i]][[j]], model.boxlj[[i]][[j]]$statistic, model.boxlj[[i]][[j]]$p.value, peacor[[i]][[j]])
+          #values[k, (length(values[k,])+1):(length(values[k,])+9)] <- cbind(values, me) 
+          values <- cbind(values, t(me))
+        }
+        if(i==1 & j >1){
+          values[j,] <- data.frame(t(paramest[[i]][j,])) #data.frame(apply(par.tst[[i]]$params[j,], c(1,2), as.numeric))
+          me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, dw.res[[i]][[j]]$r, 
+                  dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2],
+                  model.dw[[i]][[j]], model.boxlj[[i]][[j]]$statistic, model.boxlj[[i]][[j]]$p.value, peacor[[i]][[j]])
+          values[j, (ncol(paramest[[i]])+1):length(values)] <- t(me)
+        }
+        if(i > 1){
+          ind2 <- i*(length(listdf[[i]])-1)
+          ind1 <- ind2-(length(listdf[[i]])-2)
+          values[(ind1:ind2)[j], ] <- data.frame(t(paramest[[i]][j,])) #data.frame(apply(par.tst[[i]]$params[j,], c(1,2), as.numeric))
+          me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, 
+                  dw.res[[i]][[j]]$r, dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, 
+                  rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2],
+                  model.dw[[i]][[j]], model.boxlj[[i]][[j]]$statistic, 
+                  model.boxlj[[i]][[j]]$p.value, peacor[[i]][[j]])
+          values[(ind1:ind2)[j], (ncol(paramest[[i]])+1):length(values)] <- t(me)
+        }
+      }
     }
-    if(i > 1){
-      ind2 <- i*(length(listdf[[i]])-1)
-      ind1 <- ind2-(length(listdf[[i]])-2)
-      values[(ind1:ind2)[j], ] <- data.frame(t(paramest[[i]][j,])) #data.frame(apply(par.tst[[i]]$params[j,], c(1,2), as.numeric))
-      me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, 
-              dw.res[[i]][[j]]$r, dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, 
-              rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2])
-      values[(ind1:ind2)[j], (ncol(paramest[[i]])+1):length(values)] <- t(me)
+    if( est$name == "b5" || est$name == "l5"){
+      names(values) <- c(c("b", "c", "d", "e", "f"), paste0(c("r", "dw", "p"), "-amp"),
+                         paste0(c("r", "dw", "p"), "-res"), c("rss", "ct", "eff"), 
+                         c("dw.comp", "boxlj", "boxlj.p", "pearcor"))
     }
-  }
-}
-  if( est$name == "b5" || est$name == "l5"){
-names(values) <- c(c("b", "c", "d", "e", "f"), paste0(c("r", "dw", "p"), "-amp"),
-                   paste0(c("r", "dw", "p"), "-res"), c("rss", "ct", "eff"))
-  }
-  else{  #if( est == "l4" || est == "b4"){
-names(values) <- c(c("b", "c", "d", "e"), paste0(c("r", "dw", "p"), "-amp"),
-                   paste0(c("r", "dw", "p"), "-res"), c("rss", "ct", "eff"))
-  }
-rownames(values) <- c() #getting rid of arbitrary row names
+    else{  #if( est == "l4" || est == "b4"){
+      names(values) <- c(c("b", "c", "d", "e"), paste0(c("r", "dw", "p"), "-amp"),
+                         paste0(c("r", "dw", "p"), "-res"), c("rss", "ct", "eff"),
+                         c("dw.comp", "boxlj", "boxlj.p", "pearcor"))
+    }
+    rownames(values) <- c() #getting rid of arbitrary row names
 
 #two graphs on top each other
 par(mfrow=c(2,1))
