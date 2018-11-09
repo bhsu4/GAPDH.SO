@@ -250,6 +250,12 @@ dev.off()
 par(oma=c(2,2,0.5,0.5),mar=c(1.25,2,0.75,0.75),mfrow=c(2,4),pch=16)
 plot_resid(subsets, df_b5)
 
+dfb5.ml1 <- list() ; dfb5.res1 <- list()
+for(i in 1:8){
+  dfb5.ml1[[i]] <- modlist(df_b5$fits[[i]], model=l5)
+  dfb5.res1[[i]] <- getPar(dfb5.ml1[[i]], type = "curve", cp = "cpD2", eff = "sliwin")
+}
+
 plot_resid_axis <- function(params){
   
   for (i in 1:length(params$fits)){
@@ -259,13 +265,14 @@ plot_resid_axis <- function(params){
         
         if(k == 1) plot(y=resids[[i]][1:40], 
                         x=params$fits[[1]]$DATA$Cycles[1:40], 
-                        ylim=c(-40000,40000), type="l", 
+                        ylim=c(-30000,30000), type="l", 
                         xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
         axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
         if(k > 1){
           ind2 <- 40*k
           ind1 <- ind2-39
           lines(y=resids[[i]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
+          abline(v=dfb5.res1[[i]][1,], lty='dashed')
         }
       }
     } 
@@ -275,13 +282,15 @@ plot_resid_axis <- function(params){
         
         if(k == 1) plot(y=resids[[i]][1:40], 
                         x=params$fits[[1]]$DATA$Cycles[1:40], 
-                        ylim=c(-40000,40000), type="l", 
+                        ylim=c(-30000,30000), type="l", 
                         xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
         #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
         if(k > 1){
           ind2 <- 40*k
           ind1 <- ind2-39
           lines(y=resids[[i]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
+          abline(v=dfb5.res1[[i]][1,], lty='dashed')
+          
         }
       }
     }
@@ -291,13 +300,15 @@ plot_resid_axis <- function(params){
         
         if(k == 1) plot(y=resids[[i]][1:40], 
                         x=params$fits[[1]]$DATA$Cycles[1:40], 
-                        ylim=c(-40000,40000), type="l", 
+                        ylim=c(-30000,30000), type="l", 
                         xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
         axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
         if(k > 1){
           ind2 <- 40*k
           ind1 <- ind2-39
           lines(y=resids[[i]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
+          abline(v=dfb5.res1[[i]][1,], lty='dashed')
+          
         }
       }
     }
@@ -308,13 +319,15 @@ plot_resid_axis <- function(params){
         
         if(k == 1) plot(y=resids[[i]][1:40], 
                         x=params$fits[[1]]$DATA$Cycles[1:40], 
-                        ylim=c(-40000,40000), type="l", 
+                        ylim=c(-30000,30000), type="l", 
                         xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
         #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
         if(k > 1){
           ind2 <- 40*k
           ind1 <- ind2-39
           lines(y=resids[[i]][ind1:ind2], x=params$fits[[1]]$DATA$Cycles[ind1:ind2], col=k)
+          abline(v=dfb5.res1[[i]][1,], lty='dashed')
+          
         }
       }
     }
@@ -331,6 +344,26 @@ par(oma=c(4,4,4,4),mar=c(0.5,0.75,1,0))
 plot_resid_axis(df_b5)
 mtext(text="Residual", side=2, line=2, outer=T)
 mtext(text="Cycle", side=1, line=2, outer=T)
+
+#baseline subtracted gapdhso
+subsets_base <- vector('list', 8) ; subsets2 <- list()
+#baseline subtract GAPDH
+for(i in 1:8){
+  for(j in 2:13){
+    subsets_base[[i]][[1]] <- subsets[[i]][,1]
+    subsets_base[[i]][[j]] <- subsets[[i]][,j] - min(subsets[[i]][,j])
+  }
+  subsets2[[i]] <- data.frame(matrix(unlist(subsets_base[[i]]), ncol=13))
+}
+names(subsets2) <- LETTERS[1:8]
+df_b5_base <- genparams(est=b5, listdf=subsets2)
+plot_resid(subsets2, df_b5_base)
+
+plot_resid_axis(df_b5_base)
+mtext(text="Residual", side=2, line=2, outer=T)
+mtext(text="Cycle", side=1, line=2, outer=T)
+
+
 
 ##AutoCorrelation of GAPDH.SO l5 Model 
 
@@ -365,6 +398,71 @@ ggplot(l5dat,  mapping = aes(dw.res, ct, col = ind, lty = ind)) +
 #key point here!
 #smaller dw.res (more ac) with larger RSS. there's something bad about 
 #sig model that goes beyond the eq., increasing variance
+
+ggplot(l5dat,  mapping = aes(dw.amp, ct, col = ind, lty = ind)) +
+  geom_density2d(contour = TRUE, size=0.75, linemitre = 3, bins=5) + xlim(c(0.02,0.075)) +
+  #xlim(range(l5dat$dw.amp)) + 
+  ylim(range(l5dat$ct)) +
+  scale_color_brewer(palette="Set1") + theme_bw()
+
+smoothScatter(x=l5dat$dw.amp, y=l5dat$ct)
+
+x1 = l5dat[l5dat$ind == 'small',]
+x2 = l5dat[l5dat$ind == 'ok',]
+x3 = l5dat[l5dat$ind == 'big',]
+
+alpharamp<-function(c1,c2, alpha=128) {stopifnot(alpha>=0 & alpha<=256);function(n) paste(colorRampPalette(c(c1,c2))(n), format(as.hexmode(alpha), upper.case=T), sep="")}
+smoothScatter(x=x1$dw.amp,y=x1$ct,nrpoints=length(x1),cex=3, colramp=alpharamp("white",blues9))
+par(new=T)
+smoothScatter(x=x2$dw.amp,y=x2$ct,nrpoints=length(x2),cex=3,colramp= alpharamp("white","red"), axes=F, ann=F)
+par(new=T)
+smoothScatter(x=x3$dw.amp,y=x3$ct,nrpoints=length(x2),cex=3,colramp= alpharamp("white","green"), axes=F, ann=F)
+
+
+
+###contour plot with points
+library(MASS)  # in case it is not already loaded 
+set.seed(101)
+n <- 1000
+X <- mvrnorm(n, mu=c(.5,2.5), Sigma=matrix(c(1,.6,.6,1), ncol=2))
+
+## some pretty colors
+library(RColorBrewer)
+k <- 12
+my.cols <- rev(brewer.pal(k, "RdYlBu"))
+
+## compute 2D kernel density, see MASS book, pp. 130-131
+l5dat.na <- l5dat[which(  (!is.na(l5dat$dw.amp)) & (!is.na(l5dat$ct))),]
+z <- kde2d(x=l5dat.na$dw.amp, y=l5dat.na$ct, n=5000)
+
+plot(x=l5dat.na$dw.amp, y=l5dat.na$ct, xlab="X label", ylab="Y label", pch=19, cex=.4, xlim = c(0.02, 0.25))
+contour(z, drawlabels=FALSE, nlevels=k, col=my.cols, add=TRUE, lwd=2.5)
+
+abline(h=mean(X[,2]), v=mean(X[,1]), lwd=2)
+legend("topleft", paste("R=", round(cor(X)[1,2],2)), bty="n")
+
+
+
+#heat map in contour
+
+commonTheme = list(labs(color="Density",fill="Density",
+                        x="Durbin-Watson Test Statistic",
+                        y="CT Value (SDM)"),
+                   theme_bw(),
+                   theme(legend.position=c(0,1),
+                         legend.justification=c(0,1)))
+
+ggplot(data=l5dat.na,aes(dw.amp,ct)) + 
+  stat_density2d(aes(fill=..level..,alpha=..level..),geom='polygon',colour='black') + 
+  scale_fill_continuous(low="green",high="red") +
+  geom_smooth(method=lm,linetype=2,colour="red",se=F) + 
+  xlim(c(0.025, 0.065))+
+  guides(alpha="none") +
+  geom_point(shape=16, cex=0.05, alpha=0.25) + commonTheme
+
+
+
+
 
 #miRcompData Branching Residuals
 plot_resid_axis <- function(params){
@@ -451,8 +549,23 @@ try_b5 <- genparams(est=b5, listdf=try)
 #Rn nice dataset
 load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
 try.good <- unlist.genparams(tst)
-try.good_b5 <- genparams(est=b5, listdf=try.big)
+try.good <- unlist.genparams.Rn(tst)
+try.good_b5 <- genparams(est=b5, listdf=try.good)
 plot_resid_axis(try.good_b5) #each rep vs. 1 uniform curve
+mtext("Cycle", side = 1, line= 2, outer = TRUE)
+mtext("Residual", side = 2, line= 2, outer = TRUE)
+
+dev.off()
+for(i in 1:10){
+  for(j in 2:5){
+    if(j==2){
+      plot(x=try.good[[i]][,1], y=try.good[[i]][,j], type = 'l', 
+           col= j-1, ylim = range(unlist(try.good[[i]][,2:5])))
+    }
+      lines(x=try.good[[i]][,1], y=try.good[[i]][,j], col = j-1)
+  }
+}
+
 
 
 plot_b5(try, try_b5) #plot of the data fluo
@@ -494,8 +607,9 @@ subplot_resid_4x <- function(params){
     if(k == 1) plot(y=resids[[k]][1:40], 
                     x=params$fits[[1]]$DATA$Cycles[1:40], 
                     type="l", ylim = c(-11900,9000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
-                    xlab="", ylab="", yaxt = "n")
+                    xlab="", ylab="", yaxt = "n", xaxt = 'n')
     #axis(side=2, at=seq(-2000, 2000, by=2000)) #-8000,8000 and -2000,2000
+    #axis(side=1, at=seq(10, 40, by=10))
     
     if(k > 1){
       ind2 <- 40*k
@@ -564,16 +678,57 @@ subplot_resid_5x <- function(params){
   }
 }
 
+#lag1
+lstarmodnolog1 <- list()
+for (j in 1:8) lstarmodnolog1[[j]] <- lapply(subsets[[j]][,2:13], function(f) try(tsDyn::lstar(f, m=1, d=1)))
+#lag2
+lstarmodnolog2 <- list()
+for (j in 1:8) lstarmodnolog2[[j]] <- lapply(subsets[[j]][,2:13], function(f) try(tsDyn::lstar(f, m=2, d=1)))
+lstarmodnolog2 <- lapply(lstarmodnolog2, function(x) lapply(x, function(x) c(rep(NA,2), x$residuals)))
+
 dev.off()
-par(mfrow=c(2,2))
-par(oma=c(4,4,0.5,4),mar=c(0,0.25,0,0))
+m <- matrix(c(1,2,5,3,4,6),nrow = 2, ncol = 3, byrow = TRUE)
+layout(mat = m, widths=c(100, 100, 100))
+par(oma=c(4,4,0.5,4),mar=c(0.25,0.25,0,0))
 
 subplot_resid_5xy(l5_resultsG)
 subplot_resid_5x(b5_resultsG)
 subplot_resid_4xy(l4_resultsG)
 subplot_resid_4x(b4_resultsG)
-mtext(text="Cycles", side=1, line=2, outer=TRUE)
-mtext(text= "Residuals", side=2, line=2, outer=TRUE)
+
+for(i in 1:12){
+  if(i==1){
+    plot(x=2:40, y=lstarmodnolog1[[7]][[i]]$residuals, type = 'l', 
+         col = 1, ylim = c(range(lapply(lstarmodnolog1[[7]], function(x) unlist(x$residuals)))),
+         xaxt = "n", yaxt = "n")
+    axis(side=4, at=seq(-6000, 6000, by=3000))
+    #axis(side=1, at=seq(0, 40, by=10))
+    
+  }
+  else{
+    lines(x=2:40, y=lstarmodnolog1[[7]][[i]]$residuals, col=i)
+  }
+}
+  
+for(i in 1:12){
+  if(i==1){
+    plot(x=1:40, y=lstarmodnolog2[[7]][[i]], type = 'l', 
+         col = 1, ylim = c(range(lstarmodnolog2[[7]], na.rm=TRUE)), 
+         xaxt = "n", yaxt = "n")
+    axis(side=4, at=seq(-3000, 3000, by=1500))
+    axis(side=1, at=seq(0, 40, by=10))
+    
+  }
+  else{
+    lines(x=1:40, y=lstarmodnolog2[[7]][[i]], col=i)
+  }
+}
+mtext(text="Cycle", side=1, line=2, outer=TRUE)
+mtext(text= "Residual", side=2, line=2, outer=TRUE)
+
+
+
+
 
 #miRcomp of each rep as own curve residual
 subplot_resid_each <- function(tester){
@@ -681,6 +836,7 @@ library(dynlm) ; library(car)
 ##good, bad, non-signals, unidentified signals (failed exp)
 
 #nice dataset
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets")
 load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
 try.good <- unlist.genparams(tst)
 source("GAPDH.SO/plot_sig.R")
@@ -701,6 +857,7 @@ plot_sig(l4, try.good, plot=TRUE) #plots shown
 #poor fit (L4) I4!, I3, I2, C2!
 
 ##not nice data set!
+#poor fit (L5) I3
 #failed (L5) exp I2!, J2, C3!
 #nonsignals (L5) D2, D3, D4, C4!
 
@@ -889,9 +1046,10 @@ plot_sigmacro <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
   } #macro bracket
 }
 
-par(oma=c(2,5,0,3), mar=c(0,0,1,2), mfrow=c(4,2),pch=16)
+par(oma=c(2,5,0,3), mar=c(0,0,1,2), mfrow=c(5,2),pch=16)
 plot_sigmacro(l5, try.good, macro=4, z=8, plot=TRUE) #goodfit nicedata l5
 plot_sigmacro(l4, try.good, macro=4, z=9, plot=TRUE) #poorfit nicedata l4
+plot_sigmacro(l5, try.good, macro=4, z=9, plot=TRUE) #poorfit nicedata l5
 plot_sigmacro(l5, try, macro=4, z=3, plot=TRUE) #nonsignal notnicedata l5
 plot_sigmacro(l5, try, macro=2, z=9, plot=TRUE) #failed notnicedata l5
 mtext(text="Cycle", side=1, line=1, outer=T)
@@ -966,3 +1124,9 @@ for(j in 1:8){
 for(j in 1:8){
   lines(spline(x = 1:15, y=rowMeans(ff_fitstestaic[[j]])), pch = 19, cex = 3, col = j)
 } #smoothing line
+
+
+
+
+
+
