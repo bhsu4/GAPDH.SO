@@ -59,7 +59,39 @@ tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=1, breakdb = tes
 
 #plotting GAPDH.SO
 names(subsets$F)[[8]] <- 'F7'
-testdb2 <- brkplot(mdata, getfiles = NULL, subs_list=subsets, klag=1, kbreaks = 1, plot=FALSE)
+library(foreach) ; library(Hmisc) ; library(dplyr) ; library(strucchange) ; library(gtools)
+testdb2 <- brkplot(mdata, getfiles = NULL, subs_list=subsets, klag=2, kbreaks = 1, plot=FALSE)
+detach("package:dplyr") ; library(dynlm) ; library(car)
 tstlstarmat2 <- plot_lstar(mdata, getfiles=NULL, subs_list = subsets, klag=1, mdim=1, breakdb = testdb2, plot=TRUE) #plot
 
+lstarmodnolog <- list()
+for (j in 1:8) lstarmodnolog[[j]] <- lapply(subsets[[j]][,2:13], function(f) try(tsDyn::lstar(f, m=2, d=1)))
 
+par(mfrow=c(1,1))
+for(i in 12:12){
+  if(i==12){
+    plot(x=3:40, y=lstarmodnolog[[8]][[i]]$residuals, type = 'p', 
+         col = 1, ylim = c(range(lapply(lstarmodnolog[[7]], function(x) unlist(x$residuals)))))
+  }
+  else{
+    lines(x=3:40, y=lstarmodnolog[[8]][[i]]$residuals, col=i)
+  }
+}
+
+b5resids <- lapply(df_b5$fits, resid)
+b5resids_list <- vector('list', 8) ; resids.dw <- list()
+for(i in 1:8){
+  for(j in 1:12){
+    ind2 = 40*j ; ind1 = (40*j)-(39)
+    b5resids_list[[i]][[j]] <- b5resids[[i]][ind1:ind2]
+    resids.dw[[12*(i-1)+j]] <- sum((b5resids_list[[i]][[j]]-Lag(b5resids_list[[i]][[j]], 1))^2, na.rm=TRUE)/sum(b5resids_list[[i]][[j]]^2)
+  }
+}
+ml1 <- list() ; res1 <- list()
+for(i in 1:8){
+ml1[[i]] <- modlist(subsets[[i]], model=l5)
+res1[[i]] <- getPar(ml1[[i]], type = "curve", cp = "cpD2", eff = "sliwin")
+}
+ct.l5 <- unlist(lapply(res1, function(x) x[1,]))
+
+smoothScatter(x=resids.dw, y=ct.l5)
