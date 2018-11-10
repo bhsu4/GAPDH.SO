@@ -794,7 +794,8 @@ for(k in 1:length(files)){
   
  ###PART 4: Finding the Feature Set
    #FeatureSet for each group
-   unlist.tst <- lapply(tst, function(x) unlist(x, recursive=FALSE)$FeatureSet) #rep in sub has same FeatureSet 
+   #unlist.tst <- lapply(tst, function(x) unlist(x, recursive=FALSE)$FeatureSet) #rep in sub has same FeatureSet 
+
    # featsetl <- list()
    #  for(i in 1:10){
    #     featsetl[[i]] <- unlist.tst[[i]][seq(1, length(unlist.tst[[i]]), cyclength[[i]]*4)]
