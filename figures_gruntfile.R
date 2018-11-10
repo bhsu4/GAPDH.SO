@@ -444,24 +444,90 @@ legend("topleft", paste("R=", round(cor(X)[1,2],2)), bty="n")
 
 
 #heat map in contour
-
+par(oma=c(2,2,0.5,0.5),mar=c(1.25,2,0.75,0.75),mfrow=c(2,2),pch=16)
 commonTheme = list(labs(color="Density",fill="Density",
                         x="Durbin-Watson Test Statistic",
                         y="CT Value (SDM)"),
                    theme_bw(),
                    theme(legend.position=c(0,1),
                          legend.justification=c(0,1)))
-
-ggplot(data=l5dat.na,aes(dw.amp,ct)) + 
+#dynamic linear model, dw.amp
+plot1 <- ggplot(data=l5dat.na,aes(dw.amp,ct)) + 
   stat_density2d(aes(fill=..level..,alpha=..level..),geom='polygon',colour='black') + 
   scale_fill_continuous(low="green",high="red") +
-  geom_smooth(method=lm,linetype=2,colour="red",se=F) + 
+  #geom_smooth(method=lm,linetype=2,colour="red",se=F) + 
   xlim(c(0.025, 0.065))+
   guides(alpha="none") +
   geom_point(shape=16, cex=0.05, alpha=0.25) + commonTheme
 
+#dw.comp
+l5dat2.na <- l5dat2[which(  (!is.na(l5dat2$dw.comp)) & (!is.na(l5dat2$ct))),]
+
+plot2 <- ggplot(data=l5dat2.na,aes(dw.comp, ct)) + 
+  stat_density2d(aes(fill=..level..,alpha=..level..),geom='polygon',colour='black') + 
+  scale_fill_continuous(low="green",high="red") +
+ # geom_smooth(method=lm,linetype=2,colour="red",se=F) + 
+  xlim(c(0,2.5))+ #ylim(c(5,40)) +
+  guides(alpha="none") +
+  geom_point(shape=16, cex=0.05, alpha=0.25) + commonTheme
+
+#side by side
+require(gridExtra)
+grid.arrange(plot1, plot2, ncol=2)
 
 
+#ljung-box
+commonTheme = list(labs(color="Density",fill="Density",
+                        x="Durbin-Watson Test Statistic",
+                        y="Ljung-Box P-value"),
+                   theme_bw(),
+                   theme(legend.position=c(0,1),
+                         legend.justification=c(0,1)))
+plot3 <- ggplot(data=l5dat2.na,aes(dw.comp,boxlj.p)) + 
+  stat_density2d(aes(fill=..level..,alpha=..level..),geom='polygon',colour='black') + 
+  scale_fill_continuous(low="green",high="red") +
+  geom_smooth(method=lm,linetype=2,colour="red",se=F) + 
+  ylim(0,0.05)+
+  xlim(c(0,2.5))+
+  guides(alpha="none") + geom_hline(yintercept=0.05, lty='dashed')+
+  geom_point(shape=16, cex=0.05, alpha=0.25) + commonTheme
+commonTheme = list(labs(color="Density",fill="Density",
+                        x="Ljung-Box P-value",
+                        y="Pearson Correlation"),
+                   theme_bw(),
+                   theme(legend.position=c(0,1),
+                         legend.justification=c(0,1)))
+plot4 <- ggplot(data=l5dat2.na,aes(boxlj.p,pcor)) + 
+  #stat_density2d(aes(fill=..level..,alpha=..level..),geom='polygon',colour='black') + 
+  #scale_fill_continuous(low="green",high="red") +
+  #geom_smooth(method=lm,linetype=2,colour="red",se=F) + 
+  ylim(-1,1)+
+  xlim(c(0,1))+
+  guides(alpha="none") + geom_vline(xintercept=0.05, lty='dashed')+
+  geom_point(shape=16, cex=0.05, alpha=0.25) + commonTheme
+
+grid.arrange(plot3, plot4, ncol=2)
+
+
+
+  #ljung-box
+ggplot(data=l5dat2.na,aes(boxlj.p, ct)) + 
+  stat_density2d(aes(fill=..level..,alpha=..level..),geom='polygon',colour='black') + 
+  scale_fill_continuous(low="green",high="red") +
+  #geom_smooth(method=lm,linetype=2,colour="red",se=F) + 
+  #ylim(0,0.5)+
+  #xlim(c(0,0.0001))+
+  guides(alpha="none") + geom_hline(yintercept=0.05, lty='dashed')+
+  geom_point(shape=16, cex=0.05, alpha=0.25) + commonTheme
+
+ggplot(data=l5dat2.na,aes(dw.comp,pcor)) + 
+  #stat_density2d(aes(fill=..level..,alpha=..level..),geom='polygon',colour='black') + 
+  #scale_fill_continuous(low="green",high="red") +
+  #geom_smooth(method=lm,linetype=2,colour="red",se=F) + 
+  ylim(-1,1)+
+  xlim(c(0,4))+
+  guides(alpha="none") +
+  geom_point(shape=16, cex=0.05, alpha=0.25) + commonTheme
 
 
 #miRcompData Branching Residuals
@@ -1127,6 +1193,65 @@ for(j in 1:8){
 
 
 
+###plotting ljung-box and pearcor for GAPDH, and nice try.goodd
+#gapdh.so ljung-box
+gap.each <- list() ; 
+for(i in 1:8){
+gap.each[[i]] <- sub_genparams(l5, subsets[[i]])
+}
+gap.each.resids <- lapply(gap.each, function(x) lapply(x$fits, resid))
+
+gap.each.box <- vector('list', 8) ; gap.each.dw <- vector('list', 8) ; peacor <- vector('list', 8)
+for(i in 1:8){
+  for(j in 1:12){
+  gap.each.box[[i]][[j]] <- Box.test(gap.each.resids[[i]][[j]], lag=1, type='Ljung-Box')
+  gap.each.dw[[i]][[j]] <- sum((gap.each.resids[[i]][[j]]-Lag(gap.each.resids[[i]][[j]], 1))^2, na.rm=TRUE)/sum(gap.each.resids[[i]][[j]]^2)
+  peacor[[i]][[j]] <- cor(gap.each.resids[[i]][[j]][2:40], 
+                          gap.each.resids[[i]][[j]][1:39])
+  }
+}
+gapdh.ljdw <- data.frame(matrix(c(unlist(gap.each.dw), unlist(lapply(gap.each.box, function(x) lapply(x, function(x) unlist(x$p.value)))), unlist(peacor)), ncol=3))
+colnames(gapdh.ljdw) <- c("dw", "lj.p", "peacor")
+
+par(mfrow=c(1,1))
+plot(x=gapdh.ljdw$lj.p, y=gapdh.ljdw$peacor)
+
+gapdh.ljdw.melt <- melt(gapdh.ljdw, id.vars=c())
+
+par(mfrow=c(1,3))
+gplot1 <- ggplot(data = gapdh.ljdw, aes(x="", y=dw)) + geom_boxplot() +xlab("") +ylab("")
+gplot2<- ggplot(data = gapdh.ljdw, aes(x="", y=lj.p)) + geom_boxplot()+xlab("") +ylab("") + ylim(c(0,0.04))
+gplot3 <- ggplot(data = gapdh.ljdw, aes(x="", y=peacor)) + geom_boxplot() +xlab("") +ylab("") +ylim(c(0.3,1))
+
+gplot1.1 <- ggplot(data = try.good.ljdw.mat1, aes(x="", y=X1, fill=X1)) + geom_boxplot() +xlab("") +ylab("")+ theme(legend.position = "none")
+gplot2.1 <- ggplot(data = try.good.ljdw.mat1, aes(x="", y=X2, fill=X1)) + geom_boxplot()+xlab("") +ylab("") + ylim(c(0,0.02))+ theme(legend.position = "none")
+gplot3.1 <- ggplot(data = try.good.ljdw.mat1, aes(x="", y=X3, fill=X1)) + geom_boxplot() +xlab("") +ylab("") +ylim(c(0.3,1))+ theme(legend.position = "none")
+
+gplot4 <- ggplot(data = l5dat2.na, aes(x="", y=dw.comp, fill =pcor)) + geom_boxplot() +xlab("Durbin-Watson") +ylab("") + theme(legend.position = "none")
+gplot5<- ggplot(data = l5dat2.na, aes(x="", y=boxlj.p, fill = pcor)) + geom_boxplot(outlier.size=0.5)+xlab("Ljung-Box") +ylab("") + theme(legend.position = "none")+ ylim(c(0,0.25))
+gplot6 <- ggplot(data = l5dat2.na, aes(x="", y=pcor, fill = pcor)) + geom_boxplot() +xlab("Pearson Cor.") +ylab("") + theme(legend.position = "none")
+
+grid.arrange(gplot1, gplot2, gplot3, gplot1.1, gplot2.1, gplot3.1, gplot4, gplot5, gplot6, ncol=3)
+
+#l5dat2.na[,"ind"] <- ifelse(l5dat2.na$rss <= 3000, "small", ifelse(l5dat2.na$rss >8000, "big", "ok"))
+#ggplot(data = l5dat2.na, aes(x=ind, y=boxlj.p)) + geom_boxplot(aes(fill=ind), outlier.shape=NA)
+
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
+try.good <- unlist.genparams(tst)
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-520e_001119.Rda")
+try.good1 <- unlist.genparams(tst)
+
+try.good.ljdw <- plot_sig(l5, try.good)
+try.good.ljdw.mat <- data.frame(matrix(c(try.good.ljdw$dw.comp, try.good.ljdw$boxlj.p, try.good.ljdw$pearcor), ncol=3))
+try.good.ljdw1 <- plot_sig(l5, try.good1)
+try.good.ljdw.mat1 <- data.frame(matrix(c(try.good.ljdw1$dw.comp, try.good.ljdw1$boxlj.p, try.good.ljdw1$pearcor), ncol=3))
 
 
-
+#miRcomp 3d
+library(plotly)
+plot_ly(l5dat2.na, x = ~dw.comp, y = ~pcor, z = ~boxlj.p,
+             marker = list(size=1, color = ~boxlj.p, colorscale = c( '#683531','#FFE1A1'), showscale = TRUE)) %>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'Durbin-Watson'),
+                      yaxis = list(title = 'Ljung-Box'),
+                      zaxis = list(title = 'Pearson Correlation')))
