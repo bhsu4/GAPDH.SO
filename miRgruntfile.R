@@ -68,6 +68,17 @@ save(l4dat, file = paste0("l4_" , "dat", ".Rda"))
 save(b5dat, file = paste0("b5_" , "dat", ".Rda"))
 save(b4dat, file = paste0("b4_" , "dat", ".Rda"))
 
+#running to find matrix w/ dw.comp, pearson, box-ljung
+l5dat2 <- sig_est(l5, miRcompData2, getfiles=getfiles)
+l4dat2 <- sig_est(l4, miRcompData2, getfiles=getfiles)
+b5dat2 <- sig_est(b5, miRcompData2, getfiles=getfiles)
+b4dat2 <- sig_est(b4, miRcompData2, getfiles=getfiles)
+
+save(l5dat2, file = paste0("l5_" , "dat2", ".Rda"))
+save(l4dat, file = paste0("l4_" , "dat", ".Rda"))
+save(b5dat, file = paste0("b5_" , "dat", ".Rda"))
+save(b4dat, file = paste0("b4_" , "dat", ".Rda"))
+
 #loading in matrices of parameter est
 getmat <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
               pattern = "_dat")
