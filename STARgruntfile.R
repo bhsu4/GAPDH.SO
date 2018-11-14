@@ -8,14 +8,15 @@ miRcompData2 <- miRcompData2[!(miRcompData2$SampleID == "E1_" | miRcompData2$Sam
 library(stringr) ; library(dplyr)
 mdata <- melt(df, id=c("Cycles"))
 mdata <- mdata %>%
-  dplyr::mutate(TargetName = "A") %>% 
+  dplyr::mutate(TargetName = "A", FeatureSet = 'A') %>% 
   dplyr::mutate(cat = str_extract(variable, "[A-Z]")) %>% 
   mutate_each(funs(chartr("ABCDEFGH", "12345678", .)), cat) %>% 
   dplyr::mutate(new_idn = str_extract(variable, "\\d+$")) %>% 
   dplyr::mutate(new_id = "KW") %>% 
   dplyr::mutate(SampleID = paste0(new_id, cat, "_", new_idn)) %>% 
   select(starts_with("Cycle"), starts_with("SampleID"), starts_with("TargetName"), 
-         starts_with("value"), -starts_with("new"), -starts_with("variable")) %>% 
+         starts_with("FeatureSet"), starts_with("value"), -starts_with("new"), 
+         -starts_with("variable")) %>% 
   rename(dRn = value)
 subsA  <- singtarget.list(mdata, "A") #works for single
 savetarget.list(mdata) #works for general
@@ -56,3 +57,12 @@ load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/noisy/targ_hsa-le
 try <- unlist.genparams(tst)
 detach("package:dplyr") ; library(dynlm) ; library(car)
 tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=1, breakdb = testdb, plot=TRUE) #plot
+
+#GAPDH.SO
+testdb.gap <- brkplot(mdata, getfiles=NULL, subs_list = subsets, klag=2, kbreaks = 1, plot=FALSE)
+tstlstarmat.gap <- plot_lstar(mdata, getfiles=NULL, subs_list = subsets, 
+                              klag=1, mdim=2, breakdb = testdb.gap, plot=TRUE) #plot
+plot_lstar(mdata, getfiles=NULL, subs_list = subsets, 
+           klag=1, mdim=2, breakdb = testdb.gap, plot=TRUE) #plot
+mtext(side=2, line=1, "Residual                                                                   Fluorescence", outer=TRUE)
+mtext(side=1, line=2, "Cycle", outer=TRUE)
