@@ -126,7 +126,7 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
   
   ####+/- 2 cycles SIGMOIDAL
   sigrsslocal <- function(res, modresids.unl){
-    rssgrey.sig <-list()
+    rssgrey.sig <-list() ; rssgrey.sigm <- list()
     for(i in 1:sublength){
       for(j in 1:(replength/sublength)){
         indij = ((replength/sublength)*(i-1))+j  
@@ -136,9 +136,11 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
         #list of lists of rss grey region
         rssgrey.sig[[indij]] <- tryCatch({ sum(modresids.unl[[indij]][lowercyc:uppercyc]^2) },
                                          error = function(e) { NA })
+        rssgrey.sigm[[indij]] <- rssgrey.sig[[indij]]/(uppercyc-lowercyc+1)
+        
       }
     }
-    return(unlist(rssgrey.sig))
+    return(matrix(c(unlist(rssgrey.sig), unlist(rssgrey.sigm)), ncol=2))
   }
   
   ####+/- 2 cycles LSTAR
@@ -149,6 +151,7 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
     mod2unl[which(mod2unl < (0.5+klag*mdim+2))] <- NA
     #rss for red box
     rsslstarr <- lapply(vector('list', sublength), function(x) rep(0,(replength/sublength)))
+    rsslstarrm <- lapply(vector('list', sublength), function(x) rep(0,(replength/sublength)))
     for(i in 1:sublength){
       for(j in 1:(replength/sublength)){
         #combined indicator with i and j
@@ -170,10 +173,33 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
           lowercyc = ceiling(as.numeric(as.character(mod2unl[[indij]]))-(klag*mdim)-2)
           #list of lists of rss red region
           rsslstarr[[i]][[j]] <- sum(params[[i]]$fits[[j]]$residuals[lowercyc:uppercyc]^2)} #-2cycles 
+          rsslstarrm[[i]][[j]] <- rsslstarr[[i]][[j]]/(uppercyc-lowercyc+1)
       }
     }
-    return(unlist(rsslstarr))
+    return(matrix(c(unlist(rsslstarr), unlist(rsslstarrm)), ncol=2))
   }
+  
+  ####+/- exp phase BRANCHING
+  branchlocal <- function(branch.res){
+    modresids.branch <- branch.res$residuals
+    modresids.branchunl <- oneNA(modresids.branch)
+    modresids.branchunl <- unlist(modresids.branchunl, recursive = FALSE)
+    rssgrey.sig <-list() ; rssgrey.sigm <- list()
+    for(i in 1:sublength){
+      for(j in 1:(replength/sublength)){
+        indij = ((replength/sublength)*(i-1))+j  
+        uppercyc = ctau1[indij]  #+2 cycles
+        #klag-adjusted lower cycle
+        lowercyc = ctau2[indij] #-2cycles }
+        #list of lists of rss grey region
+        rssgrey.sig[[indij]] <- tryCatch({ sum(modresids.unl[[indij]][lowercyc:uppercyc]^2) },
+                                         error = function(e) { NA })
+        rssgrey.sigm[[indij]] <- rssgrey.sig[[indij]]/(uppercyc-lowercyc+1)
+      }
+    }
+    return(matrix(c(unlist(rssgrey.sig), unlist(rssgrey.sigm)), ncol=2))
+  }
+  
   
   #rss local for sig.sig
   rsslocal.sig <- sigrsslocal(sigCT, modresids.sigunl)
@@ -181,13 +207,36 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
   rsslocal.lstar <- findlstarres(lstarCT, lstarres.fits)
   ##resids for branching
   rsslocal.branch <- sigrsslocal(branchCT, modresids.branchunl)
+  #all together
+  rss.locals <- data.frame(matrix(c(rsslocal.sig, rsslocal.lstar, rsslocal.branch), ncol=6))
+  colnames(rss.local) <- c("RSS_Sig", "RSSLocal_Sig", "RSS_LSTAR", "RSSLocal_LSTAR", "RSS_Branch", "RSSLocal_Branch")
   
-  return(list(sig = rsslocal.sig.all, lstar = rsslocal.lstar.all, branch = rsslocal.branch.all))
+  return(rss.locals)
 }
 
-#GAPDH
+
+#GAPDH.SO TESTING
+#outside params generated
+modparams <- lapply(subsets, function(x) sub_genparams(listdf=x, est=l5))
+lstarres <- vector("list", 8) #empty list of subs: ABCD,..etc
+cyclength <- unlist(lapply(subsets, nrow))
+for(i in 1:8){ #running LSTAR model
+  for(j in 2:13){
+    #results for LSTAR model 
+    lstarres[[i]][[j-1]] <- tryCatch({
+      tsDyn::lstar(subsets[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
+      error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
+                             residuals=rep(NA, (cyclength[[i]]-(klag*mdim))),
+                             model.specific=list(coefficients = rep(NA, (4+2*mdim)))))
+    #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
+  }
+}
+lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
+
 F = t(do.call(cbind, lapply(subsets,function(x) x[-1])))
 meplz <- allresids(subsets, modparams, lstarres.fits, Fer = F)
+
+do.call(cbind, meplz)
 
 #try bad data set mircomp
 F = t(do.call(cbind, lapply(try, function(x) x[-1][1:40,])))
