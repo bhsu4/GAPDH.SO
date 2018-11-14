@@ -70,7 +70,7 @@ branchfunc <- function(subs, Fer, plot=FALSE){
   for(i in 1:r){
     branchCT[i] <- quantile(ctau1[i,]:ctau2[i,])[2] #1st quartile
   }
-  return(list(CT = branchCT, dat = res_aq, residuals = resid.res))
+  return(list(CT = branchCT, dat = res_aq, residuals = resid.res, exp = cbind(ctau1, ctau2)))
 }
 
 allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
@@ -177,19 +177,10 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
   
   #rss local for sig.sig
   rsslocal.sig <- sigrsslocal(sigCT, modresids.sigunl)
-  rsslocal.sig.lstar <- sigrsslocal(lstarCT, modresids.sigunl)
-  rsslocal.sig.branch <- sigrsslocal(branchCT, modresids.sigunl)
-  rsslocal.sig.all <- matrix(c(rsslocal.sig, rsslocal.sig.lstar, rsslocal.sig.branch), ncol=3)
   #unlisted 1:(replength) of rss grey region
   rsslocal.lstar <- findlstarres(lstarCT, lstarres.fits)
-  rsslocal.lstar.sig <- findlstarres(sigCT, lstarres.fits)
-  rsslocal.lstar.branch <- findlstarres(branchCT, lstarres.fits) #############
-  rsslocal.lstar.all <- matrix(c(rsslocal.lstar.sig, rsslocal.lstar, rsslocal.lstar.branch), ncol=3)
   ##resids for branching
   rsslocal.branch <- sigrsslocal(branchCT, modresids.branchunl)
-  rsslocal.branch.sig <- sigrsslocal(sigCT, modresids.branchunl)
-  rsslocal.branch.lstar <- sigrsslocal(lstarCT, modresids.branchunl)
-  rsslocal.branch.all <- matrix(c(rsslocal.branch.sig, rsslocal.branch.lstar, rsslocal.branch), ncol=3)
   
   return(list(sig = rsslocal.sig.all, lstar = rsslocal.lstar.all, branch = rsslocal.branch.all))
 }
