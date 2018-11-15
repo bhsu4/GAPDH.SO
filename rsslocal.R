@@ -184,7 +184,7 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
     modresids.branch <- branch.res$residuals
     modresids.branchunl <- oneNA(modresids.branch)
     modresids.branchunl <- unlist(modresids.branchunl, recursive = FALSE)
-    rssgrey.sig <-list() ; rssgrey.sigm <- list()
+    rssgrey.branch <-list() ; rssgrey.branchm <- list()
     for(i in 1:sublength){
       for(j in 1:(replength/sublength)){
         indij = ((replength/sublength)*(i-1))+j  
@@ -192,9 +192,9 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
         #klag-adjusted lower cycle
         lowercyc = ctau2[indij] #-2cycles }
         #list of lists of rss grey region
-        rssgrey.sig[[indij]] <- tryCatch({ sum(modresids.unl[[indij]][lowercyc:uppercyc]^2) },
+        rssgrey.branch[[indij]] <- tryCatch({ sum(modresids.branchunl[[indij]][lowercyc:uppercyc]^2) },
                                          error = function(e) { NA })
-        rssgrey.sigm[[indij]] <- rssgrey.sig[[indij]]/(uppercyc-lowercyc+1)
+        rssgrey.branchm[[indij]] <- rssgrey.branch[[indij]]/(uppercyc-lowercyc+1)
       }
     }
     return(matrix(c(unlist(rssgrey.sig), unlist(rssgrey.sigm)), ncol=2))
@@ -209,7 +209,7 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
   rsslocal.branch <- sigrsslocal(branchCT, modresids.branchunl)
   #all together
   rss.locals <- data.frame(matrix(c(rsslocal.sig, rsslocal.lstar, rsslocal.branch), ncol=6))
-  colnames(rss.local) <- c("RSS_Sig", "RSSLocal_Sig", "RSS_LSTAR", "RSSLocal_LSTAR", "RSS_Branch", "RSSLocal_Branch")
+  colnames(rss.locals) <- c("RSS_Sig", "RSSLocal_Sig", "RSS_LSTAR", "RSSLocal_LSTAR", "RSS_Branch", "RSSLocal_Branch")
   
   return(rss.locals)
 }
@@ -239,8 +239,50 @@ meplz <- allresids(subsets, modparams, lstarres.fits, Fer = F)
 do.call(cbind, meplz)
 
 #try bad data set mircomp
+#not nice dataset
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-let-7c#_002405.Rda")
+try <- unlist.genparams(tst)
+#outside params generated
+modparams <- lapply(try, function(x) sub_genparams(listdf=x, est=l5))
+lstarres <- vector("list", 10) #empty list of subs: ABCD,..etc
+cyclength <- unlist(lapply(try, nrow))
+for(i in 1:10){ #running LSTAR model
+  for(j in 2:5){
+    #results for LSTAR model 
+    lstarres[[i]][[j-1]] <- tryCatch({
+      tsDyn::lstar(try[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
+      error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
+                             residuals=rep(NA, (cyclength[[i]]-(klag*mdim))),
+                             model.specific=list(coefficients = rep(NA, (4+2*mdim)))))
+    #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
+  }
+}
+lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
 F = t(do.call(cbind, lapply(try, function(x) x[-1][1:40,])))
 meplz2 <- allresids(try, modparams, lstarres.fits, Fer = F)
+
+
+#nice dataset
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
+try.good <- unlist.genparams(tst)
+#nice
+modparams <- lapply(try.good, function(x) sub_genparams(listdf=x, est=l5))
+lstarres <- vector("list", 10) #empty list of subs: ABCD,..etc
+cyclength <- unlist(lapply(try.good, nrow))
+for(i in 1:10){ #running LSTAR model
+  for(j in 2:5){
+    #results for LSTAR model 
+    lstarres[[i]][[j-1]] <- tryCatch({
+      tsDyn::lstar(try.good[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
+      error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
+                             residuals=rep(NA, (cyclength[[i]]-(klag*mdim))),
+                             model.specific=list(coefficients = rep(NA, (4+2*mdim)))))
+    #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
+  }
+}
+lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
+F = t(do.call(cbind, lapply(try.good, function(x) x[-1][1:40,])))
+meplz3 <- allresids(try.good, modparams, lstarres.fits, Fer = F)
 
 
 
