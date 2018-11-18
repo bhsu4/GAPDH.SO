@@ -5,6 +5,7 @@ branchfunc <- function(subs, Fer, plot=FALSE){
   replength = length(repnames)
   cyclength <- unlist(lapply(subs, nrow))
   #start
+  F = Fer
   a1 <- dim(F)
   r <- a1[1]
   n <- a1[2]
@@ -13,12 +14,18 @@ branchfunc <- function(subs, Fer, plot=FALSE){
   ctau1 <- matrix(0, r, 1)
   ctau2 <- matrix(0, r, 1)
   for (i in 1:r) {
-    ctau1[i] <- min(which(F[i, 2:n]/F[i, 1:(n - 1)] >= 
-                            tau1))
-    if (any(F[i, (ctau1[i] + 1):n]/F[i, ctau1[i]:(n - 
-                                                  1)] <= tau2)) {
-      ctau2[i] <- min(which(F[i, (ctau1[i] + 1):n]/F[i, 
-                                                     ctau1[i]:(n - 1)] <= tau2)) + ctau1[i]
+    if(F[i, 1] == 0){
+      ctau1[i] <- min(which(F[i, 3:n]/F[i, 2:(n - 1)] >= tau1))
+      if (any(F[i, (ctau1[i] + 1):n]/F[i, ctau1[i]:(n - 1)] <= tau2)) {
+        ctau2[i] <- min(which(F[i, (ctau1[i] + 1):n]/F[i, ctau1[i]:(n - 1)] <= tau2)) + ctau1[i]
+      }
+      else {
+        ctau2[i] = n
+      }
+    }
+    ctau1[i] <- min(which(F[i, 2:n]/F[i, 1:(n - 1)] >= tau1))
+    if (any(F[i, (ctau1[i] + 1):n]/F[i, ctau1[i]:(n - 1)] <= tau2)) {
+      ctau2[i] <- min(which(F[i, (ctau1[i] + 1):n]/F[i, ctau1[i]:(n - 1)] <= tau2)) + ctau1[i]
     }
     else {
       ctau2[i] = n
@@ -38,7 +45,7 @@ branchfunc <- function(subs, Fer, plot=FALSE){
   }
   
   n_an <- matrix(0, r, n) ; cdivas <- matrix(0, r, 1) ; appF <- matrix(0, r, n)
-  n_an[,1] <- mu_b
+  n_an[,1] <- mean(mu_b)
   for(i in 1:r){
     for(j in 2:n){
       n_an[i,j] <- n_an[i, j-1] + rbinom(1, round(n_an[i, j-1]), p_tilde[i])
@@ -217,6 +224,10 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
 
 #GAPDH.SO TESTING
 #outside params generated
+subsetslog = lapply(subsets, function(x) log10(x))
+for(i in 1:8){
+  subsetslog[[i]][,1] <- 1:40
+}
 modparams <- lapply(subsets, function(x) sub_genparams(listdf=x, est=l5))
 lstarres <- vector("list", 8) #empty list of subs: ABCD,..etc
 cyclength <- unlist(lapply(subsets, nrow))
@@ -264,15 +275,15 @@ meplz2 <- allresids(try, modparams, lstarres.fits, Fer = F)
 
 #nice dataset
 load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
-try.good <- unlist.genparams(tst)
+try.good <- unlist.genparams.Rn(tst)
 #nice
-modparams <- lapply(try.good, function(x) sub_genparams(listdf=x, est=l5))
-lstarres <- vector("list", 10) #empty list of subs: ABCD,..etc
+modparams.good <- lapply(try.good, function(x) sub_genparams(listdf=x, est=l5))
+lstarres.good <- vector("list", 10) #empty list of subs: ABCD,..etc
 cyclength <- unlist(lapply(try.good, nrow))
 for(i in 1:10){ #running LSTAR model
   for(j in 2:5){
     #results for LSTAR model 
-    lstarres[[i]][[j-1]] <- tryCatch({
+    lstarres.good[[i]][[j-1]] <- tryCatch({
       tsDyn::lstar(try.good[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
       error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
                              residuals=rep(NA, (cyclength[[i]]-(klag*mdim))),
@@ -280,10 +291,33 @@ for(i in 1:10){ #running LSTAR model
     #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
   }
 }
-lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
+lstarres.fits <- lapply(lstarres.good, function(x) list(fits=x))
 F = t(do.call(cbind, lapply(try.good, function(x) x[-1][1:40,])))
-meplz3 <- allresids(try.good, modparams, lstarres.fits, Fer = F)
+meplz3 <- allresids(try.good, modparams.good, lstarres.fits, Fer = F)
 
 
+#testing on another nice dataset
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-520e_001119.Rda")
+try.nice <- unlist.genparams.Rn(tst)
+modparams <- lapply(try.nice, function(x) sub_genparams(listdf=x, est=l5))
+lstarres <- vector("list", 10) #empty list of subs: ABCD,..etc
+cyclength <- unlist(lapply(try.nice, nrow))
+for(i in 1:10){ #running LSTAR model
+  for(j in 2:5){
+    #results for LSTAR model 
+    lstarres[[i]][[j-1]] <- tryCatch({
+      tsDyn::lstar(try.nice[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
+      error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
+                             residuals=rep(NA, (cyclength[[i]]-(klag*mdim))),
+                             model.specific=list(coefficients = rep(NA, (4+2*mdim)))))
+    #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
+  }
+}
+lstarres.fits <- lapply(lstarres, function(x) list(fits=x))
+F = t(do.call(cbind, lapply(try.nice, function(x) x[-1][1:40,])))
+meplz3 <- allresids(try.nice, modparams, lstarres.fits, Fer = F)
+
+plot(x = 1:40, y = F[15,])
 
 
+someone <- log(meplz)
