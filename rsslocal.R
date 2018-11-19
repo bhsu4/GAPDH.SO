@@ -1,45 +1,34 @@
-branchfunc <- function(subs, Fer, plot=FALSE){
+branchfunc <- function(subs, method='RLE', plot=FALSE){
   #setting lengths
   sublength = length(subs)
   repnames <- unique(unlist(lapply(subs, names)))[!grepl("Cycle", unique(unlist(lapply(subs, names))))]
   replength = length(repnames)
   cyclength <- unlist(lapply(subs, nrow))
-  #start
-  F = Fer
-  a1 <- dim(F)
-  r <- a1[1]
-  n <- a1[2]
-  tau1 <- 1.02
-  tau2 <- 1.02
-  ctau1 <- matrix(0, r, 1)
-  ctau2 <- matrix(0, r, 1)
-  for (i in 1:r) {
-    if(F[i, 1] == 0){
-      ctau1[i] <- min(which(F[i, 3:n]/F[i, 2:(n - 1)] >= tau1))
-      if (any(F[i, (ctau1[i] + 1):n]/F[i, ctau1[i]:(n - 1)] <= tau2)) {
-        ctau2[i] <- min(which(F[i, (ctau1[i] + 1):n]/F[i, ctau1[i]:(n - 1)] <= tau2)) + ctau1[i]
-      }
-      else {
-        ctau2[i] = n
-      }
-    }
-    ctau1[i] <- min(which(F[i, 2:n]/F[i, 1:(n - 1)] >= tau1))
-    if (any(F[i, (ctau1[i] + 1):n]/F[i, ctau1[i]:(n - 1)] <= tau2)) {
-      ctau2[i] <- min(which(F[i, (ctau1[i] + 1):n]/F[i, ctau1[i]:(n - 1)] <= tau2)) + ctau1[i]
-    }
-    else {
-      ctau2[i] = n
-    }
+  
+  #creating Fluo 
+  max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
+  subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
+  empmat <- matrix(NA, 46, 40)
+  for(i in 1:40){
+    empmat[1:len(subs.unl[[i]]), i] <- subs.unl[[i]]
   }
-  #}
+  Fluo = t(data.frame(empmat))
+  rownames(Fluo) <- unlist(lapply(LETTERS[1:10], function(x) paste0(x, 1:4)))
+  
+  #call exponential calculation
+  exp_ctau <- exp_calc(method, subs)
+  ctau1 <- exp_ctau[,2]
+  ctau2 <- exp_ctau[,3]
+  
+  #finding initial
   yn <- matrix(0, r, 1)
   yn_1 <- matrix(0, r, 1)
   p_tilde <- matrix(0, r, 1)
   mu_b <- matrix(0, r, 1)
   var_mu_b <- matrix(0, r, 1)
   for (i in 1:r) {
-    yn[i] <- sum(F[i, ctau1[i]:ctau2[i]])
-    yn_1[i] <- sum(F[i, ctau1[i]:(ctau2[i] - 1)])
+    yn[i] <- sum(Fluo[i, ctau1[i]:ctau2[i]])
+    yn_1[i] <- sum(Fluo[i, ctau1[i]:(ctau2[i] - 1)])
     p_tilde[i] <- (yn[i] - F[i, ctau1[i]] - yn_1[i])/yn_1[i]
     mu_b[i] <- p_tilde[i]/((1 + p_tilde[i])^n) * yn[i] * (1 - (1 + p_tilde[i])^(ctau1[i] - n))^(-1)
   }
@@ -57,7 +46,7 @@ branchfunc <- function(subs, Fer, plot=FALSE){
   
   backconst <- matrix(0, r, n) ; res_aq <- matrix(0, r, n)
   for(i in 1:r){
-    backconst[i,] = cumsum(F[i,])/F[i,]
+    backconst[i,] = cumsum(Fluo[i,])/Fluo[i,]
     res_aq[i,] <- cumsum(appF[i,])/backconst[i,]
   }
   if(plot){  
@@ -79,6 +68,7 @@ branchfunc <- function(subs, Fer, plot=FALSE){
   }
   return(list(CT = branchCT, dat = res_aq, residuals = resid.res, exp = cbind(ctau1, ctau2)))
 }
+
 
 allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
   #lengths
