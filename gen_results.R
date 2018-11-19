@@ -170,13 +170,13 @@ gen_results <- function(subs, params, sig=l5){
           uppercyc = cyclength[[i]]-(klag*mdim)
           lowercyc = ceiling(unlistcycCTthr[[indij]]-(klag*mdim)-2)
           #list of lists of rss red region
-          rsslstarr[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)}
+          rsslstarr[[i]][[j]] <- sum(params[[i]]$fits[[j]]$residuals[lowercyc:uppercyc]^2)}
         else{    #(sum(is.na(unlistcycCTthr[[indij]])) == 0){ 
           uppercyc = floor(unlistcycCTthr[[indij]]-(klag*mdim)+2)  #+2 cycles
           #klag-adjusted lower cycle
           lowercyc = ceiling(unlistcycCTthr[[indij]]-(klag*mdim)-2)
           #list of lists of rss red region
-          rsslstarr[[i]][[j]] <- sum(lstarres[[i]][[j]]$residuals[lowercyc:uppercyc]^2)
+          rsslstarr[[i]][[j]] <- sum(params[[i]]$fits[[j]]$residuals[lowercyc:uppercyc]^2)
           } #-2cycles 
       }
     }
