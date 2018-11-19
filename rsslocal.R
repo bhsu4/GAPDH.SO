@@ -319,5 +319,53 @@ meplz3 <- allresids(try.nice, modparams, lstarres.fits, Fer = F)
 
 plot(x = 1:40, y = F[15,])
 
+sdres <- apply(meplz, 2, mean, na.rm = TRUE)
+sdres2 <- apply(meplz, 2, sd, na.rm = TRUE)
 
-someone <- log(meplz)
+
+###finding the exponential
+exp_calc <- function(method = 'RLE', subs){
+  #RLE method
+  max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
+  subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
+  empmat <- matrix(NA, 46, 40)
+  for(i in 1:40){
+    empmat[1:len(subs.unl[[i]]), i] <- subs.unl[[i]]
+  }
+  Fluo = t(data.frame(empmat))
+  rownames(Fluo) <- unlist(lapply(LETTERS[1:10], function(x) paste0(x, 1:4)))
+  
+  if (method == 'RLE'){
+    ctau1_rle <- matrix(0, 40, 1) ; ctau2_rle <- matrix(0, 40, 1)
+    for(i in 1:40){
+      eff_est <- rle( (Fluo[i, 2:n]/Fluo[i, 1:(n - 1)]) > 1.01 )
+      tester.mat <- matrix(eff_est$lengths, nrow=1)
+      ctau1_rle[i,] <- sum(tester.mat[,1:(which(eff_est$lengths == max(eff_est$lengths))-1)])+1
+      ctau2_rle[i,] <- ctau1_rle[i,] + tester.mat[,which(eff_est$lengths == max(eff_est$lengths))]
+      len_used <- matrix(lapply(subs.unl, length), ncol=1)
+    }
+    return(cbind(len_used, ctau1_rle, ctau2_rle))
+  }
+  else if (method == 'AQB'){
+    
+    a1 <- dim(Fluo)
+    r <- a1[1]
+    n <- a1[2]
+    tau1 <- 1.02
+    tau2 <- 1.02
+    ctau1 <- matrix(0, r, 1)
+    ctau2 <- matrix(0, r, 1)
+    for (i in 1:r) {
+      ctau1[i] <- min(which(Fluo[i, 2:n]/Fluo[i, 1:(n - 1)] >= tau1))
+      if (any(Fluo[i, (ctau1[i] + 1):n]/Fluo[i, ctau1[i]:(n - 1)] <= tau2)) {
+        ctau2[i] <- min(which(Fluo[i, (ctau1[i] + 1):n]/Fluo[i, ctau1[i]:(n - 1)] <= tau2)) + ctau1[i]
+      }
+      else {
+        ctau2[i] = n
+      }
+    }
+  }
+  return(cbind(len_used, ctau1, ctau2))
+}
+
+exp_calc(method = 'AQB', subs = try.good)
