@@ -356,6 +356,10 @@ for(i in 1:8){
   subsets2[[i]] <- data.frame(matrix(unlist(subsets_base[[i]]), ncol=13))
 }
 names(subsets2) <- LETTERS[1:8]
+my_names <- lapply(LETTERS[1:8], function(x) paste0(x, 1:12))
+for(i in 1:8){
+  names(subsets2[[i]]) <- c("Cycle", my_names[[i]])
+}
 df_b5_base <- genparams(est=b5, listdf=subsets2)
 plot_resid(subsets2, df_b5_base)
 
@@ -1228,7 +1232,7 @@ gplot2.1 <- ggplot(data = try.good.ljdw.mat1, aes(x="", y=X2, fill=X1)) + geom_b
 gplot3.1 <- ggplot(data = try.good.ljdw.mat1, aes(x="", y=X3, fill=X1)) + geom_boxplot() +xlab("") +ylab("") +ylim(c(0.3,1))+ theme(legend.position = "none")
 
 gplot4 <- ggplot(data = l5dat2.na, aes(x="", y=dw.comp, fill =pcor)) + geom_boxplot() +xlab("Durbin-Watson") +ylab("") + theme(legend.position = "none")
-gplot5<- ggplot(data = l5dat2.na, aes(x="", y=boxlj.p, fill = pcor)) + geom_boxplot(outlier.size=0.5)+xlab("Ljung-Box") +ylab("") + theme(legend.position = "none")+ ylim(c(0,0.25))
+gplot5<- ggplot(data = l5dat2.na, aes(x="", y=boxlj.p, fill = pcor)) + geom_boxplot()+xlab("Ljung-Box") +ylab("") + theme(legend.position = "none")+ ylim(c(0,0.25))
 gplot6 <- ggplot(data = l5dat2.na, aes(x="", y=pcor, fill = pcor)) + geom_boxplot() +xlab("Pearson Cor.") +ylab("") + theme(legend.position = "none")
 
 grid.arrange(gplot1, gplot2, gplot3, gplot1.1, gplot2.1, gplot3.1, gplot4, gplot5, gplot6, ncol=3)
