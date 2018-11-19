@@ -17,8 +17,8 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
   
   #call exponential calculation
   exp_ctau <- exp_calc(method, subs)
-  ctau1 <- exp_ctau[,2]
-  ctau2 <- exp_ctau[,3]
+  ctau1 <- unlist(exp_ctau[,2])
+  ctau2 <- unlist(exp_ctau[,3])
   
   #finding initial
   yn <- matrix(0, r, 1)
@@ -27,7 +27,7 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
   mu_b <- matrix(0, r, 1)
   var_mu_b <- matrix(0, r, 1)
   for (i in 1:r) {
-    yn[i] <- sum(Fluo[i, ctau1[i]:ctau2[i]])
+    yn[i] <- sum(Fluo[i, ctau1[i]:ctau2[i]], na.rm=TRUE)
     yn_1[i] <- sum(Fluo[i, ctau1[i]:(ctau2[i] - 1)])
     p_tilde[i] <- (yn[i] - F[i, ctau1[i]] - yn_1[i])/yn_1[i]
     mu_b[i] <- p_tilde[i]/((1 + p_tilde[i])^n) * yn[i] * (1 - (1 + p_tilde[i])^(ctau1[i] - n))^(-1)
@@ -39,7 +39,7 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
     for(j in 2:n){
       n_an[i,j] <- n_an[i, j-1] + rbinom(1, round(n_an[i, j-1]), p_tilde[i])
     }
-    cdivas[i,] = (n_an[i, round((ctau1[i,]+ctau2[i,])/2)]/F[i,round((ctau1[i,]+ctau2[i,])/2)])/(9.1*10^11)
+    cdivas[i,] = (n_an[i, round((ctau1[i]+ctau2[i])/2)]/F[i,round((ctau1[i]+ctau2[i])/2)])/(9.1*10^11)
     constant = cdivas * (9.1*10^11)
     appF[i,] = n_an[i,]/constant[i,]
   }
@@ -64,7 +64,7 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
   }
   branchCT <- list()
   for(i in 1:r){
-    branchCT[i] <- quantile(ctau1[i,]:ctau2[i,])[2] #1st quartile
+    branchCT[i] <- quantile(ctau1[i]:ctau2[i])[2] #1st quartile
   }
   return(list(CT = branchCT, dat = res_aq, residuals = resid.res, exp = cbind(ctau1, ctau2)))
 }
