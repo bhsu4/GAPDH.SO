@@ -4,16 +4,13 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
   repnames <- unique(unlist(lapply(subs, names)))[!grepl("Cycle", unique(unlist(lapply(subs, names))))]
   replength = length(repnames)
   cyclength <- unlist(lapply(subs, nrow))
-  
   #creating Fluo 
   max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
   subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
-  empmat <- matrix(NA, 46, 40)
-  for(i in 1:40){
-    empmat[1:len(subs.unl[[i]]), i] <- subs.unl[[i]]
-  }
-  Fluo = t(data.frame(empmat))
-  rownames(Fluo) <- unlist(lapply(LETTERS[1:10], function(x) paste0(x, 1:4)))
+  empmat <- matrix(NA, max_len, replength) #set max cycles
+  for(i in 1:40){ empmat[1:len(subs.unl[[i]]), i] <- subs.unl[[i]] } #NA filled for non-max lengths
+  Fluo = t(data.frame(empmat)) #transposed 
+  rownames(Fluo) <- unlist(lapply(LETTERS[1:10], function(x) paste0(x, 1:4))) #names assigned
   
   #call exponential calculation
   exp_ctau <- exp_calc(method, subs)
@@ -32,7 +29,6 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
     p_tilde[i] <- (yn[i] - Fluo[i, ctau1[i]] - yn_1[i])/yn_1[i]
     mu_b[i] <- p_tilde[i]/((1 + p_tilde[i])^n) * yn[i] * (1 - (1 + p_tilde[i])^(ctau1[i] - n))^(-1)
   }
-  
   n_an <- matrix(0, r, n) ; cdivas <- matrix(0, r, 1) ; appF <- matrix(0, r, n)
   n_an[,1] <- mean(mu_b)
   for(i in 1:r){
@@ -42,31 +38,28 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
     cdivas[i,] = (n_an[i, round((ctau1[i]+ctau2[i])/2)]/Fluo[i, round((ctau1[i]+ctau2[i])/2)])
     appF[i,] = n_an[i,]/cdivas[i,]
   }
-
+  #backtransform constant
   backconst <- matrix(0, r, n) ; res_aq <- matrix(0, r, n)
   for(i in 1:r){
     backconst[i,] = cumsum(Fluo[i,])/Fluo[i,]
     res_aq[i,] <- cumsum(appF[i,])/backconst[i,]
   }
-  
+  #plotting
   if(plot){  
     for(i in 1:r){
-      plot(x=1:40, y=res_aq[i,], col=2)
-      points(x=1:40, y=F[i,])
+      plot(x=1:max_len, y=res_aq[i,], col=2)
+      points(x=1:max_len, y=Fluo[i,])
     }
   }
+  #resid.res list of list
   resid.res <- vector('list', sublength)
   for(i in 1:sublength){
     for(j in 1:(replength/sublength)){
       indij = (replength/sublength)*(i-1)+j
-      resid.res[[i]][[j]] <- res_aq[indij,] - F[indij,]
+      resid.res[[i]][[j]] <- res_aq[indij,] - Fluo[indij,]
     }
   }
-  branchCT <- list()
-  for(i in 1:r){
-    branchCT[i] <- quantile(ctau1[i]:ctau2[i])[2] #1st quartile
-  }
-  return(list(CT = branchCT, dat = res_aq, residuals = resid.res, exp = cbind(ctau1, ctau2)))
+  return(list(fitted.values = res_aq, residuals = resid.res, expo = exp_ctau))
 }
 
 allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
@@ -312,7 +305,7 @@ sdres2 <- apply(meplz, 2, sd, na.rm = TRUE)
 
 
 ###finding the exponential
-exp_calc <- function(method = 'RLE', subs, thr){
+exp_calc <- function(method = 'RLE', subs, thr=1.02){
   #RLE method
   max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
   subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
