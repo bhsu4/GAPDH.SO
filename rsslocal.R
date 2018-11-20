@@ -29,7 +29,7 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
   for (i in 1:r) {
     yn[i] <- sum(Fluo[i, ctau1[i]:ctau2[i]], na.rm=TRUE)
     yn_1[i] <- sum(Fluo[i, ctau1[i]:(ctau2[i] - 1)])
-    p_tilde[i] <- (yn[i] - F[i, ctau1[i]] - yn_1[i])/yn_1[i]
+    p_tilde[i] <- (yn[i] - Fluo[i, ctau1[i]] - yn_1[i])/yn_1[i]
     mu_b[i] <- p_tilde[i]/((1 + p_tilde[i])^n) * yn[i] * (1 - (1 + p_tilde[i])^(ctau1[i] - n))^(-1)
   }
   
@@ -39,16 +39,16 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
     for(j in 2:n){
       n_an[i,j] <- n_an[i, j-1] + rbinom(1, round(n_an[i, j-1]), p_tilde[i])
     }
-    cdivas[i,] = (n_an[i, round((ctau1[i]+ctau2[i])/2)]/F[i,round((ctau1[i]+ctau2[i])/2)])/(9.1*10^11)
-    constant = cdivas * (9.1*10^11)
-    appF[i,] = n_an[i,]/constant[i,]
+    cdivas[i,] = (n_an[i, round((ctau1[i]+ctau2[i])/2)]/Fluo[i, round((ctau1[i]+ctau2[i])/2)])
+    appF[i,] = n_an[i,]/cdivas[i,]
   }
-  
+
   backconst <- matrix(0, r, n) ; res_aq <- matrix(0, r, n)
   for(i in 1:r){
     backconst[i,] = cumsum(Fluo[i,])/Fluo[i,]
     res_aq[i,] <- cumsum(appF[i,])/backconst[i,]
   }
+  
   if(plot){  
     for(i in 1:r){
       plot(x=1:40, y=res_aq[i,], col=2)
@@ -68,7 +68,6 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
   }
   return(list(CT = branchCT, dat = res_aq, residuals = resid.res, exp = cbind(ctau1, ctau2)))
 }
-
 
 allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
   #lengths
@@ -283,7 +282,7 @@ for(i in 1:10){ #running LSTAR model
 }
 lstarres.fits <- lapply(lstarres.good, function(x) list(fits=x))
 F = t(do.call(cbind, lapply(try.good, function(x) x[-1][1:40,])))
-meplz3 <- allresids(try.good, modparams.good, lstarres.fits, Fer = F)
+meplz3 <- allresids(try.good, modparams.good, lstarres.fits, Fer = Fluo)
 
 
 #testing on another nice dataset
@@ -318,15 +317,17 @@ exp_calc <- function(method = 'RLE', subs){
   #RLE method
   max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
   subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
-  empmat <- matrix(NA, 46, 40)
-  for(i in 1:40){
+  subs_len <- sum(unlist(lapply(try.good, function(x) length(x[-1]))))
+  empmat <- matrix(NA, max_len, subs_len)
+  for(i in 1:subs_len){
     empmat[1:len(subs.unl[[i]]), i] <- subs.unl[[i]]
   }
   Fluo = t(data.frame(empmat))
+  a1 <- dim(Fluo) ; r <- a1[1] ; n <- a1[2]
   rownames(Fluo) <- unlist(lapply(LETTERS[1:10], function(x) paste0(x, 1:4)))
   
   if (method == 'RLE'){
-    ctau1_rle <- matrix(0, 40, 1) ; ctau2_rle <- matrix(0, 40, 1)
+    ctau1_rle <- matrix(0, subs_len, 1) ; ctau2_rle <- matrix(0, subs_len, 1)
     for(i in 1:40){
       eff_est <- rle( (Fluo[i, 2:n]/Fluo[i, 1:(n - 1)]) > 1.01 )
       tester.mat <- matrix(eff_est$lengths, nrow=1)
@@ -337,10 +338,6 @@ exp_calc <- function(method = 'RLE', subs){
     return(cbind(len_used, ctau1_rle, ctau2_rle))
   }
   else if (method == 'AQB'){
-    
-    a1 <- dim(Fluo)
-    r <- a1[1]
-    n <- a1[2]
     tau1 <- 1.02
     tau2 <- 1.02
     ctau1 <- matrix(0, r, 1)
