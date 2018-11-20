@@ -81,7 +81,7 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
   sigCT <- res.sig$CT
   lstarCT <- res.lstar$CT
   #branching on its own
-  branch.res <- branchfunc(subs, Fer)
+  branch.res <- branchfunc(subs)
   branchCT <- branch.res$CT
   #branchCT.mat <- matrix(branch.res$CT, nrow=8, ncol=12, byrow=TRUE)
   #branchCT <- list()
@@ -195,7 +195,6 @@ allresids <- function(subs, params.sig, params.lstar, Fer, sig=l5){
     }
     return(matrix(c(unlist(rssgrey.sig), unlist(rssgrey.sigm)), ncol=2))
   }
-  
   
   #rss local for sig.sig
   rsslocal.sig <- sigrsslocal(sigCT, modresids.sigunl)
@@ -313,26 +312,29 @@ sdres2 <- apply(meplz, 2, sd, na.rm = TRUE)
 
 
 ###finding the exponential
-exp_calc <- function(method = 'RLE', subs){
+exp_calc <- function(method = 'RLE', subs, thr){
   #RLE method
   max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
   subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
-  subs_len <- sum(unlist(lapply(try.good, function(x) length(x[-1]))))
-  empmat <- matrix(NA, max_len, subs_len)
-  for(i in 1:subs_len){
+  reps_len <- length(subs.unl) #40
+  subs_len <- length(subs) #10
+  empmat <- matrix(NA, max_len, reps_len)
+  for(i in 1:reps_len){
     empmat[1:len(subs.unl[[i]]), i] <- subs.unl[[i]]
   }
   Fluo = t(data.frame(empmat))
   a1 <- dim(Fluo) ; r <- a1[1] ; n <- a1[2]
-  rownames(Fluo) <- unlist(lapply(LETTERS[1:10], function(x) paste0(x, 1:4)))
+  rownames(Fluo) <- unlist(lapply(LETTERS[1:subs_len], function(x) paste0(x, 1:(reps_len/subs_len))))
   
   if (method == 'RLE'){
-    ctau1_rle <- matrix(0, subs_len, 1) ; ctau2_rle <- matrix(0, subs_len, 1)
+    ctau1_rle <- matrix(0, reps_len, 1) ; ctau2_rle <- matrix(0, reps_len, 1)
     for(i in 1:40){
-      eff_est <- rle( (Fluo[i, 2:n]/Fluo[i, 1:(n - 1)]) > 1.01 )
-      tester.mat <- matrix(eff_est$lengths, nrow=1)
-      ctau1_rle[i,] <- sum(tester.mat[,1:(which(eff_est$lengths == max(eff_est$lengths))-1)])+1
-      ctau2_rle[i,] <- ctau1_rle[i,] + tester.mat[,which(eff_est$lengths == max(eff_est$lengths))]
+      eff_est <- rle( (Fluo[i, 2:n]/Fluo[i, 1:(n - 1)]) > thr ) #run length encoding
+      tester.mat <- matrix(eff_est$lengths, nrow=1) 
+      overth <- which(eff_est$values == TRUE) #all indexes over thr
+      max.overth <- max(eff_est$lengths[overth]) #max consec cycles at the indexes
+      ctau1_rle[i,] <- sum(tester.mat[,1:(which(eff_est$lengths == max.overth & eff_est$values == TRUE)-1)])+1
+      ctau2_rle[i,] <- ctau1_rle[i,] + max.overth
       len_used <- matrix(lapply(subs.unl, length), ncol=1)
     }
     return(cbind(len_used, ctau1_rle, ctau2_rle))
@@ -355,4 +357,4 @@ exp_calc <- function(method = 'RLE', subs){
   return(cbind(len_used, ctau1, ctau2))
 }
 
-exp_calc(method = 'AQB', subs = try.good)
+exp_calc(method = 'RLE', subs = try.good, thr=1.02)
