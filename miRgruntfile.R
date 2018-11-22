@@ -75,15 +75,17 @@ b5dat2 <- sig_est(b5, miRcompData2, getfiles=getfiles)
 b4dat2 <- sig_est(b4, miRcompData2, getfiles=getfiles)
 
 save(l5dat2, file = paste0("l5_" , "dat2", ".Rda"))
-save(l4dat, file = paste0("l4_" , "dat", ".Rda"))
-save(b5dat, file = paste0("b5_" , "dat", ".Rda"))
-save(b4dat, file = paste0("b4_" , "dat", ".Rda"))
+save(l4dat2, file = paste0("l4_" , "dat2", ".Rda"))
+save(b5dat2, file = paste0("b5_" , "dat2", ".Rda"))
+save(b4dat2, file = paste0("b4_" , "dat2", ".Rda"))
 
 #loading in matrices of parameter est
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont")
 getmat <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
               pattern = "_dat")
 
 load(file = getmat[[1]]) ; load(file = getmat[[2]]) ; load(file = getmat[[3]]) ; load(file = getmat[[4]])
+load(file = getmat[[5]]) ; load(file = getmat[[6]])
 l5dat = help1 ; l4dat = help2 ; b5dat = help3 ; b4dat = help4
 
 
