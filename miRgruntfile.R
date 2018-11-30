@@ -27,7 +27,7 @@ plot_resid(try, result.try) #whole target resids
 
 #plotting amplification surve + residual plot
 ##DW-statistic package loading
-library(dynlm) ; library(car)
+library(dynlm) ; library(car) ; library(Hmisc) ; library(foreach)
 
 #not nice dataset
 load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-let-7c#_002405.Rda")
