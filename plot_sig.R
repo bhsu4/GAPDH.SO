@@ -776,6 +776,7 @@ sig_est <- function(est, orgdata, getfiles){
   }
   foreach(k=1:length(files)) %do% {    #(k in 1:length(files)){  #foreach (k = 1:length(files)) %do% {
     load(file = files[[k]])
+    print(getfiles[[k]])
     try <- unlist.genparams(tst)
     ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
     if((grepl(tst[[1]][[1]]$TargetName[1], res[,"TargetName"][ind1]) == "TRUE") & 
