@@ -376,6 +376,46 @@ while(pt1_while < 34 ){
   pt1_while = pt1_while+1
 }
 
+#midpoint method
+midpt <- round((ctau1_rle[1]+ctau2_rle[1])/2)
+range1 <- midpt-1 ; range2 <- midpt+1
+start_mean <- mean(Feff[range1:range2])
+
+# test1 <- range1-1 ; test2 <- range2+1
+#comp_mean1 <- mean(Feff[test1:range2])
+# comp_mean2 <- mean(Feff[range1:test2])
+
+while(range1 > 20 & range2 < 34){
+  test1 <- range1-1 ; test2 <- range2+1 
+  comp_mean1 <- mean(Feff[test1:range2])
+  comp_mean2 <- mean(Feff[range1:test2])
+  
+  if(comp_mean1 > comp_mean2){
+    range1 = test1 ; range2 = range2
+  }
+  else if(comp_mean1 < comp_mean2){
+    range1 = range1 ; range2 = test2
+  }
+  print(paste(mean(Feff[range1:range2]), range1, range2))
+}
+
+#using raw method
+threshold = 0.04 * (max(array) - min(array))
+
+for index, value in enumerate(array):
+  cumulative_left = sum(array[:index + 1]) / sum(!is.na(Fluo[1,]))
+#cumulative averages
+cumulative_left <- matrix(NA, 40, 46) ; threshold <- matrix(NA, 40, 1)
+ctau1_raw <- matrix(NA, 40, 1) ; ctau2_raw <- matrix(NA, 40, 1)
+for(i in 1:40){
+  threshold[i,] = 0.04 * (max(Fluo[i,], na.rm=TRUE) - min(Fluo[i,], na.rm=TRUE))
+  for(n in 1:46){
+    cumulative_left[i,n] = sum(Fluo[i,1:n])/sum(!is.na(Fluo[i,1:n]))
+  }
+  ctau1_raw[i,] <- min(which(Fluo[i,] - cumulative_left[i,] > threshold[i,]))
+  
+}
+
 
 
 
