@@ -402,8 +402,6 @@ while(range1 > 20 & range2 < 34){
 #using raw method
 threshold = 0.04 * (max(array) - min(array))
 
-for index, value in enumerate(array):
-  cumulative_left = sum(array[:index + 1]) / sum(!is.na(Fluo[1,]))
 #cumulative averages
 cumulative_left <- matrix(NA, 40, 46) ; threshold <- matrix(NA, 40, 1)
 ctau1_raw <- matrix(NA, 40, 1) ; ctau2_raw <- matrix(NA, 40, 1)
@@ -413,7 +411,7 @@ for(i in 1:40){
     cumulative_left[i,n] = sum(Fluo[i,1:n])/sum(!is.na(Fluo[i,1:n]))
   }
   ctau1_raw[i,] <- min(which(Fluo[i,] - cumulative_left[i,] > threshold[i,]))
-  
+  ctau2_raw[i,] <- ctau1_raw[i,] + which.max((Fluo[i, 2:46] - Fluo[i, 1:45])[ctau1_raw[1,]:46])+1
 }
 
 
