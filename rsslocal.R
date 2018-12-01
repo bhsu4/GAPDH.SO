@@ -330,6 +330,92 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
       ctau2_rle[i,] <- ctau1_rle[i,] + max.overth
       len_used <- matrix(lapply(subs.unl, length), ncol=1)
     }
+    #ema with RLE
+    ctau2_ema <- matrix(NA, 40, 1)
+    for(i in 1:40){
+      Fluo_EMA3 <- EMA( (Fluo[i, 2:n]/Fluo[i, 1:(n-1)])[ctau1_rle[i]:ctau2_rle[i]-1] , n=3)
+      thr_ema <- mean(Fluo_EMA3[which(Fluo_EMA3>0)])
+      ctau2_ema[i,] <- ctau1_rle[i] + max(which(Fluo_EMA3 > thr_ema))
+    }
+    #sma with RLE
+    ctau2_sma <- matrix(NA, 40, 1)
+    eff_rle_means <- matrix(NA, 1, 46)
+    for(i in ctau1_rle[1]:ctau2_rle[1]){
+      ind = i-ctau1_rle[1]+1
+      eff_rle_means[,ind] <- mean(Feff[i:(i+2)])
+    }  
+    #cycle at which max, so we go from 3 pts to 4 to 5, and so on
+    for(i in 1:40){
+    pt1 <- ctau1_rle[1]-1+which.max(eff_rle_means)
+    adder=3 #; pt1 = 25 ; pt1_while = 25
+    while(pt1_while < 34 & mean(Feff[pt1:(pt1+adder)]) > 1.25){
+      #print(paste0(mean(Feff[pt1:(pt1+adder)]), ",", pt1, ",", print(adder)))
+      #adder = adder + 1
+      pt1_while = pt1_while+1
+    }
+      ctau2_sma[i,] <- pt1_while-1
+    }
+
+    #midpoint method
+    ctau1_mid <- matrix(NA, 40, 1) ; ctau2_mid <- matrix(NA, 40, 1)
+    for(i in 1:40){
+    midpt <- round((ctau1_rle[i]+ctau2_rle[i])/2)
+    range1 <- midpt-1 ; range2 <- midpt+1
+    #start_mean <- mean(Feff[range1:range2])
+    
+    while(range1 > ctau1_rle[i] & range2 < ctau2_rle[i]){
+      test1 <- range1-1 ; test2 <- range2+1 
+      comp_mean1 <- mean(Feff[test1:range2])
+      comp_mean2 <- mean(Feff[range1:test2])
+      
+      if(comp_mean1 > comp_mean2 & comp_mean1 > 1.25 || comp_mean1 > comp_mean2 & comp_mean1 <= 1.25){
+        range1 = test1 ; range2 = range2
+      }
+      else if(comp_mean1 < comp_mean2 & comp_mean2 > 1.25 || comp_mean1 < comp_mean2 & comp_mean2 <= 1.25){
+        range1 = range1 ; range2 = test2
+      }
+      print(paste(i, range1, range2))
+      ctau1_mid[i,] <- range1 ; ctau2_mid[i,] <- range2
+    }
+
+    for(i in 1:40){
+      midpt <- round((ctau1_rle[i]+ctau2_rle[i])/2)
+      range1 <- midpt-1 ; range2 <- midpt+1 #starting 3-cycle range
+      Feff <- Fluo[i, 2:n]/Fluo[i, 1:(n-1)]
+    while(range1 > ctau1_rle[i] & range2 < ctau2_rle[i]){
+      test1 <- range1-1 ; test2 <- range2+1 
+      comp_mean1 <- mean(Feff[test1:range2])
+      comp_mean2 <- mean(Feff[range1:test2])
+      print(paste(comp_mean1, comp_mean2))
+      #finding larger mean range
+      if(comp_mean1 > comp_mean2){
+        if(comp_mean1 > 1.25){ range1 = test1 ; range2 = range2 }
+        else if(comp_mean1 <= 1.25){ range1 = test1 ; range2 = range2 ; break }
+      }
+      else if(comp_mean1 < comp_mean2){ 
+        if(comp_mean2 > 1.25){ range1 = range1 ; range2 = test2 }
+        else if(comp_mean2 <= 1.25){ range1 = range1 ; range2 = test2 ; break }
+      }
+      #print(paste(i, mean(Feff[range1:range2]), range1, range2))
+    }
+      print(paste(i, range1, range2))
+      ctau1_mid[i,] <- range1 ; ctau2_mid[i,] <- range2
+    }
+    
+    
+    for(i in ctau1_rle[6]:ctau2_rle[6]){
+      test1 <- range1-1; test2<- range2-1
+      if (comp_mean > comp_mean2){
+        range1 = test1 ; range2 = range2
+      }
+      else if(comp_mean < comp_mean2){
+        range1 = range1 ; range2 = test2
+      }
+      print(paste(i, range1, range2, mean(Feff[range1:range2])))
+    }
+    
+    
+    
     return(cbind(len_used, ctau1_rle, ctau2_rle))
   }
   else if (method == 'AQB'){
