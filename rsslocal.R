@@ -256,7 +256,7 @@ meplz2 <- allresids(try, modparams, lstarres.fits, Fer = F)
 
 #nice dataset
 load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
-try.good <- unlist.genparams.Rn(tst)
+try.good <- unlist.genparams(tst)
 #nice
 modparams.good <- lapply(try.good, function(x) sub_genparams(listdf=x, est=l5))
 lstarres.good <- vector("list", 10) #empty list of subs: ABCD,..etc
@@ -351,3 +351,35 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
 }
 
 exp_calc(method = 'RLE', subs = try.good, thr=1.02)
+
+###adding ways for identifying exponential phase 
+
+#ema method
+ctau1_ema <- ctau1_rle
+(Fluo[1, 2:n]/Fluo[1, 1:(n-1)])[ctau1_rle[1]:ctau2_rle[1]]
+Fluo_EMA3 <- EMA( (Fluo[1, 2:n]/Fluo[1, 1:(n-1)])[ctau1_rle[1]:ctau2_rle[1]] , n=3)
+ctau2_ema <- ctau1_rle[1] + max(which(Fluo_EMA3 > 1.25))
+
+#sequential adding with SMA
+(Fluo[1, 2:n]/Fluo[1, 1:(n-1)])
+eff_rle_means <- matrix(NA, 1, 46)
+for(i in ctau1_rle[1]:ctau2_rle[1]){
+  ind = i-ctau1_rle[1]+1
+  eff_rle_means[,ind] <- mean(Feff[i:(i+2)])
+}  
+#cycle at which max, so we go from 3 pts to 4 to 5, and so on
+pt1 <- ctau1_rle[1]-1+which.max(eff_rle_means)
+adder=3 ; pt1 = 25 ; pt1_while = 25
+while(pt1_while < 34 ){
+  print(paste0(mean(Feff[pt1:(pt1+adder)]), ",", pt1, ",", print(adder)))
+  adder = adder + 1
+  pt1_while = pt1_while+1
+}
+
+
+
+
+
+
+
+
