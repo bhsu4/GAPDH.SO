@@ -8,7 +8,7 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
   max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
   subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
   empmat <- matrix(NA, max_len, replength) #set max cycles
-  for(i in 1:40){ empmat[1:len(subs.unl[[i]]), i] <- subs.unl[[i]] } #NA filled for non-max lengths
+  for(i in 1:40){ empmat[1:length(subs.unl[[i]]), i] <- subs.unl[[i]] } #NA filled for non-max lengths
   Fluo = t(data.frame(empmat)) #transposed 
   rownames(Fluo) <- unlist(lapply(LETTERS[1:10], function(x) paste0(x, 1:4))) #names assigned
   
@@ -337,24 +337,6 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
       thr_ema <- mean(Fluo_EMA3[which(Fluo_EMA3>0)])
       ctau2_ema[i,] <- ctau1_rle[i] + max(which(Fluo_EMA3 > thr_ema))
     }
-    #sma with RLE
-    ctau2_sma <- matrix(NA, 40, 1)
-    eff_rle_means <- matrix(NA, 1, 46)
-    for(i in ctau1_rle[1]:ctau2_rle[1]){
-      ind = i-ctau1_rle[1]+1
-      eff_rle_means[,ind] <- mean(Feff[i:(i+2)])
-    }  
-    #cycle at which max, so we go from 3 pts to 4 to 5, and so on
-    for(i in 1:40){
-    pt1 <- ctau1_rle[1]-1+which.max(eff_rle_means)
-    adder=3 #; pt1 = 25 ; pt1_while = 25
-    while(pt1_while < 34 & mean(Feff[pt1:(pt1+adder)]) > 1.25){
-      #print(paste0(mean(Feff[pt1:(pt1+adder)]), ",", pt1, ",", print(adder)))
-      #adder = adder + 1
-      pt1_while = pt1_while+1
-    }
-      ctau2_sma[i,] <- pt1_while-1
-    }
 
   #midpoint method
     ctau1_mid <- matrix(NA, 40, 1) ; ctau2_mid <- matrix(NA, 40, 1)
@@ -385,9 +367,20 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
       ctau1_mid[i,] <- range1 ; ctau2_mid[i,] <- range2
     }
     
-    
-    return(cbind(len_used, ctau1_rle, ctau2_rle))
+    return(cbind(len_used, ctau1_rle, ctau2_rle, ctau1_rle, ctau2_ema, ctau1_mid, ctau2_mid))
   }
+  
+  for(i in 1:40){
+    plot(Fluo[i,])
+    abline(v=testerctau[i,2])
+    abline(v=testerctau[i,3])
+    abline(v=testerctau[i,4], col=2, lty='dotted')
+    abline(v=testerctau[i,5], col=2, lty='dotted')
+    abline(v=testerctau[i,6], col=3, lty='dashed')
+    abline(v=testerctau[i,7], col=3, lty='dashed')
+    }
+  
+  
   else if (method == 'AQB'){
     tau1 <- 1.02
     tau2 <- 1.02
@@ -403,6 +396,22 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
       }
     }
   }
+  
+  else if (method == 'RAW'){
+    #cumulative averages
+    cumulative_left <- matrix(NA, 40, 46) ; threshold <- matrix(NA, 40, 1)
+    ctau1_raw <- matrix(NA, 40, 1) ; ctau2_raw <- matrix(NA, 40, 1)
+    for(i in 1:40){
+      threshold[i,] = 0.04 * (max(Fluo[i,], na.rm=TRUE) - min(Fluo[i,], na.rm=TRUE))
+      for(n in 1:46){
+        cumulative_left[i,n] = sum(Fluo[i,1:n])/sum(!is.na(Fluo[i,1:n]))
+      }
+      ctau1_raw[i,] <- min(which(Fluo[i,] - cumulative_left[i,] > threshold[i,]))
+      ctau2_raw[i,] <- ctau1_raw[i,] + which.max((Fluo[i, 2:46] - Fluo[i, 1:45])[ctau1_raw[1,]:46])+1
+    }
+    
+  }
+  
   return(cbind(len_used, ctau1, ctau2))
 }
 
