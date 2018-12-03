@@ -479,9 +479,30 @@ for(i in 1:40){
   ctau2_raw[i,] <- ctau1_raw[i,] + which.max((Fluo[i, 2:46] - Fluo[i, 1:45])[ctau1_raw[1,]:46])+1
 }
 
-
-
-
+#savitzky-golay smoothing local min/max method
+ctau1_ssg <- matrix(NA, 40, 1) ; ctau2_ssg <- matrix(NA, 40, 1)
+for(i in 1:40){
+  subs = Fluo[i,][which(!is.na(Fluo[i,]))]
+  subs_len <- length(subs)
+  if(sd(subs) < 100){ #noisy data
+    point_filt = savgol(subs, fl=25, forder=3) #window=25, poly-order=3
+    sslope_filt = savgol((point_filt[2:(subs_len)]-point_filt[1:(subs_len-1)]), fl=15, forder=3)
+  } else{ #clean data
+    point_filt = savgol(subs, fl=3, forder=3) #window=5, poly-order=3
+    sslope_filt = savgol((point_filt[2:(subs_len)]-point_filt[1:(subs_len-1)]), fl=5, forder=3)
+  }
+  #restandardize
+  rs.point_filt = (point_filt - min(point_filt))/(max(point_filt) - min(point_filt))
+  rs.sslope_filt = (sslope_filt - min(sslope_filt))/(max(sslope_filt) - min(sslope_filt))
+  #find cycles
+  lmin_val = localMinima(rs.sslope_filt) #lmin cyc
+  lmax_val = localMaxima(rs.sslope_filt) #lmax cyc
+  cyc_lmax = which(rs.sslope_filt == 1) #standardized max at 1
+  cyc_lmin = cyc_lmin[max(which(cyc_lmin < lmax_val))] #first lmin value < lmax
+  #output
+  ctau1_ssg[i,] <- cyc_lmin + 1
+  ctau2_ssg[i,] <- cyc_lmax + 1
+}
 
 
 
