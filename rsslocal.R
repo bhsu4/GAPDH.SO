@@ -305,7 +305,8 @@ sdres2 <- apply(meplz, 2, sd, na.rm = TRUE)
 
 
 ###finding the exponential
-exp_calc <- function(method = 'RLE', subs, thr=1.02){
+###finding the exponential
+exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
   
   #compute lengths first
   max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
@@ -321,7 +322,7 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
   rownames(Fluo) <- unlist(lapply(LETTERS[1:subs_len], function(x) paste0(x, 1:(reps_len/subs_len))))
   
   #run-length encoding method
-  if (method == 'RLE'){
+  if (method == 'RLE' & all == FALSE || all == TRUE){
     ctau1_rle <- matrix(NA, reps_len, 1) ; ctau2_rle <- matrix(NA, reps_len, 1)
     for(i in 1:reps_len){
       eff_est <- rle( (Fluo[i, 2:n]/Fluo[i, 1:(n - 1)]) > thr ) #run length encoding
@@ -333,113 +334,129 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
     }
     len_used <- matrix(unlist(lapply(subs.unl, length)), ncol=1)
     
-  #ema with RLE
+    #ema with RLE
     ctau2_ema <- matrix(NA, reps_len, 1)
     for(i in 1:reps_len){
       Fluo_EMA3 <- EMA( (Fluo[i, 2:n]/Fluo[i, 1:(n-1)])[ctau1_rle[i]:ctau2_rle[i]-1] , n=3) #window=3
       thr_ema <- mean(Fluo_EMA3[which(Fluo_EMA3>0)]) #mean of Fluo-EMA3 > 0
       ctau2_ema[i,] <- ctau1_rle[i] + max(which(Fluo_EMA3 > thr_ema))
     }
-
-  #midpoint method
+    
+    #midpoint method
     ctau1_mid <- matrix(NA, reps_len, 1) ; ctau2_mid <- matrix(NA, reps_len, 1)
-  #this works, consider chaning threshold 1.25 to something else
+    #this works, consider chaning threshold 1.25 to something else
     for(i in 1:reps_len){
       midpt <- round((ctau1_rle[i]+ctau2_rle[i])/2)
       range1 <- midpt-1 ; range2 <- midpt+1 #starting 3-cycle range
       Feff <- Fluo[i, 2:n]/Fluo[i, 1:(n-1)]
-    while(range1 > ctau1_rle[i] & range2 < ctau2_rle[i]){
-      test1 <- range1-1 ; test2 <- range2+1 
-      comp_mean1 <- mean(Feff[test1:range2])
-      comp_mean2 <- mean(Feff[range1:test2])
-      #print(paste(comp_mean1, comp_mean2))
-  #finding larger mean range
-      if(comp_mean1 > comp_mean2){
-        range1 = test1 ; range2 = range2 
-        if(comp_mean1 <= 1.25){ break }
+      while(range1 > ctau1_rle[i] & range2 < ctau2_rle[i]){
+        test1 <- range1-1 ; test2 <- range2+1 
+        comp_mean1 <- mean(Feff[test1:range2])
+        comp_mean2 <- mean(Feff[range1:test2])
+        #print(paste(comp_mean1, comp_mean2))
+        #finding larger mean range
+        if(comp_mean1 > comp_mean2){
+          range1 = test1 ; range2 = range2 
+          if(comp_mean1 <= 1.25){ break }
+        }
+        else if(comp_mean1 < comp_mean2){ 
+          range1 = range1 
+          range2 = test2 
+          if(comp_mean2 <= 1.25){ break }
+        }
+        #print(paste(i, mean(Feff[range1:range2]), range1, range2))
       }
-      else if(comp_mean1 < comp_mean2){ 
-        range1 = range1 
-        range2 = test2 
-        if(comp_mean2 <= 1.25){ break }
-      }
-      #print(paste(i, mean(Feff[range1:range2]), range1, range2))
-    }
       #print(paste(i, range1, range2))
       #cat("\n")
       ctau1_mid[i,] <- range1 ; ctau2_mid[i,] <- range2
     }
-  
-    ctau <- data.frame(cbind(len_used, ctau1_rle, ctau2_rle, 
-                                       ctau1_rle, ctau2_ema, 
-                                       ctau1_mid, ctau2_mid))
-    colnames(ctau) <- c("len", "rle1", "rle2", "ema1", "ema2", "mid1", "mid2")
-    return(ctau)
+    
+    ctau_rle <- data.frame(cbind(len_used, ctau1_rle, ctau2_rle, 
+                                 ctau1_rle, ctau2_ema, 
+                                 ctau1_mid, ctau2_mid))
+    colnames(ctau_rle) <- c("len", "rle1", "rle2", "ema1", "ema2", "mid1", "mid2")
+    if(all == FALSE){ return(ctau_rle) }
   }
   
   #AQB method
-  else if (method == 'AQB'){
+  else if (method == 'AQB' & all == FALSE || all == TRUE){
     tau1 <- 1.02 ; tau2 <- 1.02
-    ctau1 <- matrix(0, r, 1) ; ctau2 <- matrix(0, r, 1)
+    ctau1_aqb <- matrix(0, r, 1) ; ctau2_aqb <- matrix(0, r, 1)
     for (i in 1:r) {
-      ctau1[i] <- min(which(Fluo[i, 2:n]/Fluo[i, 1:(n - 1)] >= tau1))
-      if (any(Fluo[i, (ctau1[i] + 1):n]/Fluo[i, ctau1[i]:(n - 1)] <= tau2)) {
-        ctau2[i] <- min(which(Fluo[i, (ctau1[i] + 1):n]/Fluo[i, ctau1[i]:(n - 1)] <= tau2)) + ctau1[i]
+      ctau1_aqb[i] <- min(which(Fluo[i, 2:n]/Fluo[i, 1:(n - 1)] >= tau1))
+      if (any(Fluo[i, (ctau1_aqb[i] + 1):n]/Fluo[i, ctau1_aqb[i]:(n - 1)] <= tau2)) {
+        ctau2_aqb[i] <- min(which(Fluo[i, (ctau1_aqb[i] + 1):n]/Fluo[i, ctau1_aqb[i]:(n - 1)] <= tau2)) + ctau1_aqb[i]
       }
       else {
-        ctau2[i] = n
+        ctau2_aqb[i] = n
       }
     }
-    return(cbind(len_used, ctau1, ctau2))
+    ctau_aqb <- cbind(len_used, ctau1_aqb, ctau2_aqb)
+    if(all == FALSE){ return(ctau_aqb) }
   }
   
   #RAW method: using efficieincy and slope of raw fluorescence
-  else if (method == 'RAW'){
+  else if (method == 'RAW' & all == FALSE || all == TRUE){
     #cumulative averages
     cumulative_left <- matrix(NA, reps_len, max_len) ; threshold <- matrix(NA, reps_len, 1)
     ctau1_raw <- matrix(NA, reps_len, 1) ; ctau2_raw <- matrix(NA, reps_len, 1)
     for(i in 1:reps_len){
       subs_len <- length(Fluo[i,][which(!is.na(Fluo[i,]))]) #cycle length
       threshold[i,] = 0.04 * (max(Fluo[i,], na.rm=TRUE) - min(Fluo[i,], na.rm=TRUE))
-    for(n in 1:max_len){
+      for(n in 1:max_len){
         cumulative_left[i,n] = sum(Fluo[i,1:n])/sum(!is.na(Fluo[i,1:n]))
       }
       ctau1_raw[i,] <- min(which(Fluo[i,] - cumulative_left[i,] > threshold[i,]))
       ctau2_raw[i,] <- ctau1_raw[i,] + which.max((Fluo[i, 2:n] - Fluo[i, 1:(n-1)])[ctau1_raw[1,]:(subs_len)])+1
     }
-    return(cbind(len_used, ctau1_raw, ctau2_raw))
+    ctau_raw <- cbind(len_used, ctau1_raw, ctau2_raw)
+    if(all == FALSE){ return(ctau_raw) }
   }
   
   #SSG method: savitzsky-golay smoothing
-  else if (method == 'SSG'){
-  #savitzky-golay smoothing local min/max method
-  ctau1_ssg <- matrix(NA, reps_len, 1) ; ctau2_ssg <- matrix(NA, reps_len, 1)
-  for(i in 1:reps_len){
-    subs = Fluo[i,][which(!is.na(Fluo[i,]))]
-    subs_len <- length(subs)
-    if(sd(subs) < 100){ #noisy data
-      point_filt = savgol(subs, fl=25, forder=3) #window=25, poly-order=3
-      sslope_filt = savgol((point_filt[2:(subs_len)]-point_filt[1:(subs_len-1)]), fl=15, forder=3)
-    } else{ #clean data
-      point_filt = savgol(subs, fl=3, forder=3) #window=5, poly-order=3
-      sslope_filt = savgol((point_filt[2:(subs_len)]-point_filt[1:(subs_len-1)]), fl=5, forder=3)
+  else if (method == 'SSG' & all == FALSE || all == TRUE){
+    #savitzky-golay smoothing local min/max method
+    ctau1_ssg <- matrix(NA, reps_len, 1) ; ctau2_ssg <- matrix(NA, reps_len, 1)
+    for(i in 1:reps_len){
+      subs = Fluo[i,][which(!is.na(Fluo[i,]))]
+      subs_len <- length(subs)
+      if(sd(subs) < 100){ #noisy data
+        point_filt = savgol(subs, fl=25, forder=3) #window=25, poly-order=3
+        sslope_filt = savgol((point_filt[2:(subs_len)]-point_filt[1:(subs_len-1)]), fl=15, forder=3)
+      } else{ #clean data
+        point_filt = savgol(subs, fl=3, forder=3) #window=5, poly-order=3
+        sslope_filt = savgol((point_filt[2:(subs_len)]-point_filt[1:(subs_len-1)]), fl=5, forder=3)
+      }
+      #restandardize
+      rs.point_filt = (point_filt - min(point_filt))/(max(point_filt) - min(point_filt))
+      rs.sslope_filt = (sslope_filt - min(sslope_filt))/(max(sslope_filt) - min(sslope_filt))
+      #find cycles
+      lmin_val = localMinima(rs.sslope_filt) #lmin cyc
+      lmax_val = localMaxima(rs.sslope_filt) #lmax cyc
+      cyc_lmax = which(rs.sslope_filt == 1) #standardized max at 1
+      cyc_lmin = lmin_val[max(which(lmin_val < cyc_lmax))] #first lmin value < lmax
+      #output
+      ctau1_ssg[i,] <- cyc_lmin + 1
+      ctau2_ssg[i,] <- cyc_lmax + 1
     }
-    #restandardize
-    rs.point_filt = (point_filt - min(point_filt))/(max(point_filt) - min(point_filt))
-    rs.sslope_filt = (sslope_filt - min(sslope_filt))/(max(sslope_filt) - min(sslope_filt))
-    #find cycles
-    lmin_val = localMinima(rs.sslope_filt) #lmin cyc
-    lmax_val = localMaxima(rs.sslope_filt) #lmax cyc
-    cyc_lmax = which(rs.sslope_filt == 1) #standardized max at 1
-    cyc_lmin = lmin_val[max(which(lmin_val < cyc_lmax))] #first lmin value < lmax
-    #output
-    ctau1_ssg[i,] <- cyc_lmin + 1
-    ctau2_ssg[i,] <- cyc_lmax + 1
-    }
-    return(cbind(len_used, ctau1_ssg, ctau2_ssg))
+    ctau_ssg <- cbind(len_used, ctau1_ssg, ctau2_ssg)
+    if(all == FALSE){ return(ctau_ssg) }
+  }
+  #final return output
+  if(all == TRUE){ 
+    ctau_all = data.frame(cbind(len_used, ctau1_rle, ctau2_rle,  #rle
+                                ctau1_rle, ctau2_ema,  #ema
+                                ctau1_mid, ctau2_mid,  #mid-seq
+                                ctau1_aqb, ctau2_aqb,  #aqb
+                                ctau1_raw, ctau2_raw,  #raw
+                                ctau1_ssg, ctau2_ssg)) #savit-golay
+    colnames(ctau_all) <- c("len", "rle1", "rle2", "ema1", "ema2", "mid1", "mid2",
+                            "aqb1", "aqb2", "raw1", "raw2", "ssg1", "ssg2")
+    return(ctau_all)
   }
 }
-exp_calc(method = 'RAW', subs = try.good, thr=1.02)
+exp_calc(method = 'RLE', subs = try.good, thr=1.02) #RLE method
+exp_calc(subs=try.good, thr=1.02, all=TRUE) #all methods
 
 
 for(i in 1:40){
@@ -451,5 +468,3 @@ for(i in 1:40){
          col=c('red', 'green', 'blue'), 
          lty=c('dashed', 'dotted', 'dotdash'))
 }
-
-
