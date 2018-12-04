@@ -307,7 +307,7 @@ sdres2 <- apply(meplz, 2, sd, na.rm = TRUE)
 ###finding the exponential
 exp_calc <- function(method = 'RLE', subs, thr=1.02){
   
-  #RLE method
+  #compute lengths first
   max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
   subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
   reps_len <- length(subs.unl) #40
@@ -316,14 +316,14 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
   for(i in 1:reps_len){
     empmat[1:length(subs.unl[[i]]), i] <- subs.unl[[i]]
   }
-  Fluo = t(data.frame(empmat))
-  a1 <- dim(Fluo) ; r <- a1[1] ; n <- a1[2]
+  Fluo = t(data.frame(empmat)) #row-wise fluorescence
+  a1 <- dim(Fluo) ; r <- a1[1] ; n <- a1[2] #row-wise fluo dimensions
   rownames(Fluo) <- unlist(lapply(LETTERS[1:subs_len], function(x) paste0(x, 1:(reps_len/subs_len))))
   
   #run-length encoding method
   if (method == 'RLE'){
-    ctau1_rle <- matrix(0, reps_len, 1) ; ctau2_rle <- matrix(0, reps_len, 1)
-    for(i in 1:40){
+    ctau1_rle <- matrix(NA, reps_len, 1) ; ctau2_rle <- matrix(NA, reps_len, 1)
+    for(i in 1:reps_len){
       eff_est <- rle( (Fluo[i, 2:n]/Fluo[i, 1:(n - 1)]) > thr ) #run length encoding
       tester.mat <- matrix(eff_est$lengths, nrow=1) 
       overth <- which(eff_est$values == TRUE) #all indexes over thr
@@ -334,17 +334,17 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
     len_used <- matrix(unlist(lapply(subs.unl, length)), ncol=1)
     
   #ema with RLE
-    ctau2_ema <- matrix(NA, 40, 1)
-    for(i in 1:40){
-      Fluo_EMA3 <- EMA( (Fluo[i, 2:n]/Fluo[i, 1:(n-1)])[ctau1_rle[i]:ctau2_rle[i]-1] , n=3)
-      thr_ema <- mean(Fluo_EMA3[which(Fluo_EMA3>0)])
+    ctau2_ema <- matrix(NA, reps_len, 1)
+    for(i in 1:reps_len){
+      Fluo_EMA3 <- EMA( (Fluo[i, 2:n]/Fluo[i, 1:(n-1)])[ctau1_rle[i]:ctau2_rle[i]-1] , n=3) #window=3
+      thr_ema <- mean(Fluo_EMA3[which(Fluo_EMA3>0)]) #mean of Fluo-EMA3 > 0
       ctau2_ema[i,] <- ctau1_rle[i] + max(which(Fluo_EMA3 > thr_ema))
     }
 
   #midpoint method
-    ctau1_mid <- matrix(NA, 40, 1) ; ctau2_mid <- matrix(NA, 40, 1)
+    ctau1_mid <- matrix(NA, reps_len, 1) ; ctau2_mid <- matrix(NA, reps_len, 1)
   #this works, consider chaning threshold 1.25 to something else
-    for(i in 1:40){
+    for(i in 1:reps_len){
       midpt <- round((ctau1_rle[i]+ctau2_rle[i])/2)
       range1 <- midpt-1 ; range2 <- midpt+1 #starting 3-cycle range
       Feff <- Fluo[i, 2:n]/Fluo[i, 1:(n-1)]
@@ -352,8 +352,8 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
       test1 <- range1-1 ; test2 <- range2+1 
       comp_mean1 <- mean(Feff[test1:range2])
       comp_mean2 <- mean(Feff[range1:test2])
-        #print(paste(comp_mean1, comp_mean2))
-      #finding larger mean range
+      #print(paste(comp_mean1, comp_mean2))
+  #finding larger mean range
       if(comp_mean1 > comp_mean2){
         range1 = test1 ; range2 = range2 
         if(comp_mean1 <= 1.25){ break }
@@ -379,10 +379,8 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
   
   #AQB method
   else if (method == 'AQB'){
-    tau1 <- 1.02
-    tau2 <- 1.02
-    ctau1 <- matrix(0, r, 1)
-    ctau2 <- matrix(0, r, 1)
+    tau1 <- 1.02 ; tau2 <- 1.02
+    ctau1 <- matrix(0, r, 1) ; ctau2 <- matrix(0, r, 1)
     for (i in 1:r) {
       ctau1[i] <- min(which(Fluo[i, 2:n]/Fluo[i, 1:(n - 1)] >= tau1))
       if (any(Fluo[i, (ctau1[i] + 1):n]/Fluo[i, ctau1[i]:(n - 1)] <= tau2)) {
@@ -398,15 +396,16 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
   #RAW method: using efficieincy and slope of raw fluorescence
   else if (method == 'RAW'){
     #cumulative averages
-    cumulative_left <- matrix(NA, 40, 46) ; threshold <- matrix(NA, 40, 1)
-    ctau1_raw <- matrix(NA, 40, 1) ; ctau2_raw <- matrix(NA, 40, 1)
-    for(i in 1:40){
+    cumulative_left <- matrix(NA, reps_len, max_len) ; threshold <- matrix(NA, reps_len, 1)
+    ctau1_raw <- matrix(NA, reps_len, 1) ; ctau2_raw <- matrix(NA, reps_len, 1)
+    for(i in 1:reps_len){
+      subs_len <- length(Fluo[i,][which(!is.na(Fluo[i,]))]) #cycle length
       threshold[i,] = 0.04 * (max(Fluo[i,], na.rm=TRUE) - min(Fluo[i,], na.rm=TRUE))
-      for(n in 1:46){
+    for(n in 1:max_len){
         cumulative_left[i,n] = sum(Fluo[i,1:n])/sum(!is.na(Fluo[i,1:n]))
       }
       ctau1_raw[i,] <- min(which(Fluo[i,] - cumulative_left[i,] > threshold[i,]))
-      ctau2_raw[i,] <- ctau1_raw[i,] + which.max((Fluo[i, 2:46] - Fluo[i, 1:45])[ctau1_raw[1,]:46])+1
+      ctau2_raw[i,] <- ctau1_raw[i,] + which.max((Fluo[i, 2:n] - Fluo[i, 1:(n-1)])[ctau1_raw[1,]:(subs_len)])+1
     }
     return(cbind(len_used, ctau1_raw, ctau2_raw))
   }
@@ -414,8 +413,8 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
   #SSG method: savitzsky-golay smoothing
   else if (method == 'SSG'){
   #savitzky-golay smoothing local min/max method
-  ctau1_ssg <- matrix(NA, 40, 1) ; ctau2_ssg <- matrix(NA, 40, 1)
-  for(i in 1:40){
+  ctau1_ssg <- matrix(NA, reps_len, 1) ; ctau2_ssg <- matrix(NA, reps_len, 1)
+  for(i in 1:reps_len){
     subs = Fluo[i,][which(!is.na(Fluo[i,]))]
     subs_len <- length(subs)
     if(sd(subs) < 100){ #noisy data
@@ -439,10 +438,8 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02){
     }
     return(cbind(len_used, ctau1_ssg, ctau2_ssg))
   }
-  
 }
-
-exp_calc(method = 'SSG', subs = try.good, thr=1.02)
+exp_calc(method = 'RAW', subs = try.good, thr=1.02)
 
 
 for(i in 1:40){
