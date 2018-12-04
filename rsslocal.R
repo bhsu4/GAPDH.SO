@@ -391,7 +391,8 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
         ctau2_aqb[i] = n
       }
     }
-    ctau_aqb <- cbind(len_used, ctau1_aqb, ctau2_aqb)
+    ctau_aqb <- data.frame(cbind(len_used, ctau1_aqb, ctau2_aqb))
+    colnames(ctau_aqb) <- c("len", "aqb1", "aqb2")
     if(all == FALSE){ return(ctau_aqb) }
   }
   
@@ -409,7 +410,8 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
       ctau1_raw[i,] <- min(which(Fluo[i,] - cumulative_left[i,] > threshold[i,]))
       ctau2_raw[i,] <- ctau1_raw[i,] + which.max((Fluo[i, 2:n] - Fluo[i, 1:(n-1)])[ctau1_raw[1,]:(subs_len)])+1
     }
-    ctau_raw <- cbind(len_used, ctau1_raw, ctau2_raw)
+    ctau_raw <- data.frame(cbind(len_used, ctau1_raw, ctau2_raw))
+    colnames(ctau_raw) <- c("len", "raw1", "raw2")
     if(all == FALSE){ return(ctau_raw) }
   }
   
@@ -439,7 +441,8 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
       ctau1_ssg[i,] <- cyc_lmin + 1
       ctau2_ssg[i,] <- cyc_lmax + 1
     }
-    ctau_ssg <- cbind(len_used, ctau1_ssg, ctau2_ssg)
+    ctau_ssg <- data.frame(cbind(len_used, ctau1_ssg, ctau2_ssg))
+    colnames(ctau_ssg) <- c("len", "ssg1", "ssg2")
     if(all == FALSE){ return(ctau_ssg) }
   }
   #final return output
@@ -456,6 +459,9 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
   }
 }
 exp_calc(method = 'RLE', subs = try.good, thr=1.02) #RLE method
+exp_calc(method = 'AQB', subs = try.good) #AQB method
+exp_calc(method = 'RAW', subs = try.good) #RAW method
+exp_calc(method = 'SSG', subs = try.good) #SSG method
 exp_calc(subs=try.good, thr=1.02, all=TRUE) #all methods
 
 
