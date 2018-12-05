@@ -305,8 +305,7 @@ sdres2 <- apply(meplz, 2, sd, na.rm = TRUE)
 
 
 ###finding the exponential
-exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
-  
+read_try <- function(subs){
   #compute lengths first
   max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
   subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
@@ -319,7 +318,25 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
   Fluo = t(data.frame(empmat)) #row-wise fluorescence
   a1 <- dim(Fluo) ; r <- a1[1] ; n <- a1[2] #row-wise fluo dimensions
   rownames(Fluo) <- unlist(lapply(LETTERS[1:subs_len], function(x) paste0(x, 1:(reps_len/subs_len))))
+  return(Fluo)
+}
+
+exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
   
+  #compute lengths first
+  max_len <- max(unlist(lapply(subs, function(x) lapply(x, length))))
+  subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
+  reps_len <- length(subs.unl) #40
+  subs_len <- length(subs) #10
+  empmat <- matrix(NA, max_len, reps_len)
+#  for(i in 1:reps_len){
+#    empmat[1:length(subs.unl[[i]]), i] <- subs.unl[[i]]
+#  }
+#  Fluo = t(data.frame(empmat)) #row-wise fluorescence
+#  a1 <- dim(Fluo) ; r <- a1[1] ; n <- a1[2] #row-wise fluo dimensions
+#  rownames(Fluo) <- unlist(lapply(LETTERS[1:subs_len], function(x) paste0(x, 1:(reps_len/subs_len))))
+  Fluo <- read_try(subs)
+    
   #run-length encoding method
   if (method == 'RLE' & all == FALSE || all == TRUE){
     ctau1_rle <- matrix(NA, reps_len, 1) ; ctau2_rle <- matrix(NA, reps_len, 1)
@@ -482,6 +499,7 @@ localMaxima <- function(x) {
   y
 }
 
+library(TTR)
 exp_calc(method = 'RLE', subs = try.good, thr=1.02) #RLE method
 exp_calc(method = 'AQB', subs = try.good) #AQB method
 exp_calc(method = 'RAW', subs = try.good) #RAW method
