@@ -1266,25 +1266,59 @@ plot_ly(l5dat2.na, x = ~dw.comp, y = ~pcor, z = ~boxlj.p,
 ####
 #using try.nice to create introduction graph of eye-balling threshold
 plot(try.nice[[5]][,2], xlab = "Cycle", ylab='Fluorescence')
-abline(h=460, lty= "dashed")
-points(24.5, 460, pch=17)
-arrows(23,600,24,500, length=0.12, angle= 50, lty=3) 
-text(22, 665, "CT Value", col = "black", cex=0.8)
-text(45,515, "Threshold", cex=0.9)
-mtext('Phase 1', side=3, line=0.5, at=10)
-mtext('Phase 2', side=3, line=0.5, at=27)
-mtext('Phase 3', side=3, line=0.5, at=40)
-text(32, 2200, '}', srt = -50.5, cex = 1.5, family = 'Helvetica Neue UltraLight')
-text(35, 2100, expression(frac('F'[n+1],'F'[n]) == 'PCR Efficiency'), cex=0.8)
-polygon(c(min(par("usr")), 22, 22, min(par("usr")), min(par("usr"))), 
+try.nice[[5]][,2]
+abline(h=115, lty= "dashed")
+points(21.5, 115, pch=17)
+arrows(20,250,21.25,150, length=0.12, angle= 50, lty=3) 
+text(18.75, 270, "CT Value", col = "black", cex=0.8)
+segments(21.5, 115, 21.5, min(par("usr")))
+text(45,155, "Threshold", cex=0.9)
+mtext('Phase 1', side=3, line=0.5, at=9)
+mtext('Phase 2', side=3, line=0.5, at=24)
+mtext('Phase 3', side=3, line=0.5, at=38)
+brackets(26.25, 855, 25.25, 575, lwd=1, curvatur=1, type=2)
+
+text(26.25, 855, 25.25, 575, '}', srt = -22.5, cex = 3.5, family = 'Helvetica Neue UltraLight', font = 1)
+text(30, 675, expression(frac('F'[n+1],'F'[n]) == 'PCR Efficiency'), cex=0.8)
+polygon(c(min(par("usr")), 20, 20, min(par("usr")), min(par("usr"))), 
         c(min(par("usr")), min(par("usr")), max(par("usr")), 
           max(par("usr")), min(par("usr"))),
         col= rgb(0,0,0,alpha=0.15), border = NA) 
-polygon(c(22,32,32,22,22), 
+polygon(c(20,29,29,20,20), 
         c(min(par("usr")), min(par("usr")), max(par("usr")), 
           max(par("usr")), min(par("usr"))),
         col= rgb(0,0,0,alpha=0.12), border=NA) 
-polygon(c(32,max(par("usr")),max(par("usr")),32,32 ), 
+polygon(c(29,max(par("usr")),max(par("usr")),29,29 ), 
+        c(min(par("usr")), min(par("usr")), max(par("usr")), 
+          max(par("usr")), min(par("usr"))),
+        col= rgb(0,0,0,alpha=0.09), border= NA)  
+
+
+#restandardize
+nicedumb <- try.nice[[5]][,2] 
+stdnice <- (nicedumb - min(nicedumb))/(max(nicedumb) - min(nicedumb))
+
+plot(stdnice, xlab = "Cycle", ylab='Fluorescence')
+abline(h=0.045, lty= "dashed")
+points(21.5, 0.045, pch=15)
+segments(21.5, 0.045, 21.5, min(par("usr")))
+#arrows(21,0.095,21.35,0.055, length=0.12, angle= 50, lty=3) 
+text(23.25, 0.0225, "CT Value", col = "black", cex=1)
+text(45,0.066, "Threshold", cex=1.05)
+mtext('Phase 1', side=3, line=0.5, at=9)
+mtext('Phase 2', side=3, line=0.5, at=24.5)
+mtext('Phase 3', side=3, line=0.5, at=38)
+brackets(26.25, 0.30, 25.25, .21, lwd=1, curvatur=1, type=2)
+text(29.75, 0.215, expression(frac('F'[n+1],'F'[n]) == 'PCR Efficiency'), cex=1)
+polygon(c(min(par("usr")), 20, 20, min(par("usr")), min(par("usr"))), 
+        c(min(par("usr")), min(par("usr")), max(par("usr")), 
+          max(par("usr")), min(par("usr"))),
+        col= rgb(0,0,0,alpha=0.15), border = NA) 
+polygon(c(20,29,29,20,20), 
+        c(min(par("usr")), min(par("usr")), max(par("usr")), 
+          max(par("usr")), min(par("usr"))),
+        col= rgb(0,0,0,alpha=0.12), border=NA) 
+polygon(c(29,max(par("usr")),max(par("usr")),29,29 ), 
         c(min(par("usr")), min(par("usr")), max(par("usr")), 
           max(par("usr")), min(par("usr"))),
         col= rgb(0,0,0,alpha=0.09), border= NA)  
