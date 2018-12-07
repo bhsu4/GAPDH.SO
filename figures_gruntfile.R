@@ -1259,3 +1259,32 @@ plot_ly(l5dat2.na, x = ~dw.comp, y = ~pcor, z = ~boxlj.p,
   layout(scene = list(xaxis = list(title = 'Durbin-Watson'),
                       yaxis = list(title = 'Ljung-Box'),
                       zaxis = list(title = 'Pearson Correlation')))
+
+
+
+
+####
+#using try.nice to create introduction graph of eye-balling threshold
+plot(try.nice[[5]][,2], xlab = "Cycle", ylab='Fluorescence')
+abline(h=460, lty= "dashed")
+points(24.5, 460, pch=17)
+arrows(23,600,24,500, length=0.12, angle= 50, lty=3) 
+text(22, 665, "CT Value", col = "black", cex=0.8)
+text(45,515, "Threshold", cex=0.9)
+mtext('Phase 1', side=3, line=0.5, at=10)
+mtext('Phase 2', side=3, line=0.5, at=27)
+mtext('Phase 3', side=3, line=0.5, at=40)
+text(32, 2200, '}', srt = -50.5, cex = 1.5, family = 'Helvetica Neue UltraLight')
+text(35, 2100, expression(frac('F'[n+1],'F'[n]) == 'PCR Efficiency'), cex=0.8)
+polygon(c(min(par("usr")), 22, 22, min(par("usr")), min(par("usr"))), 
+        c(min(par("usr")), min(par("usr")), max(par("usr")), 
+          max(par("usr")), min(par("usr"))),
+        col= rgb(0,0,0,alpha=0.15), border = NA) 
+polygon(c(22,32,32,22,22), 
+        c(min(par("usr")), min(par("usr")), max(par("usr")), 
+          max(par("usr")), min(par("usr"))),
+        col= rgb(0,0,0,alpha=0.12), border=NA) 
+polygon(c(32,max(par("usr")),max(par("usr")),32,32 ), 
+        c(min(par("usr")), min(par("usr")), max(par("usr")), 
+          max(par("usr")), min(par("usr"))),
+        col= rgb(0,0,0,alpha=0.09), border= NA)  
