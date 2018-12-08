@@ -1322,3 +1322,38 @@ polygon(c(29,max(par("usr")),max(par("usr")),29,29 ),
         c(min(par("usr")), min(par("usr")), max(par("usr")), 
           max(par("usr")), min(par("usr"))),
         col= rgb(0,0,0,alpha=0.09), border= NA)  
+
+###setar example
+library(tsDyn)
+setartest <- tsDyn::setar(try.nice[[5]][,2], m=2, d=1, thDelay = 1)
+lstartest <- tsDyn::lstar(try.nice[[5]][,2], m=1, d=1)
+plot(try.nice[[5]][,2])
+lines(2:46, setartest$fitted.values)
+lines(2:46, lstartest$fitted.values, col = "red")
+
+par(mfrow = c(1,2))
+par(oma=c(4,4,0.5,0.5),mar=c(0.25,0.25,0,0))
+#ar(1) model on data
+artest <- arima(x = ts(try.nice[[5]][,2]), order = c(1,0,0), method = 'ML')
+plot(try.nice[[5]][,2], xlab = "Cycle", ylab="Fluorescence")
+lines(2:46, (try.nice[[5]][,2]*artest$coef[1])[1:45], col=1)
+#ar(2)
+artest2 <- arima(x = ts(try.nice[[5]][,2]), order = c(2,0,0), method = 'ML')
+plot(try.nice[[5]][,2], xlab = "Cycle", ylab="", yaxt = "n")
+lines(3:46, (try.nice[[5]][,2]*artest2$coef[1])[1:44], col=1)
+mtext("Cycle", line = 2, side = 1, outer = TRUE)
+mtext("Fluorescence", line = 2.5, side = 2, outer = TRUE)
+
+#probit transformation (ddoesn't work)
+probres <- probit(stdnice,  bvalue = .Machine$double.eps)
+artest3prob <- arima(x = probres, order = c(1,0,0), method = 'ML')
+plot(probres)
+lines(2:46, (probres*artest3prob$coef[1])[1:45], col=1)
+
+
+#quality scores
+nice_b5 <- sub_genparams(est=b5, listdf=try.nice$E)
+efficiency(nice_b5$fits[[1]])$Rsq #0.9944928
+qpcRb5$qc[grep("hsa-miR-520e_001119", row.names(qpcRb5$qc)),]
+row.names(qpcRb5$qc)
+
