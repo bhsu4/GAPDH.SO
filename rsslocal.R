@@ -333,8 +333,9 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
 #    empmat[1:length(subs.unl[[i]]), i] <- subs.unl[[i]]
 #  }
 #  Fluo = t(data.frame(empmat)) #row-wise fluorescence
-#  a1 <- dim(Fluo) ; r <- a1[1] ; n <- a1[2] #row-wise fluo dimensions
+  a1 <- dim(Fluo) ; r <- a1[1] ; n <- a1[2] #row-wise fluo dimensions
 #  rownames(Fluo) <- unlist(lapply(LETTERS[1:subs_len], function(x) paste0(x, 1:(reps_len/subs_len))))
+  len_used <- matrix(unlist(lapply(subs.unl, length)), ncol=1)
   Fluo <- read_try(subs)
     
   #run-length encoding method
@@ -348,7 +349,6 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
       ctau1_rle[i,] <- sum(tester.mat[,1:(which(eff_est$lengths == max.overth & eff_est$values == TRUE)-1)])+1
       ctau2_rle[i,] <- ctau1_rle[i,] + max.overth
     }
-    len_used <- matrix(unlist(lapply(subs.unl, length)), ncol=1)
     
     #ema with RLE
     ctau2_ema <- matrix(NA, reps_len, 1)
@@ -499,20 +499,6 @@ localMaxima <- function(x) {
   y
 }
 
-library(TTR)
-exp_calc(method = 'RLE', subs = try.good, thr=1.02) #RLE method
-exp_calc(method = 'AQB', subs = try.good) #AQB method
-exp_calc(method = 'RAW', subs = try.good) #RAW method
-exp_calc(method = 'SSG', subs = try.good) #SSG method
-exp_calc(subs=try.good, thr=1.02, all=TRUE) #all methods
 
 
-for(i in 1:40){
-  plot(Fluo[i,])
-  abline(v=nicetestctau[i,2:3], lty='dashed', col='red')
-  abline(v=nicetestctau[i,4:5], lty='dotted', col='green')
-  abline(v=nicetestctau[i,6:7], lty='dotdash', col='blue')
-  legend("topleft", c('rle', 'ema', 'mid'), 
-         col=c('red', 'green', 'blue'), 
-         lty=c('dashed', 'dotted', 'dotdash'))
-}
+
