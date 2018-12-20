@@ -398,6 +398,10 @@ for(k in 1:length(files)){
  #two graphs on top each other
   par(mfrow=c(2,1))
   par(oma=c(4,4,4,4),mar=c(0.25,0.25,0,0))
+  
+  #m <- matrix(c(1,3,2,4), nrow = 2, ncol = 2, byrow = TRUE)
+  #layout(mat = m)
+  #par(oma=c(4,4,4,4),mar=c(0,2.25,0.25,0))
 #start of plot
   if(plot){
   ##REF PART 2: Clarifying Specific targetdb and breakdb
@@ -531,7 +535,7 @@ for(k in 1:length(files)){
       }
     }
   } 
-  
+
   ###plotting fitted curves and actual values
   for(i in 1:sublength){ #plotting the LSTAR fitted curve
     for(j in 1:(replength/sublength)){ #i for subs, j for reps
