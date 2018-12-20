@@ -11,7 +11,7 @@ branchfunc <- function(subs, method='RLE', plot=FALSE){
   for(i in 1:40){ empmat[1:length(subs.unl[[i]]), i] <- subs.unl[[i]] } #NA filled for non-max lengths
   Fluo = t(data.frame(empmat)) #transposed 
   rownames(Fluo) <- unlist(lapply(LETTERS[1:10], function(x) paste0(x, 1:4))) #names assigned
-  
+  r = dim(Fluo)[1]  ; n = dim(Fluo)[2]
   #call exponential calculation
   exp_ctau <- exp_calc(method, subs)
   ctau1 <- unlist(exp_ctau[,2])
@@ -328,18 +328,18 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
   subs.unl <- unlist(lapply(subs, function(x) x[-1]), recursive = FALSE)
   reps_len <- length(subs.unl) #40
   subs_len <- length(subs) #10
-  empmat <- matrix(NA, max_len, reps_len)
-#  for(i in 1:reps_len){
-#    empmat[1:length(subs.unl[[i]]), i] <- subs.unl[[i]]
-#  }
-#  Fluo = t(data.frame(empmat)) #row-wise fluorescence
-  a1 <- dim(Fluo) ; r <- a1[1] ; n <- a1[2] #row-wise fluo dimensions
-#  rownames(Fluo) <- unlist(lapply(LETTERS[1:subs_len], function(x) paste0(x, 1:(reps_len/subs_len))))
+  #empmat <- matrix(NA, max_len, reps_len)
+  #for(i in 1:reps_len){
+  #  empmat[1:length(subs.unl[[i]]), i] <- subs.unl[[i]]
+  #}
+  #Fluo = t(data.frame(empmat)) #row-wise fluorescence
+  #rownames(Fluo) <- unlist(lapply(LETTERS[1:subs_len], function(x) paste0(x, 1:(reps_len/subs_len))))
   len_used <- matrix(unlist(lapply(subs.unl, length)), ncol=1)
   Fluo <- read_try(subs)
-    
+  a1 <- dim(Fluo) ; r <- a1[1] ; n <- a1[2] #row-wise fluo dimensions
+  
   #run-length encoding method
-  if (method == 'RLE' & all == FALSE || all == TRUE){
+  if (method == 'RLE' & all == FALSE | all == TRUE){
     ctau1_rle <- matrix(NA, reps_len, 1) ; ctau2_rle <- matrix(NA, reps_len, 1)
     for(i in 1:reps_len){
       eff_est <- rle( (Fluo[i, 2:n]/Fluo[i, 1:(n - 1)]) > thr ) #run length encoding
@@ -395,7 +395,7 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
   }
   
   #AQB method
-  else if (method == 'AQB' & all == FALSE || all == TRUE){
+  else if (method == 'AQB' & all == FALSE | all == TRUE){
     tau1 <- 1.02 ; tau2 <- 1.02
     ctau1_aqb <- matrix(0, r, 1) ; ctau2_aqb <- matrix(0, r, 1)
     for (i in 1:r) {
@@ -413,7 +413,7 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
   }
   
   #RAW method: using efficieincy and slope of raw fluorescence
-  else if (method == 'RAW' & all == FALSE || all == TRUE){
+  else if (method == 'RAW' & all == FALSE | all == TRUE){
     #cumulative averages
     cumulative_left <- matrix(NA, reps_len, max_len) ; threshold <- matrix(NA, reps_len, 1)
     ctau1_raw <- matrix(NA, reps_len, 1) ; ctau2_raw <- matrix(NA, reps_len, 1)
@@ -432,7 +432,7 @@ exp_calc <- function(method = 'RLE', subs, thr=1.02, all = FALSE){
   }
   
   #SSG method: savitzsky-golay smoothing
-  else if (method == 'SSG' & all == FALSE || all == TRUE){
+  else if (method == 'SSG' & all == FALSE | all == TRUE){
     #savitzky-golay smoothing local min/max method
     ctau1_ssg <- matrix(NA, reps_len, 1) ; ctau2_ssg <- matrix(NA, reps_len, 1)
     for(i in 1:reps_len){
