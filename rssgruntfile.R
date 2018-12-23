@@ -12,7 +12,11 @@ exp_calc(method = 'RLE', subs = try.nice, thr=1.02) #RLE method
 exp_calc(method = 'AQB', subs = try.nice) #AQB method
 exp_calc(method = 'RAW', subs = try.nice) #RAW method
 exp_calc(method = 'SSG', subs = try.nice) #SSG method
-exp_calc(subs=try.nice, thr=1.02, all=TRUE) #all methods
+exp_calc(subs=try.nice, all=TRUE) #all methods BUG?
+
+ctau1 <- ctau_all[,"mid1"]
+ctau2 <- ctau_all[,"mid2"]
+
 
 for(i in 1:40){
   plot(Fluo[i,])
