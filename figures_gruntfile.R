@@ -1305,9 +1305,10 @@ segments(21.5, 0.045, 21.5, min(par("usr")))
 #arrows(21,0.095,21.35,0.055, length=0.12, angle= 50, lty=3) 
 text(23.25, 0.0225, "CT Value", col = "black", cex=1)
 text(45,0.066, "Threshold", cex=1.05)
-mtext('Phase 1', side=3, line=0.5, at=9)
-mtext('Phase 2', side=3, line=0.5, at=24.5)
-mtext('Phase 3', side=3, line=0.5, at=38)
+mtext('Phase 1: Baseline', side=3, line=-7.5, at=9, font=2)
+mtext('Phase 2: Exponential', side=3, line=-7.5, at=24.5, font=2)
+mtext('Phase 3: Plateau', side=3, line=-7.5, at=38, font=2)
+library(pBrackets)
 brackets(26.25, 0.30, 25.25, .21, lwd=1, curvatur=1, type=2)
 text(29.75, 0.215, expression(frac('F'[n+1],'F'[n]) == 'PCR Efficiency'), cex=1)
 polygon(c(min(par("usr")), 20, 20, min(par("usr")), min(par("usr"))), 
@@ -1322,6 +1323,11 @@ polygon(c(29,max(par("usr")),max(par("usr")),29,29 ),
         c(min(par("usr")), min(par("usr")), max(par("usr")), 
           max(par("usr")), min(par("usr"))),
         col= rgb(0,0,0,alpha=0.09), border= NA)  
+
+text(3.5,0.6125,"Baseline w/ slow upward trend. \n\nObserved fluorescence is usually random\nnoise. The signal is dominated by\nbackground fluorescence.", pos=4)
+text(20.5,0.6,"Upward swing into an\nexponential model.\n\nSignal dominated by\nactual amount of\ntarget molecule.", pos=4)
+text(32,0.63,"Enters plateau as the signal tapers off.\n\nReaction limited by amount of available\nnucleotides, slowing down of amplification.", pos=4)
+
 
 ###setar example
 library(tsDyn)
