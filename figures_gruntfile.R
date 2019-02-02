@@ -1346,7 +1346,7 @@ lines(2:46, (try.nice[[5]][,2]*artest$coef[1])[1:45], col=1)
 #ar(2)
 artest2 <- arima(x = ts(try.nice[[5]][,2]), order = c(2,0,0), method = 'ML')
 plot(try.nice[[5]][,2], xlab = "Cycle", ylab="", yaxt = "n")
-lines(3:46, (try.nice[[5]][,2]*artest2$coef[1])[1:44], col=1)
+lines(3:46, (try.nice[[5]][,2]*artest2$coef[1])[1:44]+(try.nice[[5]][,2]*artest2$coef[2])[1:44], col=1)
 mtext("Cycle", line = 2, side = 1, outer = TRUE)
 mtext("Fluorescence", line = 2.5, side = 2, outer = TRUE)
 
