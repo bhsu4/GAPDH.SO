@@ -6,8 +6,8 @@ load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_dme-
 try.tst <- unlist.genparams(tst)
 
 #get the files which overwrites tst 
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall")
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetssmall", 
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
                 pattern =  "^targ_")
 files <- getfiles
 
@@ -53,8 +53,10 @@ res_qc <- function(getfiles, orgdata, est, res_out){
   return(res_merge)
 }
 
-res_qc(getfiles, miRcompData2, b5, b5dat2)
-
+res_b5 <- res_qc(getfiles, miRcompData2, b5, b5dat2)
+res_l5 <- res_qc(getfiles, miRcompData2, l5, l5dat2)
+res_b4 <- res_qc(getfiles, miRcompData2, b4, b4dat2)
+res_l4 <- res_qc(getfiles, miRcompData2, l4, l4dat2)
 
 #get the files which overwrites tst 
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
