@@ -1358,8 +1358,10 @@ lines(2:46, (probres*artest3prob$coef[1])[1:45], col=1)
 
 
 #quality scores
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-520e_001119.Rda")
+try.nice <- unlist.genparams(tst)
 nice_b5 <- sub_genparams(est=b5, listdf=try.nice$E)
 efficiency(nice_b5$fits[[1]])$Rsq #0.9944928
-qpcRb5$qc[grep("hsa-miR-520e_001119", row.names(qpcRb5$qc)),]
+qpcRb5$qc[grep("hsa-miR-520e_001119", rownames(qpcRb5$qc)),]
 row.names(qpcRb5$qc)
 

@@ -1,19 +1,3 @@
-load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-520e_001119.Rda")
-try.nice <- unlist.genparams(tst)
-nice_b5 <- sub_genparams(est=b5, listdf=try.nice$E)
-
-load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_dme-miR-7_000268.Rda")
-try.tst <- unlist.genparams(tst)
-
-#get the files which overwrites tst 
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont")
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
-                pattern =  "^targ_")
-files <- getfiles
-
-
-
-
 res_qc <- function(getfiles, orgdata, est, res_out){
 
   files <- getfiles
@@ -28,7 +12,7 @@ res_qc <- function(getfiles, orgdata, est, res_out){
   res <- data.frame(
     #target categories
     TargetName = rep(targnames, each = replength), SampleID = rep(sampnames, targlength), 
-    Group = gsub("_." , "", tmp), FeatureSet = rep(NA, each = replength),
+    Group = gsub("_." , "", tmp),
     #r-squared quality scores
     Rsq = rep(NA, targlength * replength)
   )
@@ -52,15 +36,6 @@ res_qc <- function(getfiles, orgdata, est, res_out){
   res_merge <- merge(res_out, res, by="id", all.x=TRUE)
   return(res_merge)
 }
-
-res_b5 <- res_qc(getfiles, miRcompData2, b5, b5dat2)
-res_l5 <- res_qc(getfiles, miRcompData2, l5, l5dat2)
-res_b4 <- res_qc(getfiles, miRcompData2, b4, b4dat2)
-res_l4 <- res_qc(getfiles, miRcompData2, l4, l4dat2)
-
-#get the files which overwrites tst 
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
-                pattern =  "^targ_")
 
 
 
