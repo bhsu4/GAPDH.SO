@@ -85,7 +85,7 @@ getmat <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/t
               pattern = "_dat")
 
 load(file = getmat[[1]]) ; load(file = getmat[[2]]) ; load(file = getmat[[3]]) ; load(file = getmat[[4]])
-load(file = getmat[[5]]) ; load(file = getmat[[6]])
+load(file = getmat[[5]]) ; load(file = getmat[[6]]) ; load(file = getmat[[7]]) ; load(file = getmat[[8]])
 l5dat = help1 ; l4dat = help2 ; b5dat = help3 ; b4dat = help4
 
 
