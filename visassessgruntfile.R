@@ -42,10 +42,40 @@ cbind(data.frame(TargetName = unique(res_b4[1:40,]$TargetName.x)), t(res_b4[1:40
 
 #mixedsort the columns, then cbind with colnames = vector of sampleid
 
+ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
+
 water <- res_b4[1:40, c("SampleID.x", "ct")]
 sampids <- res_b4[1:40, c("SampleID.x")]
 river <- order(match(sampids, paste0(hello, "_", 1:4)))
 res_test <- t(water[river,]$ct) 
-
 res_test2 <- cbind(data.frame(TargetName = unique(res_b4[1:40,]$TargetName.x)), t(as.vector(res_test)))
 colnames(res_test2) <- c("TargetName", as.vector(sampids[river]))
+
+
+#in function terms
+
+for(k in 1:2){
+ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
+
+#set up the df on first run through
+if(k == 1){
+  water <- res_b4[ind1:ind2, c("SampleID.x", "ct")]
+  sampids <- res_b4[ind1:ind2, c("SampleID.x")]
+  river <- order(match(sampids, paste0(mixedsort(gsub( "_.*$", "", res_b4[1:40, c("SampleID.x")])), "_", 1:4)))
+  res_test <- t(water[river,]$ct) 
+  res_test2 <- cbind(data.frame(TargetName = unique(res_b4[ind1:ind2,]$TargetName.x)), t(as.vector(res_test)))
+  colnames(res_test2) <- c("TargetName", as.vector(sampids[river]))
+}
+
+else{
+  water <- res_b4[ind1:ind2, c("SampleID.x", "ct")]
+  sampids <- res_b4[ind1:ind2, c("SampleID.x")]
+  river <- order(match(sampids, paste0(mixedsort(gsub( "_.*$", "", res_b4[1:40, c("SampleID.x")])), "_", 1:4)))
+  res_test <- t(water[river,]$ct) 
+  res_test3 <- cbind(data.frame(TargetName = unique(res_b4[ind1:ind2,]$TargetName.x)), t(as.vector(res_test)))
+  colnames(res_test3) <- c("TargetName", as.vector(sampids[river]))
+  res_resf <- rbind(res_test2, res_test3)
+  }
+}
+#create a df, and matrix, then bind it together
+
