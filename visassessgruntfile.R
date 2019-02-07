@@ -78,4 +78,12 @@ else{
   }
 }
 #create a df, and matrix, then bind it together
-
+data.frame(TargetName = unique(res_b4$TargetName.x))
+water <- res_b4[ind1:ind2, c("SampleID.x", "ct")]
+sampids <- res_b4[ind1:ind2, c("SampleID.x")]
+river <- order(match(sampids, paste0(mixedsort(gsub( "_.*$", "", res_b4[1:40, c("SampleID.x")])), "_", 1:4)))
+res_test <- t(water[river,]$ct) 
+dude <- matrix(NA, length(unique(res_b4$TargetName.x)), 40)
+for(i in 1:length(files)){
+dude[1,] <- res_test
+}
