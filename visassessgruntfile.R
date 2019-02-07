@@ -78,12 +78,18 @@ else{
   }
 }
 #create a df, and matrix, then bind it together
-data.frame(TargetName = unique(res_b4$TargetName.x))
-water <- res_b4[ind1:ind2, c("SampleID.x", "ct")]
-sampids <- res_b4[ind1:ind2, c("SampleID.x")]
-river <- order(match(sampids, paste0(mixedsort(gsub( "_.*$", "", res_b4[1:40, c("SampleID.x")])), "_", 1:4)))
-res_test <- t(water[river,]$ct) 
-dude <- matrix(NA, length(unique(res_b4$TargetName.x)), 40)
-for(i in 1:length(files)){
-dude[1,] <- res_test
+
+res_ct <- matrix(NA, length(unique(res_b4$TargetName.x)), 40)
+
+for(k in 1:2){
+  ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
+  res_curr <- res_b4[ind1:ind2, c("SampleID.x", "ct")]
+  sampids <- res_b4[ind1:ind2, c("SampleID.x")]
+  sampids_ord <- order(match(sampids, paste0(mixedsort(gsub( "_.*$", "", res_b4[ind1:ind2, c("SampleID.x")])), "_", 1:4)))
+  res_test <- t(res_curr[sampids_ord,]$ct) 
+  #creating matrix for ct
+  res_ct[k,] <- res_test
 }
+res_ctf <- cbind(data.frame(TargetName = unique(res_b4$TargetName.x)), res_ct)
+colnames(res_ctf) <- c("TargetName", as.vector(paste0(rep(paste0("KW", 1:10), each = 4), "_", 1:4)))
+
