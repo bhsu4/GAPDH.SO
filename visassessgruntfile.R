@@ -80,16 +80,22 @@ else{
 #create a df, and matrix, then bind it together
 
 res_ct <- matrix(NA, length(unique(res_b4$TargetName.x)), 40)
+res_rsq <- matrix(NA, length(unique(res_b4$TargetName.x)), 40)
 
-for(k in 1:2){
+for(k in 1:length(unique(res_b4$TargetName.x))){
   ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
-  res_curr <- res_b4[ind1:ind2, c("SampleID.x", "ct")]
-  sampids <- res_b4[ind1:ind2, c("SampleID.x")]
+  res_curr <- res_b4[ind1:ind2, c("SampleID.x", "ct", "Rsq")]
+  sampids <- res_b4[ind1:ind2, c("SampleID.x")] #all unique sample IDs (KW)
   sampids_ord <- order(match(sampids, paste0(mixedsort(gsub( "_.*$", "", res_b4[ind1:ind2, c("SampleID.x")])), "_", 1:4)))
-  res_test <- t(res_curr[sampids_ord,]$ct) 
+  ct_val <- t(res_curr[sampids_ord,]$ct) #correct order, mixed sorting
+  rsq_val <- t(res_curr[sampids_ord,]$Rsq)
   #creating matrix for ct
-  res_ct[k,] <- res_test
+  res_ct[k,] <- ct_val
+  res_rsq[k,] <- rsq_val
+  #matrix names
+  rownames(res_ct) <- unique(res_b4$TargetName.x)
+  rownames(res_rsq) <- unique(res_b4$TargetName.x)
+  colnames(res_ct) <- as.vector(paste0(rep(paste0("KW", 1:10), each = 4), "_", 1:4))
+  colnames(res_rsq) <- as.vector(paste0(rep(paste0("KW", 1:10), each = 4), "_", 1:4))
 }
-res_ctf <- cbind(data.frame(TargetName = unique(res_b4$TargetName.x)), res_ct)
-colnames(res_ctf) <- c("TargetName", as.vector(paste0(rep(paste0("KW", 1:10), each = 4), "_", 1:4)))
-
+res_qpcr <- list(ct=res_ctf, qc=res_rsqf)
