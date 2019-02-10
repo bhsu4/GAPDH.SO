@@ -37,5 +37,39 @@ res_qc <- function(getfiles, orgdata, est, res_out){
   return(res_merge)
 }
 
+gen_ctqc <- function(res){
+  #parameter lengths
+  replength <- length(unique(res$SampleID.x))
+  grouplength <- length(unique(res$Group.x))
+  #empty matrix for ct and rsq 
+  res_ct <- matrix(NA, length(unique(res$TargetName.x)), replength)
+  res_rsq <- matrix(NA, length(unique(res$TargetName.x)), replength)
+  #creating ct and rsq matrix
+  for(k in 1:length(unique(res$TargetName.x))){
+    ind2 <- replength*k  ; ind1 <- ind2-(replength-1)
+    res_curr <- res[ind1:ind2, c("SampleID.x", "ct", "Rsq")]
+    sampids <- res[ind1:ind2, c("SampleID.x")] #all unique sample IDs (KW)
+    sampids_ord <- order(match(sampids, paste0(mixedsort(gsub( "_.*$", "", 
+                         res[ind1:ind2, c("SampleID.x")])), "_", 1:(replength/grouplength))))
+    ct_val <- t(res_curr[sampids_ord,]$ct) #correct order, mixed sorting
+    rsq_val <- t(res_curr[sampids_ord,]$Rsq)
+    #creating matrix for ct
+    res_ct[k,] <- ct_val
+    res_rsq[k,] <- rsq_val
+    #matrix names
+    rownames(res_ct) <- unique(res$TargetName.x)
+    rownames(res_rsq) <- unique(res$TargetName.x)
+    colnames(res_ct) <- as.vector(paste0(rep(paste0("KW", 1:grouplength), 
+                                  each = (replength/grouplength)), ":", 1:(replength/grouplength))) #KW(n)
+    colnames(res_rsq) <- as.vector(paste0(rep(paste0("KW", 1:grouplength), 
+                                   each = (replength/grouplength)), ":", 1:(replength/grouplength)))
+  }
+  res_qpcr <- list(ct=res_ct, qc=res_rsq)
+  return(res_qpcr)
+}
+
+
+
+
 
 
