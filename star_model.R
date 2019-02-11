@@ -486,6 +486,10 @@ for(k in 1:length(files)){
       else{
         #cycles greater than threshold in lagged format
         cycCT.unl[[indicator]] <- which(lstarres.unl[[indicator]]$fitted.values > lstarcoef[[indicator]]["th"])
+        if(length(cycCT.unl[[indicator]]) == 0){ #if none > threshold (in noisy data, this problem exists)
+          cycCT.unl[[indicator]] <- NA
+        }
+        else{}
       }
     }
     ind2 = (replength/sublength)*i ; ind1 = ind2-((replength/sublength)-1)
