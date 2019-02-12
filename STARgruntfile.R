@@ -31,7 +31,13 @@ setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
 getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
                 pattern =  "^targ_")
 library(foreach) ; library(Hmisc) ; library(dplyr) ; library(strucchange) ; library(gtools)
-testdb <- brkplot(miRcompData2, getfiles, klag=1, plot=FALSE)
+testdb2 <- brkplot(miRcompData2, getfiles, klag=1, plot=FALSE)
+
+#klag = 2, and max breaks = 2 of all miRcomp
+testdb <- brkplot(miRcompData2, getfiles, klag=2, kbreaks=2, plot=FALSE)
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/LSTAR_res")
+save(testdb, file = paste0("LSTAR_l2breaks", ".Rda"))
+load(file = "LSTAR_l2breaks.Rda")
 
 #AIC quality control for GAPDH.SO
 dev.off()
@@ -39,12 +45,13 @@ set1aic <- aiclag(subs = subs, klag=15)
 
 #LSTAR cannot run with dplyr in library
 detach("package:dplyr") ; library(dynlm) ; library(car)
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello")
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/mello", 
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
                 pattern =  "^targ_")
 tstlstarmat <- plot_lstar(miRcompData2, getfiles, klag=2, mdim=1, breakdb = testdb, plot=FALSE) #noplot
-tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=1, breakdb = testdb, plot=TRUE) #plot
-tstlstarmat3 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=2, breakdb = testdb, plot=TRUE) #plot
+tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=2, breakdb = testdb, plot=TRUE) #plot
+tstlstarmat3 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=2, breakdb = testdb, plot=FALSE) #plot
+save(tstlstarmat2, file = paste0("LSTAR_l2res", ".Rda"))
 
 #specific noisy data set testing
 #not nice dataset

@@ -624,7 +624,8 @@ for(k in 1:length(files)){
      rightbound <- lstarres[[i]][[j]]$fitted.values[cycCT.th[[i]][[j]]+0.5-(klag*mdim)]
      avgCTfittedvalue = (leftbound+rightbound)/2
      #estimated CT value
-     if(cycCT.th[[i]][[j]]>(0.5+klag*mdim)){
+     if(is.na(cycCT.th[[i]][[j]]) == TRUE){ print("helpme") }
+     else if( is.na(cycCT.th[[i]][[j]]) == FALSE & cycCT.th[[i]][[j]]>(0.5+klag*mdim)){
       #if explanation: at d*m = 1, 2:40 -> earliest cycle cross threshold is 1st cycle
       #which has intermediate at 0.5. Actual cycle is 0.5 + d*m (whch is 1) = 1.5.
       #Thus, anything less than 1.5 + 2 cycle range = 3.5 cannot have RSSred
@@ -635,8 +636,8 @@ for(k in 1:length(files)){
              y = c(min(par("usr")), min(par("usr")), 
                    max(par("usr")), max(par("usr")), min(par("usr"))),
              col= rgb(1,0,0,alpha=0.15))}
-     else if(cycCT.th[[i]][[j]]<(0.5+klag*mdim)){ }
-     
+     else if(cycCT.th[[i]][[j]]<=(0.5+klag*mdim)){}
+
   ###PART 4: Residuals Plotting
    ##A. SECOND DERIVATIVE METHOD: estimated CT value            
     #residuals
@@ -652,8 +653,9 @@ for(k in 1:length(files)){
      #              max(par("usr")), max(par("usr")), min(par("usr"))),
      #        col= rgb(0,0,0,alpha=0.15))
     ##B. LSTAR THRESHOLD METHOD: estimated CT value            
-     #estimated CT value
-     if(cycCT.th[[i]][[j]]>(0.5+klag*mdim)){ 
+     #estimated CT value     
+     if(is.na(cycCT.th[[i]][[j]]) == TRUE){ }
+     else if(is.na(cycCT.th[[i]][[j]]) == FALSE & cycCT.th[[i]][[j]]>(0.5+klag*mdim)){ 
      #if explanation: at d*m = 1, 2:40 -> earliest cycle cross threshold is 1st cycle
      #which has intermediate at 0.5. Actual cycle is 0.5 + d*m (whch is 1) = 1.5.
      #Thus, anything less than 1.5 + 2 cycle range = 3.5 cannot have RSSred
