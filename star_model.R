@@ -354,7 +354,8 @@ plot_lstar <- function(orgdata, getfiles, subs_list=NULL, klag, mdim, breakdb, p
     rssgrey = rep(NA, targlength * replength), 
     ct = rep(NA, targlength * replength), 
     rssred = rep(NA, targlength*replength), 
-    ctth = rep(NA, targlength*replength)
+    ctth = rep(NA, targlength*replength),
+    rsq = rep(NA, targlength*replength)
   )
 
 for(k in 1:length(files)){
@@ -676,11 +677,6 @@ for(k in 1:length(files)){
     } #if(plot)
 
 ####Creating Matrix Output w/ TargID, AC, RSS, RSSGrey
-  
-  
-  
-  
-  
  ###PART 1: Creating the LSTAR Model's RSS and RSSGrey
    #list of lists of RSS
    rsslstar <- lapply(lstarres, function(x) lapply(x, function(x) sum(x$residuals^2)))
@@ -847,12 +843,24 @@ for(k in 1:length(files)){
    }
   ##Finalized FeatureSet Matrix 
    featset.mat <- matrix(unlist(featsetf), ncol=1)
+ 
+ ###PART 5: R-squared for the fitted curve
+   r_sq <- matrix(NA, 40, 1)
+   for(i in 1:sublength){ #calling LSTAR model
+     for(j in 1:((replength/sublength))){
+       ind = 4*(i-1)+j
+       ss_tot <- sum((lstarres[[i]][[j]]$model$yy - mean(lstarres[[i]][[j]]$model$yy))^2)
+       ss_res <- sum((lstarres[[i]][[j]]$residuals)^2)
+       r_sq[ind,] <- 1-(ss_res/ss_tot)
+     }
+   }
    
  ###PART 5: Finalizing Matrix Output   
   indk2 = replength*k ; indk1 = indk2-(replength-1)
   res[indk1:indk2, "FeatureSet"] <- featset.mat
   res[indk1:indk2, 5:10] <- dw.mat
   res[indk1:indk2, 11:15] <- rss.mat
+  res[indk1:indk2, "rsq"] <- r_sq
   
   if(k==1){
   resp <- data.frame(lstarparams.mat)

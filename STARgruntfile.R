@@ -50,7 +50,7 @@ getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO
                 pattern =  "^targ_")
 tstlstarmat <- plot_lstar(miRcompData2, getfiles, klag=2, mdim=1, breakdb = testdb, plot=FALSE) #noplot
 tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=2, breakdb = testdb, plot=TRUE) #plot
-tstlstarmat3 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=2, breakdb = testdb, plot=FALSE) #plot
+tstlstarmat3 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=2, breakdb = testdb, plot=FALSE) #noplot
 save(tstlstarmat2, file = paste0("LSTAR_l2res", ".Rda"))
 
 #specific noisy data set testing
