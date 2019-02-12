@@ -402,57 +402,52 @@ for(k in 1:length(files)){
   #m <- matrix(c(1,3,2,4), nrow = 2, ncol = 2, byrow = TRUE)
   #layout(mat = m)
   #par(oma=c(4,4,4,4),mar=c(0,2.25,0.25,0))
-#start of plot
-  if(plot){
-  ##REF PART 2: Clarifying Specific targetdb and breakdb
-    #specific target chosen from k files
-    spectarg <- breakdb$Targets[which(breakdb$Targets$TargetName == targnames[[k]]),]
-    #specific break points for target
-    specbreak <- breakdb$Breaks[breakdb$Breaks$TargetID %in% spectarg$TargetID, ]
+  
+ ##finding the SDM and threshold method *referred twice in plot and no plot
   ##REF (REF PART 3): Empty Lists for Second Derivative Maximum Estimate  
-    diff_df <- vector("list", 10) ; diff2_df <- vector("list", 10) 
-    
+  diff_df <- vector("list", 10) ; diff2_df <- vector("list", 10) 
+  
   ###plotting fitted curves and actual values
   for(i in 1:sublength){ #plotting the LSTAR fitted curve
     for(j in 1:(replength/sublength)){ #i for subs, j for reps
-  
-  ##REF PART 3: Creating First and Second Derivatives for Maximum Estimation          
-    #nonsubtractable first row    
-    #lstarres[[i]][[j]]$fitted.values[-1,] 
-    #nonsubtractable last row
-    #lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
-    #NO LSTAR Model Fit      
-    if(sum(is.na(lstarres[[i]][[j]]$fitted.values)) > 0 ){
-      diff_df[[i]][[j]] <-  rep(NA, length(lstarres[[i]][[j]]$fitted.values)-1)
-      diff2_df[[i]][[j]] <- rep(NA, length(diff_df[[i]][[j]])-1)
-    }
-    #LSTAR Model
-    else{
-      diff_df[[i]][[j]] <-  lstarres[[i]][[j]]$fitted.values[-1,]  - lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
+      
+      ##REF PART 3: Creating First and Second Derivatives for Maximum Estimation          
+      #nonsubtractable first row    
+      #lstarres[[i]][[j]]$fitted.values[-1,] 
+      #nonsubtractable last row
+      #lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
+      #NO LSTAR Model Fit      
+      if(sum(is.na(lstarres[[i]][[j]]$fitted.values)) > 0 ){
+        diff_df[[i]][[j]] <-  rep(NA, length(lstarres[[i]][[j]]$fitted.values)-1)
+        diff2_df[[i]][[j]] <- rep(NA, length(diff_df[[i]][[j]])-1)
+      }
+      #LSTAR Model
+      else{
+        diff_df[[i]][[j]] <-  lstarres[[i]][[j]]$fitted.values[-1,]  - lstarres[[i]][[j]]$fitted.values[-nrow(lstarres[[i]][[j]]$fitted.values),]
       }
     }
   }
   ###Removing all Neg to Pos CT values
-    #unlist the first derivative slopes
-    unl.diff_df <- lapply(diff_df, function(x) unlist(x, recursive=TRUE))
-    for(i in 1:sublength){
-        for(y in 1:length(unl.diff_df[[i]])){
+  #unlist the first derivative slopes
+  unl.diff_df <- lapply(diff_df, function(x) unlist(x, recursive=TRUE))
+  for(i in 1:sublength){
+    for(y in 1:length(unl.diff_df[[i]])){
       if(unl.diff_df[[i]][[y]] < 0 & is.na(unl.diff_df[[i]][[y]]) == FALSE){
-          unl.diff_df[[i]][[y]] <- NA #replace all neg with NA
-            }
-        else{}
-        }
+        unl.diff_df[[i]][[y]] <- NA #replace all neg with NA
       }
-    #diff_dfl is the list of diff_df with NAs
-    #get output diff2_df
-    diff_dfl <- vector("list", sublength)
-      for(i in 1:sublength){
-        for(j in 1:(replength/sublength)){
-          ind2 = length(diff_df[[i]][[j]])*j ; ind1 = ind2 - (length(diff_df[[i]][[j]])-1)
-          diff_dfl[[i]][[j]] <- unl.diff_df[[i]][ind1:ind2]
-          diff2_df[[i]][[j]] <- diff_dfl[[i]][[j]][-1] - diff_dfl[[i]][[j]][-length(diff_dfl[[i]][[j]])]
-        }
-      }
+      else{}
+    }
+  }
+  #diff_dfl is the list of diff_df with NAs
+  #get output diff2_df
+  diff_dfl <- vector("list", sublength)
+  for(i in 1:sublength){
+    for(j in 1:(replength/sublength)){
+      ind2 = length(diff_df[[i]][[j]])*j ; ind1 = ind2 - (length(diff_df[[i]][[j]])-1)
+      diff_dfl[[i]][[j]] <- unl.diff_df[[i]][ind1:ind2]
+      diff2_df[[i]][[j]] <- diff_dfl[[i]][[j]][-1] - diff_dfl[[i]][[j]][-length(diff_dfl[[i]][[j]])]
+    }
+  }
   #diff2_df[[i]][[j]] <- diff_df[[i]][[j]][-1] - diff_df[[i]][[j]][-length(diff_df[[i]][[j]])]
   #list <- unlist(lstarres, recursive = FALSE) #list of 40 equation output
   #listfittedvalues <- lapply(list, function(x) x$fitted.values) #list of 40 fitted values
@@ -468,8 +463,8 @@ for(k in 1:length(files)){
   diff2_dfCT <- lapply(diff2_dfCT, function(x) lapply(x, CTrepNA))
   
   #End of RSS, RSS Grey
- ###ADDED THRESHOLD CT VALUE: Beginning of RSSthres, RSS Red
- ###CT with Threshold STAR
+  ###ADDED THRESHOLD CT VALUE: Beginning of RSSthres, RSS Red
+  ###CT with Threshold STAR
   lstarcoef <- vector("list", sublength) #empty list of subs: ABCD,..etc
   cycCT.thover <- vector("list", sublength)
   cycCT.unl <- list() 
@@ -539,7 +534,15 @@ for(k in 1:length(files)){
       }
     }
   } 
-
+  
+#start of plot
+  if(plot){
+  ##REF PART 2: Clarifying Specific targetdb and breakdb
+    #specific target chosen from k files
+    spectarg <- breakdb$Targets[which(breakdb$Targets$TargetName == targnames[[k]]),]
+    #specific break points for target
+    specbreak <- breakdb$Breaks[breakdb$Breaks$TargetID %in% spectarg$TargetID, ]
+  ##START OF PLOTTING
   ###plotting fitted curves and actual values
   for(i in 1:sublength){ #plotting the LSTAR fitted curve
     for(j in 1:(replength/sublength)){ #i for subs, j for reps
@@ -673,6 +676,11 @@ for(k in 1:length(files)){
     } #if(plot)
 
 ####Creating Matrix Output w/ TargID, AC, RSS, RSSGrey
+  
+  
+  
+  
+  
  ###PART 1: Creating the LSTAR Model's RSS and RSSGrey
    #list of lists of RSS
    rsslstar <- lapply(lstarres, function(x) lapply(x, function(x) sum(x$residuals^2)))
