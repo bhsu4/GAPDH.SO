@@ -37,28 +37,33 @@ res_qc <- function(getfiles, orgdata, est, res_out){
   return(res_merge)
 }
 
+#once your results has r-squared and ct, use this to gen input for miRcomp
 gen_ctqc <- function(res){
+  #defining variable
+  targ <- colnames(res)[grep("TargetName", colnames(res))][[1]]
+  grp <- colnames(res)[grep("Group", colnames(res))][[1]]
+  samp <- colnames(res)[grep("SampleID", colnames(res))][[1]]
   #parameter lengths
-  replength <- length(unique(res$SampleID.x))
-  grouplength <- length(unique(res$Group.x))
+  replength <- length(unique(res[,samp]))
+  grouplength <- length(unique(res[,grp]))
   #empty matrix for ct and rsq 
-  res_ct <- matrix(NA, length(unique(res$TargetName.x)), replength)
-  res_rsq <- matrix(NA, length(unique(res$TargetName.x)), replength)
+  res_ct <- matrix(NA, length(unique(res[,targ])), replength)
+  res_rsq <- matrix(NA, length(unique(res[,targ])), replength)
   #creating ct and rsq matrix
-  for(k in 1:length(unique(res$TargetName.x))){
+  for(k in 1:length(unique(res[,targ]))){
     ind2 <- replength*k  ; ind1 <- ind2-(replength-1)
-    res_curr <- res[ind1:ind2, c("SampleID.x", "ct", "Rsq")]
-    sampids <- res[ind1:ind2, c("SampleID.x")] #all unique sample IDs (KW)
+    res_curr <- res[ind1:ind2, c(samp, "ct", "Rsq")]
+    sampids <- res[ind1:ind2, c(samp)] #all unique sample IDs (KW)
     sampids_ord <- order(match(sampids, paste0(mixedsort(gsub( "_.*$", "", 
-                         res[ind1:ind2, c("SampleID.x")])), "_", 1:(replength/grouplength))))
+                         res[ind1:ind2, c(samp)])), "_", 1:(replength/grouplength))))
     ct_val <- t(res_curr[sampids_ord,]$ct) #correct order, mixed sorting
     rsq_val <- t(res_curr[sampids_ord,]$Rsq)
     #creating matrix for ct
     res_ct[k,] <- ct_val
     res_rsq[k,] <- rsq_val
     #matrix names
-    rownames(res_ct) <- unique(res$TargetName.x)
-    rownames(res_rsq) <- unique(res$TargetName.x)
+    rownames(res_ct) <- unique(res[,targ])
+    rownames(res_rsq) <- unique(res[,targ])
     colnames(res_ct) <- as.vector(paste0(rep(paste0("KW", 1:grouplength), 
                                   each = (replength/grouplength)), ":", 1:(replength/grouplength))) #KW(n)
     colnames(res_rsq) <- as.vector(paste0(rep(paste0("KW", 1:grouplength), 
