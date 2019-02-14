@@ -355,7 +355,7 @@ plot_lstar <- function(orgdata, getfiles, subs_list=NULL, klag, mdim, breakdb, p
     ct = rep(NA, targlength * replength), 
     rssred = rep(NA, targlength*replength), 
     ctth = rep(NA, targlength*replength),
-    rsq = rep(NA, targlength*replength)
+    Rsq = rep(NA, targlength*replength)
   )
 
 for(k in 1:length(files)){
@@ -860,7 +860,7 @@ for(k in 1:length(files)){
   res[indk1:indk2, "FeatureSet"] <- featset.mat
   res[indk1:indk2, 5:10] <- dw.mat
   res[indk1:indk2, 11:15] <- rss.mat
-  res[indk1:indk2, "rsq"] <- r_sq
+  res[indk1:indk2, "Rsq"] <- r_sq
   
   if(k==1){
   resp <- data.frame(lstarparams.mat)
