@@ -52,7 +52,7 @@ tstlstarmat <- plot_lstar(miRcompData2, getfiles, klag=2, mdim=1, breakdb = test
 tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=2, breakdb = testdb, plot=TRUE) #plot
 tstlstarmat3 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=2, breakdb = testdb, plot=FALSE) #noplot
 save(tstlstarmat2, file = paste0("LSTAR_l2res", ".Rda"))
-save(tstlstarmat3, file = paste0("LSTAR_l2rescheck", ".Rda"))
+save(tstlstarmat3, file = paste0("LSTAR_lag2", ".Rda"))
 
 #specific noisy data set testing
 #not nice dataset
