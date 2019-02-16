@@ -45,8 +45,8 @@ set1aic <- aiclag(subs = subs, klag=15)
 
 #LSTAR cannot run with dplyr in library
 detach("package:dplyr") ; library(dynlm) ; library(car)
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont")
-getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy", 
                 pattern =  "^targ_")
 tstlstarmat <- plot_lstar(miRcompData2, getfiles, klag=2, mdim=1, breakdb = testdb, plot=FALSE) #noplot
 tstlstarmat2 <- plot_lstar(miRcompData2, getfiles, klag=1, mdim=2, breakdb = testdb, plot=TRUE) #plot
