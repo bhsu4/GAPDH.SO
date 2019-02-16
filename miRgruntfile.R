@@ -15,6 +15,13 @@ targetatt <- singtarget.list(miRcompData2, target = targnames[1])
 setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont")
 savetarget.list(miRcompData2) #saves all the miRcompData as list of lists
 
+#testing on smaller data set, mixedsort works for savetarget
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy")
+savetarget.list(miRcompData2)
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/easy", 
+                pattern =  "^targ_")
+load(getfiles[[1]]) #correct order for sample: KW2 before KW10
+
 #generating parameter estimates and residuals (whole + subset)
 source("GAPDH.SO/genparams.R")
 #after all targets -- loads as tst, replaces
