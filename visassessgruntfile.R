@@ -60,3 +60,21 @@ titrationResponse(res_qpcrb4, qcThreshold1=0.99, object2=res_qpcrlstar, qcThresh
 accuracy(res_qpcrlstar, qcThreshold1 = 0.9)
 boxes <- precision(res_qpcrlstar, qcThreshold1=0.95, statistic="sd")
 accuracy(res_qpcrb4, qcThreshold1=0.99, object2=res_qpcrlstar, qcThreshold2=0.99, label1="b4", label2="lstar")
+
+
+###test out other ct methods
+load(file = getfiles[[1]])
+subs <- unlist.genparams(tst)
+for(i in 1:sublength){ #running LSTAR model
+  for(j in 2:((replength/sublength)+1)){
+    #results for LSTAR model 
+    lstarres[[i]][[j-1]] <- tryCatch({
+      tsDyn::lstar(subs[[i]][,j], m=mdim, d=klag)}, #d = lag found through AIC
+      error=function(e) list(fitted.values=rep(NA, (cyclength[[i]]-(klag*mdim))), 
+                             residuals=rep(NA, (cyclength[[i]]-(klag*mdim))),
+                             model.specific=list(coefficients = rep(NA, (4+2*mdim)))))
+    #if error, output NA, (no fit) w/ fitted values and residual rep length times minus klag
+  }
+}
+lstarres[[1]][[1]]$coefficients
+lstarres[[1]][[1]]$model
