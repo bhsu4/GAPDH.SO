@@ -38,11 +38,13 @@ res_qc <- function(getfiles, orgdata, est, res_out){
 }
 
 #once your results has r-squared and ct, use this to gen input for miRcomp
-gen_ctqc <- function(res){
+gen_ctqc <- function(res, ct_name="ct"){
   #defining variable
   targ <- colnames(res)[grep("TargetName", colnames(res))][[1]]
   grp <- colnames(res)[grep("Group", colnames(res))][[1]]
   samp <- colnames(res)[grep("SampleID", colnames(res))][[1]]
+  #define ct method
+  ct = ct_name
   #parameter lengths
   replength <- length(unique(res[,samp]))
   grouplength <- length(unique(res[,grp]))
@@ -52,11 +54,11 @@ gen_ctqc <- function(res){
   #creating ct and rsq matrix
   for(k in 1:length(unique(res[,targ]))){
     ind2 <- replength*k  ; ind1 <- ind2-(replength-1)
-    res_curr <- res[ind1:ind2, c(samp, "ct", "Rsq")]
+    res_curr <- res[ind1:ind2, c(samp, ct, "Rsq")]
     sampids <- res[ind1:ind2, c(samp)] #all unique sample IDs (KW)
     sampids_ord <- order(match(sampids, paste0(mixedsort(gsub( "_.*$", "", 
                          res[ind1:ind2, c(samp)])), "_", 1:(replength/grouplength))))
-    ct_val <- t(res_curr[sampids_ord,]$ct) #correct order, mixed sorting
+    ct_val <- t(res_curr[sampids_ord,][ct]) #correct order, mixed sorting
     rsq_val <- t(res_curr[sampids_ord,]$Rsq)
     #creating matrix for ct
     res_ct[k,] <- ct_val
