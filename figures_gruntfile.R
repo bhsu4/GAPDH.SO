@@ -451,7 +451,7 @@ legend("topleft", paste("R=", round(cor(X)[1,2],2)), bty="n")
 par(oma=c(2,2,0.5,0.5),mar=c(1.25,2,0.75,0.75),mfrow=c(2,2),pch=16)
 commonTheme = list(labs(color="Density",fill="Density",
                         x="Durbin-Watson Test Statistic",
-                        y="CT Value (SDM)"),
+                        y="Cq Value (SDM)"),
                    theme_bw(),
                    theme(legend.position=c(0,1),
                          legend.justification=c(0,1)))
@@ -676,7 +676,7 @@ subplot_resid_4x <- function(params){
     
     if(k == 1) plot(y=resids[[k]][1:40], 
                     x=params$fits[[1]]$DATA$Cycles[1:40], 
-                    type="l", ylim = c(-11900,9000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
+                    type="l", ylim = c(-11000,9000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
                     xlab="", ylab="", yaxt = "n", xaxt = 'n')
     #axis(side=2, at=seq(-2000, 2000, by=2000)) #-8000,8000 and -2000,2000
     #axis(side=1, at=seq(10, 40, by=10))
@@ -696,7 +696,7 @@ subplot_resid_4xy <- function(params){
     
     if(k == 1) plot(y=resids[[k]][1:40], 
                     x=params$fits[[1]]$DATA$Cycles[1:40], 
-                    type="l", ylim = c(-11900,9000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
+                    type="l", ylim = c(-11000,9000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
                     xlab="", ylab="", yaxt = "n")
     axis(side=2, at=seq(-8000, 8000, by=4000)) #-8000,8000 and -2000,2000
     
@@ -715,9 +715,9 @@ subplot_resid_5xy <- function(params){
     
     if(k == 1) plot(y=resids[[k]][1:40], 
                     x=params$fits[[1]]$DATA$Cycles[1:40], 
-                    type="l", ylim = c(-3000,3000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
+                    type="l", ylim = c(-11000,9000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
                     xlab="", ylab="", yaxt = "n", xaxt="n")
-    axis(side=2, at=seq(-2000, 2000, by=2000)) #-8000,8000 and -2000,2000
+    axis(side=2, at=seq(-8000, 8000, by=4000)) #-8000,8000 and -2000,2000
     
     if(k > 1){
       ind1 = 1; ind2=40
@@ -735,9 +735,9 @@ subplot_resid_5x <- function(params){
     
     if(k == 1) plot(y=resids[[k]][1:40], 
                     x=params$fits[[1]]$DATA$Cycles[1:40], 
-                    type="l", ylim = c(-3000,3000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
+                    type="l", ylim = c(-11000,9000), # ylim=range(resids[[k]]), -3000,3000, -11000,9000
                     xlab="", ylab="", yaxt = "n", xaxt="n")
-    #axis(side=2, at=seq(-2000, 2000, by=2000)) #-8000,8000 and -2000,2000
+    #axis(side=2, at=seq(-8000, 8000, by=4000)) #-8000,8000 and -2000,2000
     
     if(k > 1){
       ind1 = 1 ; ind2 = 40
@@ -769,9 +769,9 @@ subplot_resid_4x(b4_resultsG)
 for(i in 1:12){
   if(i==1){
     plot(x=2:40, y=lstarmodnolog1[[7]][[i]]$residuals, type = 'l', 
-         col = 1, ylim = c(range(lapply(lstarmodnolog1[[7]], function(x) unlist(x$residuals)))),
+         col = 1, ylim = c(-11000,9000), #c(range(lapply(lstarmodnolog1[[7]], function(x) unlist(x$residuals)))),
          xaxt = "n", yaxt = "n")
-    axis(side=4, at=seq(-6000, 6000, by=3000))
+    axis(side=4, at=seq(-8000, 8000, by=4000))
     #axis(side=1, at=seq(0, 40, by=10))
     
   }
@@ -782,15 +782,15 @@ for(i in 1:12){
   
 for(i in 1:12){
   if(i==1){
-    plot(x=1:40, y=lstarmodnolog2[[7]][[i]], type = 'l', 
-         col = 1, ylim = c(range(lstarmodnolog2[[7]], na.rm=TRUE)), 
+    plot(x=3:40, y=lstarmodnolog2[[7]][[i]]$residuals, type = 'l', 
+         col = 1, ylim = c(-11000, 9000),   #range(lstarmodnolog2[[7]], na.rm=TRUE)), 
          xaxt = "n", yaxt = "n")
-    axis(side=4, at=seq(-3000, 3000, by=1500))
+    axis(side=4, at=seq(-8000, 8000, by=4000))
     axis(side=1, at=seq(0, 40, by=10))
     
   }
   else{
-    lines(x=1:40, y=lstarmodnolog2[[7]][[i]], col=i)
+    lines(x=3:40, y=lstarmodnolog2[[7]][[i]]$residuals, col=i)
   }
 }
 mtext(text="Cycle", side=1, line=2, outer=TRUE)
@@ -822,8 +822,8 @@ residsb4 <- lapply(b4_try$fits, tryresid)
 #  range4 <- round_any(range(residsl4, residsb4, na.rm=TRUE), 25, f=ceiling)
 #}
 
-par(mfrow=c(2,2))
-par(oma=c(4,4,0.5,4),mar=c(0.25,0.25,0,0))
+#par(mfrow=c(2,2))
+#par(oma=c(4,4,0.5,4),mar=c(0.25,0.25,0,0))
 
 for(x in list(residsl5, residsb5, residsl4, residsb4)){
   if(identical(x, residsl5) == TRUE){
@@ -868,7 +868,49 @@ for(x in list(residsl5, residsb5, residsl4, residsb4)){
 mtext(text="Cycles", side=1, line=2, outer=TRUE)
 mtext(text= "Residuals", side=2, line=2, outer=TRUE)
 }
-subplot_resid_each(try$J)
+
+
+#lag1
+lstarmodnolog1try <- list()
+for (j in 1:10) lstarmodnolog1try[[j]] <- lapply(try[[j]][,2:5], function(f) try(tsDyn::lstar(f, m=1, d=1)))
+#lag2
+lstarmodnolog2try <- list()
+for (j in 1:10) lstarmodnolog2try[[j]] <- lapply(try[[j]][,2:5], function(f) try(tsDyn::lstar(f, m=2, d=1)))
+lstarmodnolog2try <- lapply(lstarmodnolog2try, function(x) lapply(x, function(x) c(rep(NA,2), x$residuals)))
+
+dev.off()
+m <- matrix(c(1,2,5,3,4,6),nrow = 2, ncol = 3, byrow = TRUE)
+layout(mat = m, widths=c(100, 100, 100))
+par(oma=c(4,4,0.5,4),mar=c(0.25,0.25,0,0))
+try <- unlist.genparams(tst)
+subplot_resid_each(try$H)
+for(i in 1:4){
+  if(i==1){
+    plot(x=2:46, y=lstarmodnolog1try[[8]][[i]]$residuals, type = 'l', 
+         col = 1, ylim = c(-150,150), #c(range(lapply(lstarmodnolog1[[7]], function(x) unlist(x$residuals)))),
+         xaxt = "n", yaxt = "n")
+    axis(side=4, at=seq(-100, 100, by=50))
+    #axis(side=1, at=seq(0, 40, by=10))
+    
+  }
+  else{
+    lines(x=2:46, y=lstarmodnolog1try[[8]][[i]]$residuals, col=i)
+  }
+}
+
+for(i in 1:4){
+  if(i==1){
+    plot(x=3:46, y=lstarmodnolog2try[[8]][[i]]$residuals, type = 'l', 
+         col = 1, ylim = c(-150, 150),   #range(lstarmodnolog2[[7]], na.rm=TRUE)), 
+         xaxt = "n", yaxt = "n")
+    axis(side=4, at=seq(-100, 100, by=50))
+    axis(side=1, at=seq(0, 40, by=10))
+    
+  }
+  else{
+    lines(x=3:46, y=lstarmodnolog2try[[8]][[i]]$residuals, col=i)
+  }
+}
 
 
 unlist.genparams.Rn <- function(test){
@@ -1364,4 +1406,397 @@ nice_b5 <- sub_genparams(est=b5, listdf=try.nice$E)
 efficiency(nice_b5$fits[[1]])$Rsq #0.9944928
 qpcRb5$qc[grep("hsa-miR-520e_001119", rownames(qpcRb5$qc)),]
 row.names(qpcRb5$qc)
+
+
+#gapdh.so branching residuals: rep curve (figure 1)
+resid_rep_5y <- function(params, mod, rep){
+  for(k in 1:12){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1 & as.character(mod)[[10]] == "l5"){ plot(y=resids[[rep]][1:40], 
+                                                       x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                       ylim=c(-30000,30000), type="l", 
+                                                       xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
+      axis(2,at=seq(-25000,25000,12500)) # add a new x-axis 
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    
+    else if(k == 1 & as.character(mod)[[10]] == "b5"){ plot(y=resids[[rep]][1:40], 
+                                                            x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                            ylim=c(-30000,30000), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
+      #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    else if(k == 1 & as.character(mod)[[10]] == "l4"){ plot(y=resids[[rep]][1:40], 
+                                                            x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                            ylim=c(-30000,30000), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+      axis(2,at=seq(-25000,25000,12500)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    else if(k == 1 & as.character(mod)[[10]] == "b4"){ plot(y=resids[[rep]][1:40], 
+                                                            x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                            ylim=c(-30000,30000), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+      #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    
+    else if(k > 1){
+      ind2 <- 40*k
+      ind1 <- ind2-39
+      lines(y=resids[[rep]][ind1:ind2], x=params$fits[[rep]]$DATA$Cycles[ind1:ind2], col=k)
+      abline(v=df.res1[1,], lty='dashed')
+    }
+    
+    else {print("no run recorded")}
+  }
+}
+
+dev.off()
+m <- matrix(c(1,2,3,4),nrow = 2, ncol = 2, byrow = TRUE)
+layout(mat = m, widths=c(100, 100, 100))
+par(oma=c(4,4,0.5,4),mar=c(0.25,0.25,0,0))
+resid_rep_5y(df_l5, mod=l5, 8)
+resid_rep_5y(df_b5, mod=b5, 8)
+resid_rep_5y(df_l4, mod=l4, 8)
+resid_rep_5y(df_b4, mod=b4, 8)
+
+mtext(text="Cycle", side=1, line=2, outer=TRUE)
+mtext(text= "Residual", side=2, line=2, outer=TRUE)
+
+
+
+
+avg1 <- data.frame(ID=subsets[[1]][,1], Means=rowMeans(subsets[[1]][,-1]))
+l5.1 <- pcrfit(avg1, fluo=1, model = l5, start = NULL, offset = 0, weights = NULL, verbose = TRUE)
+pcrfit(subsets[[1]], fluo=2:13, model = l5, start = NULL, offset = 0, weights = NULL, verbose = TRUE)
+
+l5avg1 <- lapply(subsets, function(x) data.frame(ID=x[,1], Means = rowMeans(subsets[[1]][,-1])))
+
+
+#rep curve
+CYC <- rep(subsets[[1]][, 1], length(2:13))
+FLUO <- stack(subsets[[1]][, 2:13])[, 1]
+DATA <- as.data.frame(cbind(Cycles = CYC, Fluo = FLUO))  
+ssDATA <- rowMeans(subsets[[1]][, 2:13], na.rm = TRUE)   
+ssVal = l5$ssFct(subsets[[1]][,1], rowMeans(subsets[[1]][, 2:13], na.rm = TRUE) )
+NLS <- nlsLM(as.formula(l5$expr), data = DATA, start = as.list(ssVal), model = TRUE)
+
+##base line subtracted panel of 6
+
+#baseline subtracted gapdhso
+subsets_base <- vector('list', 8) ; subsets2 <- list()
+#baseline subtract GAPDH
+for(i in 1:8){
+  for(j in 2:13){
+    subsets_base[[i]][[1]] <- subsets[[i]][,1]
+    subsets_base[[i]][[j]] <- subsets[[i]][,j] - min(subsets[[i]][,j])
+  }
+  subsets2[[i]] <- data.frame(matrix(unlist(subsets_base[[i]]), ncol=13))
+}
+names(subsets2) <- LETTERS[1:8]
+my_names <- lapply(LETTERS[1:8], function(x) paste0(x, 1:12))
+for(i in 1:8){
+  names(subsets2[[i]]) <- c("Cycle", my_names[[i]])
+}
+df_b5_base <- genparams(est=b5, listdf=subsets2)
+df_l5_base <- genparams(est=l5, listdf=subsets2)
+df_b4_base <- genparams(est=b4, listdf=subsets2)
+df_l4_base <- genparams(est=l4, listdf=subsets2)
+
+resid_rep_5y(df_l5_base, l5, 8)
+resid_rep_5y(df_b5_base, b5, 8)
+resid_rep_5y(df_l4_base, l4, 8)
+resid_rep_5y(df_b4_base, b4, 8)
+mtext(text="Residual", side=2, line=2, outer=T)
+mtext(text="Cycle", side=1, line=2, outer=T)
+
+#2x4 with non baseline and baseline on top one another
+
+resid_rep_8top <- function(params, mod, rep){
+  for(k in 1:12){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1 & as.character(mod)[[10]] == "l5"){ plot(y=resids[[rep]][1:40], 
+                                                       x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                       ylim=c(-30000,30000), type="l", 
+                                                       xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
+      axis(2,at=seq(-25000,25000,12500)) # add a new x-axis 
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    
+    else if(k == 1 & as.character(mod)[[10]] == "b5"){ plot(y=resids[[rep]][1:40], 
+                                                            x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                            ylim=c(-30000,30000), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
+      #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    else if(k == 1 & as.character(mod)[[10]] == "l4"){ plot(y=resids[[rep]][1:40], 
+                                                            x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                            ylim=c(-30000,30000), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", xaxt = "n", yaxt="n")
+      #axis(2,at=seq(-25000,25000,12500)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    else if(k == 1 & as.character(mod)[[10]] == "b4"){ plot(y=resids[[rep]][1:40], 
+                                                            x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                            ylim=c(-30000,30000), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", xaxt = "n", yaxt="n")
+      #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    
+    else if(k > 1){
+      ind2 <- 40*k
+      ind1 <- ind2-39
+      lines(y=resids[[rep]][ind1:ind2], x=params$fits[[rep]]$DATA$Cycles[ind1:ind2], col=k)
+      abline(v=df.res1[1,], lty='dashed')
+      
+      title(main= paste(names(params$fits[rep]), sub=params$fits$A$MODEL$name, sep = ", "))
+      
+    }
+    
+    else {print("no run recorded")}
+  }
+}
+
+resid_rep_8bot <- function(params, mod, rep){
+  for(k in 1:12){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1 & as.character(mod)[[10]] == "l5"){ plot(y=resids[[rep]][1:40], 
+                                                       x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                       ylim=c(-30000,30000), type="l", 
+                                                       xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+      axis(2,at=seq(-25000,25000,12500)) # add a new x-axis 
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    
+    else if(k == 1 & as.character(mod)[[10]] == "b5"){ plot(y=resids[[rep]][1:40], 
+                                                            x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                            ylim=c(-30000,30000), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+      #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    else if(k == 1 & as.character(mod)[[10]] == "l4"){ plot(y=resids[[rep]][1:40], 
+                                                            x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                            ylim=c(-30000,30000), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+      #axis(2,at=seq(-25000,25000,12500)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    else if(k == 1 & as.character(mod)[[10]] == "b4"){ plot(y=resids[[rep]][1:40], 
+                                                            x=params$fits[[1]]$DATA$Cycles[1:40], 
+                                                            ylim=c(-30000,30000), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+      #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    
+    else if(k > 1){
+      ind2 <- 40*k
+      ind1 <- ind2-39
+      lines(y=resids[[rep]][ind1:ind2], x=params$fits[[rep]]$DATA$Cycles[ind1:ind2], col=k)
+      abline(v=df.res1[1,], lty='dashed')
+    }
+    
+    else {print("no run recorded")}
+  }
+}
+
+
+dev.off()
+m <- matrix(c(1,2,3,4,5,6,7,8),nrow = 2, ncol = 4, byrow = TRUE)
+layout(mat = m, widths=c(100, 100, 100, 100))
+par(oma=c(4,4,0.5,4),mar=c(0.25,0.25,0,0))
+resid_rep_8top(df_l5, mod=l5, 8)
+resid_rep_8top(df_b5, mod=b5, 8)
+resid_rep_8top(df_l4, mod=l4, 8)
+resid_rep_8top(df_b4, mod=b4, 8)
+
+resid_rep_8bot(df_l5_base, l5, 8)
+resid_rep_8bot(df_b5_base, b5, 8)
+resid_rep_8bot(df_l4_base, l4, 8)
+resid_rep_8bot(df_b4_base, b4, 8)
+mtext(text="Residual", side=2, line=2, outer=T)
+mtext(text="Cycle", side=1, line=2, outer=T)
+
+
+## miRcomp residuals vs. representative curve (supp. 5,6 -> supp. 5)
+#Rn nice dataset
+load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-23a_000399.Rda")
+try.good <- unlist.genparams(tst)
+try.good.Rn <- unlist.genparams.Rn(tst)
+try.good_b5.Rn <- genparams(est=b5, listdf=try.good.Rn)
+try.good_l5.Rn <- genparams(est=l5, listdf=try.good.Rn)
+try.good_b4.Rn <- genparams(est=b4, listdf=try.good.Rn)
+try.good_l4.Rn <- genparams(est=l4, listdf=try.good.Rn)
+
+try.good_b5 <- genparams(est=b5, listdf=try.good)
+try.good_l5 <- genparams(est=l5, listdf=try.good)
+try.good_b4 <- genparams(est=b4, listdf=try.good)
+try.good_l4 <- genparams(est=l4, listdf=try.good)
+
+
+
+resid_rep_8top <- function(params, mod, rep){
+  for(k in 1:12){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1 & as.character(mod)[[10]] == "l5"){ plot(y=resids[[rep]][1:max(params$fits[[rep]]$DATA$Cycles)], 
+                                                       x=1:max(params$fits[[rep]]$DATA$Cycles), 
+                                                       ylim=c(-300,300), type="l", 
+                                                       xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
+      axis(2,at=seq(-300,300,150)) # add a new x-axis 
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    
+    else if(k == 1 & as.character(mod)[[10]] == "b5"){ plot(y=resids[[rep]][1:max(params$fits[[rep]]$DATA$Cycles)], 
+                                                            x=1:max(params$fits[[rep]]$DATA$Cycles), 
+                                                            ylim=c(-300,300), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", xaxt="n", yaxt="n")
+      #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    else if(k == 1 & as.character(mod)[[10]] == "l4"){ plot(y=resids[[rep]][1:max(params$fits[[rep]]$DATA$Cycles)], 
+                                                            x=1:max(params$fits[[rep]]$DATA$Cycles), 
+                                                            ylim=c(-300,300), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", xaxt = "n", yaxt="n")
+      #axis(2,at=seq(-25000,25000,12500)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    else if(k == 1 & as.character(mod)[[10]] == "b4"){ plot(y=resids[[rep]][1:max(params$fits[[rep]]$DATA$Cycles)], 
+                                                            x=1:max(params$fits[[rep]]$DATA$Cycles), 
+                                                            ylim=c(-300,300), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", xaxt = "n", yaxt="n")
+      #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    
+    else if(k > 1){
+      ind2 <- max(params$fits[[rep]]$DATA$Cycles)*k
+      ind1 <- ind2-(max(params$fits[[rep]]$DATA$Cycles)-1)
+      lines(y=resids[[rep]][ind1:ind2], x=params$fits[[rep]]$DATA$Cycles[ind1:ind2], col=k)
+      abline(v=df.res1[1,], lty='dashed')
+      
+      title(main= paste(names(params$fits[rep]), sub=params$fits$A$MODEL$name, sep = ", "))
+      
+    }
+    
+    else {print("no run recorded")}
+  }
+}
+
+resid_rep_8bot <- function(params, mod, rep){
+  for(k in 1:12){
+    resids <- lapply(params$fits, resid)
+    
+    if(k == 1 & as.character(mod)[[10]] == "l5"){ plot(y=resids[[rep]][1:max(params$fits[[rep]]$DATA$Cycles)], 
+                                                       x=1:max(params$fits[[rep]]$DATA$Cycles), 
+                                                       ylim=c(-300,300), type="l", 
+                                                       xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+      axis(2,at=seq(-300,300,150)) # add a new x-axis 
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    
+    else if(k == 1 & as.character(mod)[[10]] == "b5"){ plot(y=resids[[rep]][1:max(params$fits[[rep]]$DATA$Cycles)], 
+                                                            x=1:max(params$fits[[rep]]$DATA$Cycles), 
+                                                            ylim=c(-300,300), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+      #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    else if(k == 1 & as.character(mod)[[10]] == "l4"){ plot(y=resids[[rep]][1:max(params$fits[[rep]]$DATA$Cycles)], 
+                                                            x=1:max(params$fits[[rep]]$DATA$Cycles), 
+                                                            ylim=c(-300,300), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+      #axis(2,at=seq(-25000,25000,12500)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    else if(k == 1 & as.character(mod)[[10]] == "b4"){ plot(y=resids[[rep]][1:max(params$fits[[rep]]$DATA$Cycles)], 
+                                                            x=1:max(params$fits[[rep]]$DATA$Cycles), 
+                                                            ylim=c(-300,300), type="l", 
+                                                            xlab="Cycle", ylab="Fluoresence Residual", yaxt="n")
+      #axis(2,at=seq(-30000,30000,15000)) # add a new x-axis
+      #result ct
+      df.ml1 <- modlist(params$fits[[rep]], model=mod)
+      df.res1 <- getPar(df.ml1, type = "curve", cp = "cpD2", eff = "sliwin")
+    }
+    
+    else if(k > 1){
+      ind2 <- max(params$fits[[rep]]$DATA$Cycles)*k
+      ind1 <- ind2-(max(params$fits[[rep]]$DATA$Cycles)-1)
+      lines(y=resids[[rep]][ind1:ind2], x=params$fits[[rep]]$DATA$Cycles[ind1:ind2], col=k)
+      abline(v=df.res1[1,], lty='dashed')
+    }
+    
+    else {print("no run recorded")}
+  }
+}
+
+
+dev.off()
+m <- matrix(c(1,2,3,4,5,6,7,8),nrow = 2, ncol = 4, byrow = TRUE)
+#layout(mat = m, widths=c(100, 100, 100, 100))
+#par(oma=c(4,4,0.5,4),mar=c(0.25,0.25,0,0))
+layout(mat = m)
+par(oma=c(4,4,4,4),mar=c(0,0.5,0.75,0))
+
+resid_rep_8top(try.good_l5.Rn, mod=l5, 6)
+resid_rep_8top(try.good_b5.Rn, mod=b5, 6)
+resid_rep_8top(try.good_l4.Rn, mod=l4, 6)
+resid_rep_8top(try.good_b4.Rn, mod=b4, 6)
+
+resid_rep_8bot(try.good_l5, l5, 6)
+resid_rep_8bot(try.good_b5, b5, 6)
+resid_rep_8bot(try.good_l4, l4, 6)
+resid_rep_8bot(try.good_b4, b4, 6)
+mtext(text="Residual", side=2, line=2, outer=T)
+mtext(text="Cycle", side=1, line=2, outer=T)
+
+dev.off()
+m <- matrix(c(1,2,3,4,5,6,7,8),nrow = 2, ncol = 4, byrow = TRUE)
+
 
