@@ -44,6 +44,7 @@ load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-
 try.good <- unlist.genparams(tst)
 
 #plotting fluo curves + finding parameter est in matrix
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO")
 source("GAPDH.SO/plot_sig.R")
 plot_sig(l4, try, plot=TRUE) #plots shown
 plot_sig(b5, try) #no plots shown
@@ -68,6 +69,12 @@ l5dat <- sig_est(l5, miRcompData2, getfiles=getfiles)
 l4dat <- sig_est(l4, miRcompData2, getfiles=getfiles)
 b5dat <- sig_est(b5, miRcompData2, getfiles=getfiles)
 b4dat <- sig_est(b4, miRcompData2, getfiles=getfiles)
+
+setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont")
+getfiles <- dir(path = "C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targetsmcont", 
+                pattern =  "^targ_")
+l5dat.2 <- sig_est(l5, miRcompData2, getfiles=getfiles) #with rssred added
+save(l5dat.2, file = paste0("l5_" , "dat3", ".Rda"))
 
 #saving files
 save(l5dat, file = paste0("l5_" , "dat", ".Rda"))

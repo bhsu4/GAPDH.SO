@@ -5,7 +5,8 @@ plot_sig <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
     reg.amp <- list() ; reg.res <- list() 
     dw.amp <- list() ; dw.res <- replicate(10, list())  
     ml1 <- list() ; res1 <- list() ; paramest <- list()
-    model.dw <- vector('list', 10) ; model.boxlj <- vector('list', 10) ; peacor <- vector('list', 10)
+    rssred <- vector('list', 10) ; model.dw <- vector('list', 10) ; 
+    model.boxlj <- vector('list', 10) ; peacor <- vector('list', 10)
     for(i in 1:length(listdf)){
       #each replicate fit
       par[[i]] <- sub_genparams(est, listdf[[i]])
@@ -44,8 +45,10 @@ plot_sig <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
       #parameter estimates
       paramest[[i]] <- apply(par[[i]]$params, c(1,2), as.numeric) #apply(x[k,], c(1,2), as.numeric)
       
-      #finding model DW
+      #finding model DW + RSSRed
       for(j in 1:(length(listdf[[i]])-1)){ #NA resids cannot run
+        rssred[[i]][[j]] <- tryCatch({sum((resids[[i]][[j]][ceiling(res1[[i]][,j][1]-2):floor(res1[[i]][,j][1]+2)])^2)}, 
+                 error = function(e) {return(NA)})
         model.dw[[i]][[j]] <- sum((resids[[i]][[j]]-Lag(resids[[i]][[j]], 1))^2, na.rm=TRUE)/sum(resids[[i]][[j]]^2)
         model.boxlj[[i]][[j]] <- tryCatch({Box.test(resids[[i]][[j]], lag=1, type='Ljung-Box')}, 
                  error = function(e) {return(list(statistic = NA, p.value = NA))})        
@@ -59,7 +62,7 @@ plot_sig <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
         if(i==1 & j ==1){
           values <- data.frame(t(paramest[[i]][j,]))
           me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, dw.res[[i]][[j]]$r, 
-                  dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2],
+                  dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2], rssred[[i]][[j]],
                   model.dw[[i]][[j]], model.boxlj[[i]][[j]]$statistic, model.boxlj[[i]][[j]]$p.value, peacor[[i]][[j]])
           #values[k, (length(values[k,])+1):(length(values[k,])+9)] <- cbind(values, me) 
           values <- cbind(values, t(me))
@@ -67,7 +70,7 @@ plot_sig <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
         if(i==1 & j >1){
           values[j,] <- data.frame(t(paramest[[i]][j,])) #data.frame(apply(par.tst[[i]]$params[j,], c(1,2), as.numeric))
           me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, dw.res[[i]][[j]]$r, 
-                  dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2],
+                  dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2], rssred[[i]][[j]],
                   model.dw[[i]][[j]], model.boxlj[[i]][[j]]$statistic, model.boxlj[[i]][[j]]$p.value, peacor[[i]][[j]])
           values[j, (ncol(paramest[[i]])+1):length(values)] <- t(me)
         }
@@ -77,7 +80,7 @@ plot_sig <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
           values[(ind1:ind2)[j], ] <- data.frame(t(paramest[[i]][j,])) #data.frame(apply(par.tst[[i]]$params[j,], c(1,2), as.numeric))
           me <- c(dw.amp[[i]][[j]]$r, dw.amp[[i]][[j]]$dw, dw.amp[[i]][[j]]$p, 
                   dw.res[[i]][[j]]$r, dw.res[[i]][[j]]$dw, dw.res[[i]][[j]]$p, 
-                  rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2],
+                  rss[[i]][[j]], res1[[i]][,j][1], res1[[i]][,j][2], rssred[[i]][[j]],
                   model.dw[[i]][[j]], model.boxlj[[i]][[j]]$statistic, 
                   model.boxlj[[i]][[j]]$p.value, peacor[[i]][[j]])
           values[(ind1:ind2)[j], (ncol(paramest[[i]])+1):length(values)] <- t(me)
@@ -87,12 +90,12 @@ plot_sig <- function(est, listdf, macro=0, z=NULL, plot=FALSE){
     if( est$name == "b5" || est$name == "l5"){
       names(values) <- c(c("b", "c", "d", "e", "f"), paste0(c("r", "dw", "p"), "-amp"),
                          paste0(c("r", "dw", "p"), "-res"), c("rss", "ct", "eff"), 
-                         c("dw.comp", "boxlj", "boxlj.p", "pearcor"))
+                         c("rssred", "dw.comp", "boxlj", "boxlj.p", "pearcor"))
     }
     else{  #if( est == "l4" || est == "b4"){
       names(values) <- c(c("b", "c", "d", "e"), paste0(c("r", "dw", "p"), "-amp"),
                          paste0(c("r", "dw", "p"), "-res"), c("rss", "ct", "eff"),
-                         c("dw.comp", "boxlj", "boxlj.p", "pearcor"))
+                         c("rssred", "dw.comp", "boxlj", "boxlj.p", "pearcor"))
     }
     rownames(values) <- c() #getting rid of arbitrary row names
 
@@ -752,7 +755,7 @@ sig_est <- function(est, orgdata, getfiles){
       r.res = rep(NA, targlength * replength), dw.res = rep(NA, targlength * replength), p.res = rep(NA, targlength * replength), 
       #rss and getPar statistics
       rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength),
-      dw.comp = rep(NA, targlength * replength), boxlj.x2 = rep(NA, targlength * replength), 
+      rssred = rep(NA, targlength * replength), dw.comp = rep(NA, targlength * replength), boxlj.x2 = rep(NA, targlength * replength), 
       boxlj.p = rep(NA,targlength * replength), pcor = rep(NA, targlength * replength)
     )
   }
@@ -769,7 +772,7 @@ sig_est <- function(est, orgdata, getfiles){
       r.res = rep(NA, targlength * replength), dw.res = rep(NA, targlength * replength), p.res = rep(NA, targlength * replength), 
       #rss and getPar statistics
       rss = rep(NA, targlength * replength), ct = rep(NA, targlength * replength), eff = rep(NA,targlength * replength),
-      dw.comp = rep(NA, targlength * replength), boxlj.x2 = rep(NA, targlength * replength), 
+      rssred = rep(NA, targlength * replength), dw.comp = rep(NA, targlength * replength), boxlj.x2 = rep(NA, targlength * replength), 
       boxlj.p = rep(NA,targlength * replength), pcor = rep(NA, targlength * replength)
       
     )
@@ -781,13 +784,13 @@ sig_est <- function(est, orgdata, getfiles){
     ind2 <- length(unique(orgdata$SampleID))*k  ; ind1 <- ind2-(length(unique(orgdata$SampleID))-1)
     if((grepl(tst[[1]][[1]]$TargetName[1], res[,"TargetName"][ind1]) == "TRUE") & 
        (gsub("[[:alpha:]]","", est$name) == "5") == "TRUE"){
-      res[ind1:ind2, 5:22] <- plot_sig(est, try)
-      res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
-                                                    function(x) unique(x$FeatureSet)))), replength)
+      res[ind1:ind2, 5:23] <- plot_sig(est, try)
+      res[ind1:ind2, "FeatureSet"] <- rep(NA, replength) #as.character(unique(lapply(tst[[1]], 
+                                                    #function(x) unique(x$FeatureSet)))), replength)
     }
-    if((grepl(tst[[1]][[1]]$TargetName[1], res[,"TargetName"][ind1]) == "TRUE") & 
+    else if((grepl(tst[[1]][[1]]$TargetName[1], res[,"TargetName"][ind1]) == "TRUE") & 
        (gsub("[[:alpha:]]","", est$name) == "4") == "TRUE"){
-      res[ind1:ind2, 5:21] <- plot_sig(est, try)
+      res[ind1:ind2, 5:22] <- plot_sig(est, try)
       res[ind1:ind2, "FeatureSet"] <- rep(as.character(unique(lapply(tst[[1]], 
                                                      function(x) unique(x$FeatureSet)))), replength) 
     }
