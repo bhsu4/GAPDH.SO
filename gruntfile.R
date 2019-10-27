@@ -1,4 +1,4 @@
-setwd("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/")
+setwd("C:/Users/Benjamin Hsu/Desktop/Other/Fall 2018/Independent Study/GAPDH.SO/")
 df <- read.csv(file="GAPDH.SO.csv", header = TRUE, sep = ",")
 Cycle = c(1:40)
 library(data.table)
