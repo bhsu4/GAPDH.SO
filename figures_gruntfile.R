@@ -1340,12 +1340,13 @@ polygon(c(29,max(par("usr")),max(par("usr")),29,29 ),
 nicedumb <- try.nice[[5]][,2] 
 stdnice <- (nicedumb - min(nicedumb))/(max(nicedumb) - min(nicedumb))
 
-plot(stdnice, xlab = "Cycle", ylab='Fluorescence')
+plot(stdnice, xlab = "", ylab='Fluorescence')
+mtext("Cycle", side = 1, line = 2)
 abline(h=0.045, lty= "dashed")
-points(21.5, 0.045, pch=15)
+points(21.5, 0.045, pch=15, cex = 2.0)
 segments(21.5, 0.045, 21.5, min(par("usr")))
 #arrows(21,0.095,21.35,0.055, length=0.12, angle= 50, lty=3) 
-text(23.25, 0.0225, "CT Value", col = "black", cex=1)
+text(23.25, 0.021, "CT Value", col = "black", cex=1)
 text(45,0.066, "Threshold", cex=1.05)
 mtext('Phase 1: Baseline', side=3, line=-7.5, at=9, font=2)
 mtext('Phase 2: Exponential', side=3, line=-7.5, at=24.5, font=2)
@@ -1400,7 +1401,7 @@ lines(2:46, (probres*artest3prob$coef[1])[1:45], col=1)
 
 
 #quality scores
-load("C:/Users/Benjamin Hsu/Desktop/Independent Study/GAPDH.SO/targets/targ_hsa-miR-520e_001119.Rda")
+load("C:/Users/Benjamin Hsu/Desktop/Other/Fall 2018/Independent Study/GAPDH.SO/targets/targ_hsa-miR-520e_001119.Rda")
 try.nice <- unlist.genparams(tst)
 nice_b5 <- sub_genparams(est=b5, listdf=try.nice$E)
 efficiency(nice_b5$fits[[1]])$Rsq #0.9944928
