@@ -114,3 +114,18 @@ unlist.genparams <- function(test){
   names(listdf.tst) <- LETTERS[1:length(test)]
   return(listdf.tst)
 }
+
+unlist.genparams.Rn <- function(test){
+  tst.list <- list() ; listdf.tst <- list() ; repnames <- list()
+  for(i in 1:length(test)){
+    for(j in 1:length(test[[i]])){ #length = rep of secondary list
+      mincyc <- min(unlist(lapply(test[[i]], function(k) max(k$Cycle)))) #min cyc (if diff)
+      tst.list[[i]] <- sapply(test[[i]], function(x) x$Rn[1:mincyc]) #list of diff sampleIDs, but df secondary
+      listdf.tst[[i]] <- as.data.frame(cbind(seq(1:mincyc), tst.list[[i]])) 
+      repnames <- lapply(LETTERS[1:length(test)], paste0, 1:length(test[[i]])) #df colnames
+      names(listdf.tst[[i]]) <- c("Cycle", repnames[[i]][1:length(test[[i]])])
+    }
+  }
+  names(listdf.tst) <- LETTERS[1:length(test)]
+  return(listdf.tst)
+}
